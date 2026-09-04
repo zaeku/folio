@@ -23,16 +23,6 @@ This table decides where new code goes.
 
 ## Hard rules
 
-**Retrieval names candidates; the caller reads the file.** This is what makes a
-stale index harmless: the cost of staleness is a wasted candidate, never a wrong
-quotation. Do not add a mode that answers from stored text.
-
-**Do not add a lexical retrieval route.** Measured on 2026-09-04: with a BM25
-component fused in, the one query whose answer needed a synonym bridge
-(`library` against a corpus that only writes `dependency`) fell out of the top
-eight; with the vector route alone the same query ranked it first. `rg` already
-covers exact matching, exhaustively. A fusion layer here subtracts.
-
 **Do not add an approximate-nearest-neighbour index.** A flat `f32` matrix
 scanned end to end is correct at this project's scale — see the table below. HNSW
 would add a dependency, a build step, and a recall parameter to answer a question
@@ -73,13 +63,18 @@ stays there until it has a fence; once adopted it keeps only its row below.
 | No frontmatter key is privileged | `D-01M1PP6HHJEQ4C` | **live**, fenced by `frontmatter-is-generic` |
 | Defaults at query time | `D-01M1PP6HJ7H3BM` | **live**, fenced by `frontmatter-is-generic` |
 | The incremental unit is the file | `D-01M1PP6HM6WGT4` | **live**, fenced by `incremental-unit-is-the-file` |
-| Retrieval names candidates | `D-01M1PP6HFHY7FW` | intake |
-| No lexical retrieval route | `D-01M1PP6HG6GSGK` | intake |
+| Retrieval names candidates | `D-01M1PP6HFHY7FW` | **live**, `fence: none` |
+| No lexical retrieval route | `D-01M1PP6HG6GSGK` | **live**, `fence: none` |
 | No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | intake |
 
-`D-01M1PP6HFHY7FW` will adopt as `fence: none`: no black-box test proves a mode
-was never added. §4 asks that the reason be written down rather than typed as a
-line, and the proposal carries it.
+**What nothing can execute is held by bytes instead.** Two of the decisions
+above carry `fence: none`, because no black-box test proves an absence: that a
+mode was never added, or that a lexical route was never fused in. §4 requires
+each to record in `verified:` the SHA-256 of its body at adoption, so the check
+reports when a decision drifts out from under what someone read. It does not
+judge the prose, and it does not print the hash that would silence it —
+`cargo run --bin hash <path>` computes one, and running it deliberately is the
+act of re-verifying.
 
 **Date every measured fact you rely on** is not a decision. It is a
 documentation discipline, and nothing executable checks that a number was
