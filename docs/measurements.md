@@ -91,6 +91,30 @@ that folio truncates on characters rather than chunking on a token estimate is
 a gap this corpus found and the private ones could not, having never passed
 1,100 tokens in a section.
 
+**What a re-index actually costs, and what a vector database would not fix.**
+Re-indexing MDN after one changed file took 2.74 s, of which walking the tree
+was 822 ms, reading and hashing all 14,616 files 1294 ms, loading the index
+350 ms and rewriting it 470 ms. Change detection was 77% of it and the index
+write 17%, so an embedded vector database — which replaces the write and the
+scan — addresses the smaller share.
+
+Listing a file instead of reading it costs 33 ms against 1294 ms. `git status
+--porcelain` on the same corpus takes 450 ms and `jj diff --name-only` 250 ms,
+so a version control system is 7.6x to 14x slower than the stat it would
+replace, and `git status` stats every file anyway before comparing its index.
+With a stat prefilter in place, a single-file re-index is **1.24 s**.
+
+The tree walk is now the largest remaining term at 822 ms, and the full index
+rewrite at 470 ms is the one that stays proportional to the corpus rather than
+to the change.
+
+**Where a query's time goes, in Rust.** Of the 350 ms to load the MDN index:
+parsing 119,359 JSON records is 128 ms, reading the 367 MB matrix 76 ms,
+converting those bytes to `f32` 76 ms, and splitting them into one `Vec` per row
+80 ms. Reading the matrix through `mmap` costs 0 ms and a full scan over it with
+no allocation costs 102 ms, so the 232 ms of reading, converting and splitting
+can become part of the scan itself.
+
 ## 2026-09-04 — private corpora
 
 Re-check a fact before building on it.

@@ -67,6 +67,7 @@ this file to exist; a rule someone wrote here does have to leave it.
 | No lexical retrieval route | `D-01M1PP6HG6GSGK` | **live**, `fence: none` |
 | No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | **live**, fenced by `no-ann-index` |
 | The anti-join reads the whole index | `D-01M1PT687ZR1QW` | **live**, fenced by `anti-join-reads-the-whole-index` |
+| Change detection lists before it reads | `D-01M1QD08S1ZJEY` | **live**, fenced by `stat-first-then-hash` |
 
 **What nothing can execute is held by bytes instead.** Two of the decisions
 above carry `fence: none`, because no black-box test proves an absence: that a
