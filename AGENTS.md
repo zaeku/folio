@@ -38,16 +38,6 @@ scanned end to end is correct at this project's scale — see the table below. H
 would add a dependency, a build step, and a recall parameter to answer a question
 that costs milliseconds without them.
 
-**No frontmatter key is privileged.** The YAML tree is flattened to dotted keys
-and stored as it was written. OKF requires that a consumer tolerate unknown keys
-and preserve them, and folio's filters must stay expressible over any producer's
-schema. Do not special-case `status`, `type`, or any other field in the core.
-
-**Apply a schema's defaults at query time, never at index time.** OKF reads an
-absent `status` as `stable`. Writing that default into the index would make the
-index state something the file does not say. The index records what is there;
-interpretation belongs to the query.
-
 **The incremental unit is the file, never the section.** Editing one line
 shifts every later section's range without changing its content. Re-embedding the
 whole changed file is both the smaller code and the correct answer; tracking
@@ -88,11 +78,11 @@ file and leaving only its row here.
 | Truncation is recorded, never silent | `D-01M1PP6HJWFT2Q` | **live**, fenced by `truncation-is-recorded` |
 | One model per vector space | `D-01M1PP6HKHF97G` | **live**, fenced by `one-model-per-vector-space` |
 | The index holds references, never bodies | `D-01M1PP6HMS8Q54` | **live**, fenced by `references-never-bodies` |
+| No frontmatter key is privileged | `D-01M1PP6HHJEQ4C` | **live**, fenced by `frontmatter-is-generic` |
+| Defaults at query time | `D-01M1PP6HJ7H3BM` | **live**, fenced by `frontmatter-is-generic` |
 | Retrieval names candidates | `D-01M1PP6HFHY7FW` | intake |
 | No lexical retrieval route | `D-01M1PP6HG6GSGK` | intake |
 | No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | intake |
-| No frontmatter key is privileged | `D-01M1PP6HHJEQ4C` | intake |
-| Defaults at query time | `D-01M1PP6HJ7H3BM` | intake |
 | The incremental unit is the file | `D-01M1PP6HM6WGT4` | intake |
 
 `D-01M1PP6HFHY7FW` will adopt as `fence: none`: no black-box test proves a mode
