@@ -1,0 +1,11 @@
+.DS_Store
+
+# jj already skips decisions/ on its own because it contains a .jj directory.
+# The colocated git does not: without this line `git status` reports
+# `?? decisions/`, and `git add -A` embeds it as a gitlink. The decision layer
+# is an independent repository (decisions/SPEC.md §1) and must stay invisible
+# here (§2).
+/decisions/
+
+/target
+.folio/

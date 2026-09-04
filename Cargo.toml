@@ -1,0 +1,23 @@
+[package]
+name = "folio-cli"
+version = "0.1.0"
+edition = "2024"
+description = "Section-scoped semantic search over a markdown corpus. The index holds references, never bodies."
+license = "MIT"
+
+[[bin]]
+name = "folio"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive", "env"] }
+ignore = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml_ng = "0.10"
+ureq = { version = "3", features = ["json"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
