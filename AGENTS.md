@@ -53,10 +53,6 @@ absent `status` as `stable`. Writing that default into the index would make the
 index state something the file does not say. The index records what is there;
 interpretation belongs to the query.
 
-**A vector space belongs to one model at one endpoint.** Changing either makes
-stored vectors incomparable, so `folio index` discards the index instead of
-mixing them. Do not add a path that ranks vectors from two sources together.
-
 **The incremental unit is the file, never the section.** Editing one line
 shifts every later section's range without changing its content. Re-embedding the
 whole changed file is both the smaller code and the correct answer; tracking
@@ -95,13 +91,13 @@ file and leaving only its row here.
 | Rule | Decision | State |
 |---|---|---|
 | Truncation is recorded, never silent | `D-01M1PP6HJWFT2Q` | **live**, fenced by `truncation-is-recorded` |
+| One model per vector space | `D-01M1PP6HKHF97G` | **live**, fenced by `one-model-per-vector-space` |
 | The index holds references, never bodies | `D-01M1PP6HMS8Q54` | intake |
 | Retrieval names candidates | `D-01M1PP6HFHY7FW` | intake |
 | No lexical retrieval route | `D-01M1PP6HG6GSGK` | intake |
 | No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | intake |
 | No frontmatter key is privileged | `D-01M1PP6HHJEQ4C` | intake |
 | Defaults at query time | `D-01M1PP6HJ7H3BM` | intake |
-| One model per vector space | `D-01M1PP6HKHF97G` | intake |
 | The incremental unit is the file | `D-01M1PP6HM6WGT4` | intake |
 
 `D-01M1PP6HFHY7FW` will adopt as `fence: none`: no black-box test proves a mode
