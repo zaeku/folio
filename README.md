@@ -5,10 +5,10 @@ references, never bodies.
 
 A *folio* is a numbered leaf reference — a pointer to where text sits, not the
 text. That is what this index stores: for every markdown heading section, a path,
-a line range, and the document's frontmatter. Ask it a question and it ranks the
-sections you should read. Reading them is your next step, and it reads the file,
-so an index that has fallen behind costs you a wasted candidate rather than a
-wrong quotation.
+a line range, the heading trail that names it, and the document's frontmatter.
+Ask it a question and it ranks the sections you should read. Reading them is
+your next step, and it reads the file, so an index that has fallen behind costs
+you a wasted candidate rather than a wrong quotation.
 
 ## Why it exists
 

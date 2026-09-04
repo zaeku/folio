@@ -23,11 +23,6 @@ This table decides where new code goes.
 
 ## Hard rules
 
-**The index holds references, never bodies.** A section record carries a path,
-a line range, and frontmatter. `Section::text` exists only long enough to build a
-vector and is `#[serde(skip)]`. A change that persists section text turns a
-finding aid into a second copy of the corpus, which then has to be kept true.
-
 **Retrieval names candidates; the caller reads the file.** This is what makes a
 stale index harmless: the cost of staleness is a wasted candidate, never a wrong
 quotation. Do not add a mode that answers from stored text.
@@ -92,7 +87,7 @@ file and leaving only its row here.
 |---|---|---|
 | Truncation is recorded, never silent | `D-01M1PP6HJWFT2Q` | **live**, fenced by `truncation-is-recorded` |
 | One model per vector space | `D-01M1PP6HKHF97G` | **live**, fenced by `one-model-per-vector-space` |
-| The index holds references, never bodies | `D-01M1PP6HMS8Q54` | intake |
+| The index holds references, never bodies | `D-01M1PP6HMS8Q54` | **live**, fenced by `references-never-bodies` |
 | Retrieval names candidates | `D-01M1PP6HFHY7FW` | intake |
 | No lexical retrieval route | `D-01M1PP6HG6GSGK` | intake |
 | No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | intake |
