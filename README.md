@@ -20,10 +20,11 @@ the wrong document and misunderstands a project.
 
 Semantic ranking fixes that much. What it does not fix — and makes worse — is
 precedence. A superseded statement and the statement that replaced it are
-semantically alike, so a vector index surfaces them side by side. Corpora that
-record their own lifecycle already carry the answer in frontmatter, as a `status`
-or a `supersedes`. folio indexes those fields as filters, so a query can say
-which of two similar passages still holds.
+semantically alike, so a vector index surfaces them side by side: in a two-line
+fixture the retired definition of revenue ranks at 0.763 directly under the live
+one at 0.842. Corpora that record their own lifecycle already carry the answer in
+frontmatter, as a `status` or a `supersedes`. folio indexes those fields as
+filters, so a query can say which of two similar passages still holds.
 
 ## Install
 
@@ -79,6 +80,26 @@ folio query "current guidance"             --where type!=deprecated
 `--where tags=alpha` works. `key` alone tests presence. `key!=value` also passes
 when the key is absent, so a filter never silently drops the documents nobody has
 annotated yet.
+
+### Dropping what something else replaced
+
+A `--where` predicate reads one record. Precedence does not live in one record:
+the pointer sits on the successor, and the record you want gone is the one it
+points at. That needs a join.
+
+```sh
+folio query "when is revenue recognised" --exclude-pointed-by supersedes
+```
+
+Any section whose `id` appears in any other section's `supersedes` stops being a
+candidate, and the count of what went is printed so the drop is never silent.
+Neither key is built in — `--exclude-pointed-by` names the pointer and
+`--identity` names the key holding a record's own identity, which defaults to
+`id` only because most schemas spell it that way.
+
+The values are collected from the whole index rather than from what the other
+filters leave, because a superseded record is superseded whether or not the
+record that replaced it also answers this query.
 
 Defaults belong to the query, not the index. The
 [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)

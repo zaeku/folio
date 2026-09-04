@@ -11,7 +11,7 @@ use clap::{Parser, Subcommand};
 use sections::Section;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::hash::{DefaultHasher, Hasher};
 use std::io::{BufRead, BufReader, BufWriter, Write};
@@ -59,6 +59,19 @@ enum Cmd {
         /// key is absent, so a filter never silently drops unannotated files.
         #[arg(long = "where", value_name = "PRED")]
         wheres: Vec<String>,
+        /// Drop a section whose identity appears in any indexed section's KEY.
+        /// Repeatable. An anti-join: with `--exclude-pointed-by supersedes`, a
+        /// record another record supersedes stops being a candidate. The values
+        /// are collected from the whole index, not from what the other filters
+        /// leave, because a superseded record is superseded whether or not the
+        /// record that replaced it also answers this query.
+        #[arg(long, value_name = "KEY")]
+        exclude_pointed_by: Vec<String>,
+        /// The frontmatter key holding a section's own identity, read by
+        /// `--exclude-pointed-by`. No key is built in; this is the default only
+        /// because most schemas spell it this way.
+        #[arg(long, value_name = "KEY", default_value = "id")]
+        identity: String,
         #[arg(long, short, default_value_t = 5)]
         limit: usize,
     },
@@ -82,8 +95,10 @@ fn main() -> Result<()> {
             text,
             root,
             wheres,
+            exclude_pointed_by,
+            identity,
             limit,
-        } => cmd_query(&root, &text, &wheres, limit),
+        } => cmd_query(&root, &text, &wheres, &exclude_pointed_by, &identity, limit),
         Cmd::Status { root } => cmd_status(&root),
     }
 }
@@ -270,10 +285,37 @@ fn holds(got: &Value, want: &str) -> bool {
 }
 
 fn scalar_eq(v: &Value, want: &str) -> bool {
+    scalar_text(v) == want
+}
+
+/// A scalar as the text a filter compares against. A YAML `0001` that arrived
+/// as a number still has to match the string somebody typed on the command
+/// line, so both sides go through this.
+fn scalar_text(v: &Value) -> String {
     match v {
-        Value::String(s) => s == want,
-        other => other.to_string().trim_matches('"') == want,
+        Value::String(s) => s.clone(),
+        other => other.to_string().trim_matches('"').to_string(),
     }
+}
+
+/// Every value any section carries under one of `keys`, flattened out of lists.
+/// This is the right side of the anti-join, and it is built from every row in
+/// the index rather than from the rows a filter left.
+fn pointed_at(rows: &[Row], keys: &[String]) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for (s, _) in rows {
+        for key in keys {
+            match s.fm.get(key) {
+                Some(Value::Array(a)) => out.extend(a.iter().map(scalar_text)),
+                Some(v) => {
+                    out.insert(scalar_text(v));
+                }
+                None => {}
+            }
+        }
+    }
+    out.remove("");
+    out
 }
 
 // ------------------------------------------------------------------- commands
@@ -391,7 +433,14 @@ fn cmd_index(
     Ok(())
 }
 
-fn cmd_query(root: &Path, text: &str, wheres: &[String], limit: usize) -> Result<()> {
+fn cmd_query(
+    root: &Path,
+    text: &str,
+    wheres: &[String],
+    exclude_pointed_by: &[String],
+    identity: &str,
+    limit: usize,
+) -> Result<()> {
     let root = root.canonicalize()?;
     let (state, rows) = load(&root)?;
     if rows.is_empty() {
@@ -403,13 +452,36 @@ fn cmd_query(root: &Path, text: &str, wheres: &[String], limit: usize) -> Result
         .expect("one input yields one vector");
 
     let preds = parse_preds(wheres);
+    let pointed = pointed_at(&rows, exclude_pointed_by);
+    let superseded = |s: &Section| {
+        !pointed.is_empty()
+            && s.fm
+                .get(identity)
+                .is_some_and(|v| pointed.contains(&scalar_text(v)))
+    };
+
     let mut hits: Vec<(f32, &Section)> = rows
         .iter()
-        .filter(|(s, _)| keeps(s, &preds))
+        .filter(|(s, _)| keeps(s, &preds) && !superseded(s))
         .map(|(s, v)| (dot(&q, v), s))
         .collect();
     hits.sort_by(|a, b| b.0.total_cmp(&a.0));
 
+    // Reported before the empty case, so that "nothing matched" is never the
+    // only thing a caller hears when the anti-join is what emptied the result.
+    let dropped = if pointed.is_empty() {
+        0
+    } else {
+        rows.iter()
+            .filter(|(s, _)| keeps(s, &preds) && superseded(s))
+            .count()
+    };
+    if dropped > 0 {
+        println!(
+            "({dropped} section(s) dropped as pointed at by {})",
+            exclude_pointed_by.join(", ")
+        );
+    }
     if hits.is_empty() {
         println!("no section passed the filter");
         return Ok(());
@@ -449,4 +521,60 @@ fn cmd_status(root: &Path) -> Result<()> {
         }
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn row(fm: Value) -> Row {
+        let section = Section {
+            path: "d.md".into(),
+            start: 1,
+            end: 1,
+            heading: None,
+            breadcrumb: Vec::new(),
+            fm: fm.as_object().expect("an object").clone(),
+            truncated: false,
+            text: String::new(),
+        };
+        (section, Vec::new())
+    }
+
+    #[test]
+    fn pointed_at_flattens_lists_and_tolerates_absence() {
+        let rows = vec![
+            row(json!({"id": "M-2", "supersedes": ["M-1", "M-0"]})),
+            row(json!({"id": "M-3", "supersedes": "M-9"})),
+            row(json!({"id": "M-4"})),
+        ];
+        let keys = vec!["supersedes".to_string()];
+        let got = pointed_at(&rows, &keys);
+        assert_eq!(
+            got.iter().map(String::as_str).collect::<Vec<_>>(),
+            vec!["M-0", "M-1", "M-9"],
+            "a list contributes every element, a scalar contributes itself, a missing key nothing"
+        );
+        assert!(pointed_at(&rows, &["nothing_carries_this".to_string()]).is_empty());
+    }
+
+    #[test]
+    fn identity_matches_across_yaml_scalar_types() {
+        // `id: 0001` can arrive as a number while the pointer arrived as a
+        // string. Both sides go through scalar_text so the join still closes.
+        let rows = vec![row(json!({"id": 1, "supersedes": ["1"]}))];
+        let pointed = pointed_at(&rows, &["supersedes".to_string()]);
+        let identity = rows[0].0.fm.get("id").expect("an id");
+        assert!(pointed.contains(&scalar_text(identity)));
+    }
+
+    #[test]
+    fn an_empty_pointer_value_points_at_nothing() {
+        let rows = vec![row(json!({"id": "M-1", "supersedes": ""}))];
+        assert!(
+            pointed_at(&rows, &["supersedes".to_string()]).is_empty(),
+            "an empty value must not drop every record that has no identity"
+        );
+    }
 }

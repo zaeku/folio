@@ -40,9 +40,17 @@ without an ignore entry first.
 | `(a private decision surface)` | 116 files, 476 KB, one fact per file, `id` / `question` / `verified` / `supersedes` frontmatter |
 | `(a private prose surface)` | 5 files, 146 KB, long prose sections up to 10 KB |
 
-The first corpus already carries `supersedes` on 11 sections. folio can filter on
-its presence but cannot yet exclude the records it points at, because that is a
-join across sections rather than a predicate on one. That is the next feature and
-the reason this project exists: a superseded statement and a live one are
-semantically alike, so a vector index ranks them together unless something tells
-it not to.
+The first corpus carries `supersedes` on 11 sections, and every one of those 11
+points at an id that is not in the corpus. That is not a defect: the project it
+comes from removes a decision when it stops holding and keeps the text in
+Jujutsu history, so its surface holds only what is still true. It solves the
+problem folio's anti-join solves, one layer earlier and more thoroughly.
+
+So the anti-join is not for corpora shaped like that one. It is for corpora that
+keep a superseded statement in place — an OKF bundle, where `deprecated` means
+"kept for links and history" — and for those, `--exclude-pointed-by` is the
+filter a `--where` predicate cannot express, because the pointer sits on the
+successor rather than on the record to drop.
+
+Neither corpus exercises it, which is why the measurement for it is a fixture
+rather than a number from either of these.
