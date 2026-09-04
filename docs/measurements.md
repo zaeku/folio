@@ -42,8 +42,54 @@ book paragraphs rather than one fact each. And the flat-matrix invariant that
 `no-ann-index` asserts on a fixture holds on a real corpus, which the report
 checks on every run rather than taking on faith.
 
-`mdn/content` is the second corpus and its numbers, including the contamination
-rate, are not in yet.
+`mdn/content` `files/en-us/` at `f4c14731`, 14,616 files and 59.6 MB, same model.
+This corpus carries `status` as a list containing `deprecated`, so it measures
+the filtering path and the contamination the filters exist to remove.
+
+| Fact | Value |
+|---|---|
+| Sections | 119,359 from 14,616 files |
+| Index | 1908 s |
+| Vectors | 352 MB at dim 768, exactly dim x 4 x sections |
+| Section records | 38 MB |
+| Query | 446 ms median, 471 ms worst, over 40 queries at top 10 |
+| Re-index after one changed file | 2.74 s, one file re-embedded |
+| Deprecated sections | 4,256, or 3.57% of the corpus |
+| Deprecated share of the top ten | 4.0% |
+| Deprecated share once `--where status!=deprecated` is passed | 0.0% |
+
+**Where a query's 446 ms goes.** `folio status` loads the same index and ranks
+nothing, and takes 350 ms. One embedding round trip is 7 ms. The scan over
+119,359 vectors is therefore about 70 ms of the total, against the 30 ms
+estimated for 100,000 before any of this was measured.
+
+That decomposition is the strongest thing the corpus said about the no-ANN
+decision, and it says it in the decision's favour. An approximate index would
+optimise the 16% of a query that is arithmetic and leave the 81% that is
+loading the matrix, while adding a graph that makes the loading larger. If
+query latency ever has to come down, the thing to remove is re-reading a 352 MB
+matrix on every invocation — which is a daemon, and folio not having one is a
+cost this number now names rather than a cost it hides.
+
+**Contamination is modest here and the filter is exact.** Deprecated sections
+are 3.57% of the corpus and 4.0% of what the top ten returns, so retired
+material is very slightly over-represented rather than flooding the results,
+and the filter takes it to zero. The queries were drawn from section titles at
+random with a fixed seed and without reference to `status`; a query set aimed
+at deprecated pages would have produced a larger and meaningless number.
+
+**Two runs failed before this one, each differently, and both are the reason
+the character budget moved.** The first died with `input (8216 tokens) is too
+large to process. increase the physical batch size`, which folio reported as if
+the endpoint were absent, because it could not tell a server that answered from
+one that was not there. The second, after that was fixed and the server's batch
+raised, died with `input (8216 tokens) is larger than the max context size
+(8192 tokens)` — the model's trained context, which `llama-server` caps `-c` at
+and says so. No server flag raises it, so `--max-chars` came down to 8000 and
+its default with it. A character budget cannot bound a token count in general;
+that folio truncates on characters rather than chunking on a token estimate is
+a gap this corpus found and the private ones could not, having never passed
+1,100 tokens in a section.
 
 ## 2026-09-04 — private corpora
 

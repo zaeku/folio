@@ -7,7 +7,7 @@ from GitHub, indexed through the `folio` command on PATH.
 cargo install --path ..
 llama-server -hf keisuke-miyako/gte-modernbert-base-gguf \
   --hf-file gte-modernbert-base-Q8_0.gguf \
-  --embeddings --pooling cls -c 8192 -b 8192 -ub 8192 --port 8080
+  --embeddings --pooling cls -c 16384 -b 16384 -ub 16384 --port 8080
 export FOLIO_ENDPOINT=http://127.0.0.1:8080/v1/embeddings
 
 ./run.py --model gte-modernbert
@@ -18,6 +18,28 @@ committed: a report belongs to the machine and the model that produced it, and a
 committed one would go stale without saying so. A run worth keeping goes into
 `../docs/measurements.md` under its own date, with the corpus commit, the model
 and the machine named beside it.
+
+## The model's context is the limit, and no flag raises it
+
+`run.py` sets `--max-chars 8000`, below the 8192-token context of the model
+above. That budget is on folio's side because the limit is the model's own:
+llama-server caps `-c` at the trained context and says so —
+
+```
+the slot context (16384) exceeds the training context of the model (8192) - capping
+```
+
+A character budget cannot bound a token count. A byte-level tokenizer can spend
+more than one token on a multi-byte character, and MDN has a section that
+reached 8216 tokens inside 12000 characters where the private corpora never
+passed 1100. 8000 characters is far under the limit for this corpus at its
+observed density, and it is not a proof. Chunking a long section on a token
+estimate rather than truncating it on a character count is the fix folio does
+not have yet; `zvec-grep` solves the same problem with a density heuristic.
+
+Two MDN runs died on this before the budget moved, each with a different
+message. Both are in `../docs/measurements.md`, because a limit discovered by
+hitting it is worth writing down where the next reader will look.
 
 ## Three kinds of measurement, and only two of them are here
 

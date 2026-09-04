@@ -49,6 +49,13 @@ CORPORA = {
 
 QUERY_COUNT = 40
 TOP_K = 10
+
+# Below the 8192-token context of the model this is measured on. The binding
+# limit is the model's trained context, which no server flag raises: llama-server
+# caps `-c` at it and says so. MDN reached 8216 tokens inside 12000 characters
+# where the private corpora never passed 1100, so the budget is stated here
+# rather than trusted to a default.
+MAX_CHARS = 8000
 SEED = 20260905  # Fixed, so the sampled queries are the same on every run.
 
 
@@ -62,10 +69,15 @@ def folio(*args, cwd=None):
         ["folio", *args], cwd=cwd, capture_output=True, text=True
     )
     if proc.returncode != 0:
-        tail = (proc.stderr or proc.stdout).strip().splitlines()
-        hint = tail[0] if tail else "no output"
-        if "embedding request to" in (proc.stderr or ""):
+        text = (proc.stderr or proc.stdout).strip()
+        hint = text.splitlines()[0] if text else "no output"
+        if "no answer from the endpoint" in text:
             die(f"no embeddings endpoint reachable: {hint}")
+        if "endpoint at" in text:
+            # The server answered and said why. That sentence is the actionable
+            # one — usually an input over its physical batch size — so it is
+            # passed through whole rather than summarised.
+            die(f"the embeddings endpoint refused a request:\n  {text}")
         die(f"folio {' '.join(args)} failed: {hint}")
     return proc.stdout
 
@@ -174,7 +186,8 @@ def measure(name, spec, model, keep):
     files, bytes_ = shape(root)
     print(f"  {files} files, {bytes_ / 1e6:.1f} MB")
 
-    args = ["index"] + (["--model", model] if model else [])
+    args = ["index", "--max-chars", str(MAX_CHARS)]
+    args += ["--model", model] if model else []
     _, index_seconds = timed(lambda: folio(*args, cwd=root))
     rows = records(root)
     dim = int(
@@ -226,6 +239,7 @@ def measure(name, spec, model, keep):
         "top_k": TOP_K,
         "incremental_seconds": round(incremental_seconds, 2),
         "incremental_reembedded": reembedded,
+        "max_chars": MAX_CHARS,
         "model": model or "(endpoint default)",
         "endpoint": os.environ.get("FOLIO_ENDPOINT", "(folio default)"),
     }

@@ -43,7 +43,14 @@ enum Cmd {
         #[arg(long, env = "FOLIO_MODEL", default_value = "default")]
         model: String,
         /// Cap on the text sent per section. Exceeding sections are marked.
-        #[arg(long, default_value_t = 12_000)]
+        ///
+        /// A character budget standing in for the model's token limit, which
+        /// folio cannot see. It cannot bound a token count in general — a
+        /// byte-level tokenizer can spend more than one token on a multi-byte
+        /// character — so this default is set below the 8192-token context of
+        /// the models folio is measured on rather than at a round number. Raise
+        /// it for a longer-context model, and read the truncated count.
+        #[arg(long, default_value_t = 8_000)]
         max_chars: usize,
         /// Discard the existing index instead of updating it.
         #[arg(long)]
@@ -213,9 +220,30 @@ struct EmbedItem {
 fn embed(endpoint: &str, model: &str, inputs: &[String]) -> Result<Vec<Vec<f32>>> {
     let mut out: Vec<Vec<f32>> = vec![Vec::new(); inputs.len()];
     for (bi, batch) in inputs.chunks(BATCH).enumerate() {
-        let resp: EmbedResp = ureq::post(endpoint)
+        // A server that answered is not a server that is absent, and only one
+        // of those is worth retrying. Status is handled here rather than raised
+        // as a transport error so that the server's own sentence survives: it
+        // is the sentence that says which input was too long for its batch.
+        let mut response = ureq::post(endpoint)
+            .config()
+            .http_status_as_error(false)
+            .build()
             .send_json(EmbedReq { model, input: batch })
-            .with_context(|| format!("embedding request to {endpoint} failed"))?
+            .with_context(|| format!("no answer from the endpoint at {endpoint}"))?;
+        let status = response.status();
+        if !status.is_success() {
+            let said = response
+                .body_mut()
+                .read_to_string()
+                .unwrap_or_else(|e| format!("(its body was unreadable: {e})"));
+            bail!(
+                "the endpoint at {endpoint} answered {status} for inputs {}..{}: {}",
+                bi * BATCH,
+                bi * BATCH + batch.len() - 1,
+                said.trim()
+            );
+        }
+        let resp: EmbedResp = response
             .body_mut()
             .read_json()
             .context("embedding response did not match the OpenAI schema")?;
