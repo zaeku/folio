@@ -38,11 +38,6 @@ scanned end to end is correct at this project's scale — see the table below. H
 would add a dependency, a build step, and a recall parameter to answer a question
 that costs milliseconds without them.
 
-**The incremental unit is the file, never the section.** Editing one line
-shifts every later section's range without changing its content. Re-embedding the
-whole changed file is both the smaller code and the correct answer; tracking
-section identity across edits is the dirtiest code this project could acquire.
-
 **Date every measured fact you rely on.** Embedding models and their runtimes
 turn over quickly. Record the number, how it was measured, and the date, in the
 same place you use it. An undated number is a guess to the next reader.
@@ -59,19 +54,16 @@ to remember. A decision in `live/` with a fence in `fences/` is a rule that fail
 a check when it is broken. Anything mechanically checkable should end up there,
 and this file should end up holding only what cannot be.
 
-**Adopting a rule means writing its fence in the same change** (§8 Adopt). When
-that happens, delete the rule from this file and point at the decision id
-instead. A rule kept in both places drifts, and the copy without the fence is
-the one that goes stale.
+**Adopting a rule means writing its fence in the same change** (§8 Adopt), and
+deleting the rule from this file. A rule kept in both places drifts, and the
+copy without the fence is the one that goes stale.
 
 **A rule is identified by its opening sentence, not by a number.** Rules leave
 this file one at a time as they are adopted, so a position would shift under
 every adoption and every reference to one would rot silently.
 
-**Every rule above is a proposal in `decisions/intake/`, except the last.** A
-proposal stays there until it has a fence, because §8 Adopt puts the decision
-and its fence in the same change. Adopting one means deleting the rule from this
-file and leaving only its row here.
+**Every rule above is a proposal in `decisions/intake/`, except the last.** It
+stays there until it has a fence; once adopted it keeps only its row below.
 
 | Rule | Decision | State |
 |---|---|---|
@@ -80,10 +72,10 @@ file and leaving only its row here.
 | The index holds references, never bodies | `D-01M1PP6HMS8Q54` | **live**, fenced by `references-never-bodies` |
 | No frontmatter key is privileged | `D-01M1PP6HHJEQ4C` | **live**, fenced by `frontmatter-is-generic` |
 | Defaults at query time | `D-01M1PP6HJ7H3BM` | **live**, fenced by `frontmatter-is-generic` |
+| The incremental unit is the file | `D-01M1PP6HM6WGT4` | **live**, fenced by `incremental-unit-is-the-file` |
 | Retrieval names candidates | `D-01M1PP6HFHY7FW` | intake |
 | No lexical retrieval route | `D-01M1PP6HG6GSGK` | intake |
 | No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | intake |
-| The incremental unit is the file | `D-01M1PP6HM6WGT4` | intake |
 
 `D-01M1PP6HFHY7FW` will adopt as `fence: none`: no black-box test proves a mode
 was never added. §4 asks that the reason be written down rather than typed as a
