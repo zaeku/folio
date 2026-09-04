@@ -23,11 +23,6 @@ This table decides where new code goes.
 
 ## Hard rules
 
-**Do not add an approximate-nearest-neighbour index.** A flat `f32` matrix
-scanned end to end is correct at this project's scale — see the table below. HNSW
-would add a dependency, a build step, and a recall parameter to answer a question
-that costs milliseconds without them.
-
 **Date every measured fact you rely on.** Embedding models and their runtimes
 turn over quickly. Record the number, how it was measured, and the date, in the
 same place you use it. An undated number is a guess to the next reader.
@@ -52,8 +47,9 @@ copy without the fence is the one that goes stale.
 this file one at a time as they are adopted, so a position would shift under
 every adoption and every reference to one would rot silently.
 
-**Every rule above is a proposal in `decisions/intake/`, except the last.** It
-stays there until it has a fence; once adopted it keeps only its row below.
+**`intake/` is empty and every rule that could become a decision has.** One
+entry is left above, and it is the one nothing executable can check: whether a
+number was written down honestly. The index below is where the rest went.
 
 | Rule | Decision | State |
 |---|---|---|
@@ -65,7 +61,7 @@ stays there until it has a fence; once adopted it keeps only its row below.
 | The incremental unit is the file | `D-01M1PP6HM6WGT4` | **live**, fenced by `incremental-unit-is-the-file` |
 | Retrieval names candidates | `D-01M1PP6HFHY7FW` | **live**, `fence: none` |
 | No lexical retrieval route | `D-01M1PP6HG6GSGK` | **live**, `fence: none` |
-| No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | intake |
+| No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | **live**, fenced by `no-ann-index` |
 
 **What nothing can execute is held by bytes instead.** Two of the decisions
 above carry `fence: none`, because no black-box test proves an absence: that a
