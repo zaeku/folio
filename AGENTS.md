@@ -49,7 +49,11 @@ every adoption and every reference to one would rot silently.
 
 **`intake/` is empty and every rule that could become a decision has.** One
 entry is left above, and it is the one nothing executable can check: whether a
-number was written down honestly. The index below is where the rest went.
+number was written down honestly.
+
+The index below is where the rest went, and it is now also where decisions born
+in the layer rather than here appear. A decision does not have to pass through
+this file to exist; a rule someone wrote here does have to leave it.
 
 | Rule | Decision | State |
 |---|---|---|
@@ -62,6 +66,7 @@ number was written down honestly. The index below is where the rest went.
 | Retrieval names candidates | `D-01M1PP6HFHY7FW` | **live**, `fence: none` |
 | No lexical retrieval route | `D-01M1PP6HG6GSGK` | **live**, `fence: none` |
 | No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | **live**, fenced by `no-ann-index` |
+| The anti-join reads the whole index | `D-01M1PT687ZR1QW` | **live**, fenced by `anti-join-reads-the-whole-index` |
 
 **What nothing can execute is held by bytes instead.** Two of the decisions
 above carry `fence: none`, because no black-box test proves an absence: that a
