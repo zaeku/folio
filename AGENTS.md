@@ -23,50 +23,46 @@ This table decides where new code goes.
 
 ## Hard rules
 
-**1. The index holds references, never bodies.** A section record carries a path,
+**The index holds references, never bodies.** A section record carries a path,
 a line range, and frontmatter. `Section::text` exists only long enough to build a
 vector and is `#[serde(skip)]`. A change that persists section text turns a
 finding aid into a second copy of the corpus, which then has to be kept true.
 
-**2. Retrieval names candidates; the caller reads the file.** This is what makes a
+**Retrieval names candidates; the caller reads the file.** This is what makes a
 stale index harmless: the cost of staleness is a wasted candidate, never a wrong
 quotation. Do not add a mode that answers from stored text.
 
-**3. Do not add a lexical retrieval route.** Measured on 2026-09-04: with a BM25
+**Do not add a lexical retrieval route.** Measured on 2026-09-04: with a BM25
 component fused in, the one query whose answer needed a synonym bridge
 (`library` against a corpus that only writes `dependency`) fell out of the top
 eight; with the vector route alone the same query ranked it first. `rg` already
 covers exact matching, exhaustively. A fusion layer here subtracts.
 
-**4. Do not add an approximate-nearest-neighbour index.** A flat `f32` matrix
+**Do not add an approximate-nearest-neighbour index.** A flat `f32` matrix
 scanned end to end is correct at this project's scale — see the table below. HNSW
 would add a dependency, a build step, and a recall parameter to answer a question
 that costs milliseconds without them.
 
-**5. No frontmatter key is privileged.** The YAML tree is flattened to dotted keys
+**No frontmatter key is privileged.** The YAML tree is flattened to dotted keys
 and stored as it was written. OKF requires that a consumer tolerate unknown keys
 and preserve them, and folio's filters must stay expressible over any producer's
 schema. Do not special-case `status`, `type`, or any other field in the core.
 
-**6. Apply a schema's defaults at query time, never at index time.** OKF reads an
+**Apply a schema's defaults at query time, never at index time.** OKF reads an
 absent `status` as `stable`. Writing that default into the index would make the
 index state something the file does not say. The index records what is there;
 interpretation belongs to the query.
 
-**7. Never truncate silently.** A section over `--max-chars` is cut and marked
-`truncated: true`, and `folio status` counts them. Silent loss at the model's
-context limit is the failure mode this rule exists to prevent.
-
-**8. A vector space belongs to one model at one endpoint.** Changing either makes
+**A vector space belongs to one model at one endpoint.** Changing either makes
 stored vectors incomparable, so `folio index` discards the index instead of
 mixing them. Do not add a path that ranks vectors from two sources together.
 
-**9. The incremental unit is the file, never the section.** Editing one line
+**The incremental unit is the file, never the section.** Editing one line
 shifts every later section's range without changing its content. Re-embedding the
 whole changed file is both the smaller code and the correct answer; tracking
 section identity across edits is the dirtiest code this project could acquire.
 
-**10. Date every measured fact you rely on.** Embedding models and their runtimes
+**Date every measured fact you rely on.** Embedding models and their runtimes
 turn over quickly. Record the number, how it was measured, and the date, in the
 same place you use it. An undated number is a guess to the next reader.
 
@@ -87,29 +83,34 @@ that happens, delete the rule from this file and point at the decision id
 instead. A rule kept in both places drifts, and the copy without the fence is
 the one that goes stale.
 
-**Every hard rule above except 10 is now a proposal in `decisions/intake/`.**
-They stay there until each has a fence, because §8 Adopt puts the decision and
-its fence in the same change. Adopting one means deleting the rule from this
-file and pointing at its id instead.
+**A rule is identified by its opening sentence, not by a number.** Rules leave
+this file one at a time as they are adopted, so a position would shift under
+every adoption and every reference to one would rot silently.
 
-| Rule | Proposal |
-|---|---|
-| 1 | `D-01M1PP6HMS8Q54` references never bodies |
-| 2 | `D-01M1PP6HFHY7FW` retrieval names candidates |
-| 3 | `D-01M1PP6HG6GSGK` no lexical route |
-| 4 | `D-01M1PP6HGWJMQC` no ANN index |
-| 5 | `D-01M1PP6HHJEQ4C` no privileged frontmatter key |
-| 6 | `D-01M1PP6HJ7H3BM` defaults at query time |
-| 7 | `D-01M1PP6HJWFT2Q` truncation is recorded |
-| 8 | `D-01M1PP6HKHF97G` one model per vector space |
-| 9 | `D-01M1PP6HM6WGT4` incremental unit is the file |
+**Every rule above is a proposal in `decisions/intake/`, except the last.** A
+proposal stays there until it has a fence, because §8 Adopt puts the decision
+and its fence in the same change. Adopting one means deleting the rule from this
+file and leaving only its row here.
 
-Rule 2 will adopt as `fence: none`: no black-box test proves a mode was never
-added. §4 asks that the reason be written down rather than typed as a line, and
-the proposal carries it.
+| Rule | Decision | State |
+|---|---|---|
+| Truncation is recorded, never silent | `D-01M1PP6HJWFT2Q` | **live**, fenced by `truncation-is-recorded` |
+| The index holds references, never bodies | `D-01M1PP6HMS8Q54` | intake |
+| Retrieval names candidates | `D-01M1PP6HFHY7FW` | intake |
+| No lexical retrieval route | `D-01M1PP6HG6GSGK` | intake |
+| No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | intake |
+| No frontmatter key is privileged | `D-01M1PP6HHJEQ4C` | intake |
+| Defaults at query time | `D-01M1PP6HJ7H3BM` | intake |
+| One model per vector space | `D-01M1PP6HKHF97G` | intake |
+| The incremental unit is the file | `D-01M1PP6HM6WGT4` | intake |
 
-Rule 10 is not a decision. It is a documentation discipline, and nothing
-executable checks that a number was written down honestly.
+`D-01M1PP6HFHY7FW` will adopt as `fence: none`: no black-box test proves a mode
+was never added. §4 asks that the reason be written down rather than typed as a
+line, and the proposal carries it.
+
+**Date every measured fact you rely on** is not a decision. It is a
+documentation discipline, and nothing executable checks that a number was
+written down honestly. It stays in this file for good.
 
 **How a fence reaches folio.** §5 requires a fence to test the code layer as a
 black box, through whatever it exposes to anyone else. For folio that is the
@@ -127,11 +128,12 @@ ask", and a fence that confuses them reports an outage as a violation.
 ## Measurements
 
 `docs/measurements.md` holds every number folio reports about itself, with how
-it was measured and when. Hard rule 10 governs what goes there. Two things are
+it was measured and when. The rule on dating a measured fact governs
+what goes there. Two things are
 still unmeasured and named in that file; do not assume either.
 
 Those numbers have no committed artifact yet. They were taken in a session and
-written down, which rule 10 permits and does not make reproducible. Anything
+written down, which that rule permits and does not make reproducible. Anything
 reported as a folio number from here on should come from a script in the
 repository.
 

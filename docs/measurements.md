@@ -1,7 +1,7 @@
 # Measurements
 
-Every number folio reports about itself. Hard rule 10 in `../AGENTS.md` requires
-a measured fact to carry how it was measured and when, so this file is where one
+Every number folio reports about itself. `../AGENTS.md` requires a measured
+fact to carry how it was measured and when, so this file is where one
 goes; a number quoted anywhere else should point here.
 
 **Environment.** Apple M1 Pro, 32 GB, macOS 26. Corpora as named in
@@ -39,6 +39,6 @@ Two things are unmeasured. Do not assume either.
 - Whether a reranker over the top k earns its latency.
 
 **These measurements have no committed artifact yet.** They were taken in a
-session and written down here, which rule 10 permits and does not make
+session and written down here, which that rule permits and does not make
 reproducible. Anything reported as a folio number from here on should come from
 a script in the repository.
