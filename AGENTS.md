@@ -88,7 +88,7 @@ change to folio. That is the whole reason the boundary is HTTP.
 
 **Jujutsu, colocated.** `.jj` and `.git` coexist. Measured on **jj 0.44.0**.
 
-Read the [`use-jujutsu-safely`](https://github.com/zaeku/skills/tree/main/plugins/use-jujutsu-safely)
+Read the [`use-jujutsu-safely`](https://github.com/zaeku/skills/tree/main/plugins/version-control/skills/use-jujutsu-safely)
 skill before an unfamiliar command, or `jj help <command>` if you do not have
 it. The rules that cost something here:
 
