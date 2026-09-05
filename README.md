@@ -67,9 +67,36 @@ Only `folio index` needs to be told where the endpoint is. A query reads the
 endpoint and model the index recorded, because a vector space belongs to one of
 each and the recorded pair is the only correct answer for that corpus.
 
-`--endpoint` beats `FOLIO_ENDPOINT`, which beats the config file, which beats
-`http://127.0.0.1:8080/v1/embeddings`. `folio config` prints what won, and where
-the file is; it is YAML with two keys, so editing it by hand is fine.
+`--endpoint` beats `FOLIO_ENDPOINT`, which beats `folio.yaml` beside the corpus,
+which beats the user's `~/.config/folio/config.yaml`, which beats
+`http://127.0.0.1:8080/v1/embeddings`. `folio config` prints what won and where
+each file is. Both are YAML with two keys, so editing one by hand is fine.
+
+### A corpus that needs its own model
+
+Every number here was measured on English. A corpus in another language wants a
+model trained for it, and that choice belongs to the corpus rather than to the
+machine indexing it:
+
+```sh
+folio config set --project model bge-m3
+folio config set --project endpoint http://127.0.0.1:8081/v1/embeddings
+```
+
+That writes `folio.yaml` at the corpus root. Commit it, and everyone who indexes
+that corpus embeds it the same way. It is deliberately not inside `.folio/`: the
+index there is derived and disposable, while which model a corpus needs is
+neither.
+
+Changing the model or the endpoint discards the index rather than mixing vector
+spaces, and `folio index` says so before it re-embeds:
+
+```
+$ FOLIO_MODEL=other-model folio index
+the index was built by bge-m3 at http://127.0.0.1:8081/v1/embeddings, and this
+run uses other-model at http://127.0.0.1:8081/v1/embeddings — re-embedding
+every section
+```
 
 Output names sections, with the heading trail beneath each:
 

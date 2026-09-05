@@ -46,6 +46,14 @@ struct Config {
     model: Option<String>,
 }
 
+/// The per-corpus config, meant to be committed with the corpus.
+///
+/// It sits beside the corpus rather than inside `.folio/`, because `.folio/` is
+/// a derived index that belongs to whoever built it. Which model a corpus needs
+/// is not derived: a Korean corpus and an English one can want different ones,
+/// and everyone who indexes that corpus wants the same answer.
+const PROJECT_CONFIG: &str = "folio.yaml";
+
 fn config_path() -> PathBuf {
     let base = std::env::var_os("XDG_CONFIG_HOME")
         .map(PathBuf::from)
@@ -60,9 +68,8 @@ fn config_path() -> PathBuf {
 /// A file that does not parse is not the same as no file. Falling back to the
 /// default endpoint would index a corpus against a model the user did not
 /// choose, and vectors from the wrong model are not detectable from a ranking.
-fn read_config() -> Result<Config> {
-    let path = config_path();
-    match fs::read_to_string(&path) {
+fn read_config_at(path: &Path) -> Result<Config> {
+    match fs::read_to_string(path) {
         Ok(text) => serde_yaml_ng::from_str(&text)
             .with_context(|| format!("{} is not valid YAML", path.display())),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
@@ -78,7 +85,8 @@ fn read_config() -> Result<Config> {
 fn resolve(
     flag: Option<&str>,
     env_key: &str,
-    file: Option<&str>,
+    project: Option<&str>,
+    user: Option<&str>,
     default: &str,
 ) -> (String, &'static str) {
     if let Some(v) = flag {
@@ -87,8 +95,11 @@ fn resolve(
     if let Some(v) = std::env::var(env_key).ok().filter(|v| !v.is_empty()) {
         return (v, "environment");
     }
-    if let Some(v) = file {
-        return (v.to_string(), "config file");
+    if let Some(v) = project {
+        return (v.to_string(), PROJECT_CONFIG);
+    }
+    if let Some(v) = user {
+        return (v.to_string(), "user config");
     }
     (default.to_string(), "default")
 }
@@ -180,10 +191,13 @@ enum Cmd {
         #[arg(long)]
         no_refresh: bool,
     },
-    /// Show what `folio index` would use, or write it to the config file.
+    /// Show what `folio index` would use, or write it to a config file.
     Config {
         #[command(subcommand)]
         action: Option<ConfigCmd>,
+        /// The corpus whose `folio.yaml` is read or written.
+        #[arg(long, default_value = ".")]
+        root: PathBuf,
     },
     /// Report what the index covers.
     Status {
@@ -194,11 +208,16 @@ enum Cmd {
 
 #[derive(Subcommand)]
 enum ConfigCmd {
-    /// Write one setting to the config file, creating it if it is absent.
+    /// Write one setting to a config file, creating it if it is absent.
     Set {
         /// `endpoint` or `model`.
         key: String,
         value: String,
+        /// Write `folio.yaml` beside the corpus instead of the user's config.
+        /// Commit that file, and everyone who indexes the corpus embeds it the
+        /// same way.
+        #[arg(long)]
+        project: bool,
     },
 }
 
@@ -242,7 +261,7 @@ fn main() -> Result<()> {
             limit,
             !no_refresh,
         ),
-        Cmd::Config { action } => cmd_config(action),
+        Cmd::Config { action, root } => cmd_config(action, &root),
         Cmd::Status { root } => cmd_status(&root),
     }
 }
@@ -531,6 +550,16 @@ fn reindex(
     // A vector space belongs to one model at one endpoint; mixing them would
     // rank incomparable numbers against each other.
     let reuse = !rebuild && prev.dim > 0 && prev.model == model && prev.endpoint == endpoint;
+    if !reuse && !rebuild && prev.dim > 0 {
+        // Discarding is the decision working. Saying so is the difference
+        // between that and a re-index someone cannot account for, and the
+        // usual cause is an exported variable from another corpus.
+        println!(
+            "the index was built by {} at {}, and this run uses {model} at {endpoint} — \
+             re-embedding every section",
+            prev.model, prev.endpoint
+        );
+    }
     let prev_files = if reuse { st.files()? } else { HashMap::new() };
     if !reuse {
         st.clear()?;
@@ -716,9 +745,22 @@ fn cmd_index(
     max_chars: usize,
     rebuild: bool,
 ) -> Result<()> {
-    let cfg = read_config()?;
-    let (endpoint, _) = resolve(endpoint, "FOLIO_ENDPOINT", cfg.endpoint.as_deref(), DEFAULT_ENDPOINT);
-    let (model, _) = resolve(model, "FOLIO_MODEL", cfg.model.as_deref(), DEFAULT_MODEL);
+    let proj = read_config_at(&root.join(PROJECT_CONFIG))?;
+    let user = read_config_at(&config_path())?;
+    let (endpoint, _) = resolve(
+        endpoint,
+        "FOLIO_ENDPOINT",
+        proj.endpoint.as_deref(),
+        user.endpoint.as_deref(),
+        DEFAULT_ENDPOINT,
+    );
+    let (model, _) = resolve(
+        model,
+        "FOLIO_MODEL",
+        proj.model.as_deref(),
+        user.model.as_deref(),
+        DEFAULT_MODEL,
+    );
     let (endpoint, model) = (endpoint.as_str(), model.as_str());
     // An index the user asked for waits a little for one already running, and
     // then says who it is waiting for rather than hanging on it.
@@ -985,34 +1027,51 @@ fn cmd_query(
     }
 }
 
-fn cmd_config(action: Option<ConfigCmd>) -> Result<()> {
-    let path = config_path();
-    let mut cfg = read_config()?;
+fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
+    let user_path = config_path();
+    let proj_path = root.join(PROJECT_CONFIG);
 
-    if let Some(ConfigCmd::Set { key, value }) = action {
+    if let Some(ConfigCmd::Set { key, value, project }) = action {
+        let path = if project { proj_path.clone() } else { user_path.clone() };
+        let mut cfg = read_config_at(&path)?;
         match key.as_str() {
             "endpoint" => cfg.endpoint = Some(value),
             "model" => cfg.model = Some(value),
             other => bail!("no setting named {other} — folio config holds endpoint and model"),
         }
-        if let Some(dir) = path.parent() {
-            fs::create_dir_all(dir)
-                .with_context(|| format!("cannot create {}", dir.display()))?;
+        if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
+            fs::create_dir_all(dir).with_context(|| format!("cannot create {}", dir.display()))?;
         }
         let text = serde_yaml_ng::to_string(&cfg)?;
         fs::write(&path, text).with_context(|| format!("cannot write {}", path.display()))?;
         println!("wrote {}", path.display());
     }
 
-    let (endpoint, e_src) = resolve(None, "FOLIO_ENDPOINT", cfg.endpoint.as_deref(), DEFAULT_ENDPOINT);
-    let (model, m_src) = resolve(None, "FOLIO_MODEL", cfg.model.as_deref(), DEFAULT_MODEL);
+    let proj = read_config_at(&proj_path)?;
+    let user = read_config_at(&user_path)?;
+    let (endpoint, e_src) = resolve(
+        None,
+        "FOLIO_ENDPOINT",
+        proj.endpoint.as_deref(),
+        user.endpoint.as_deref(),
+        DEFAULT_ENDPOINT,
+    );
+    let (model, m_src) = resolve(
+        None,
+        "FOLIO_MODEL",
+        proj.model.as_deref(),
+        user.model.as_deref(),
+        DEFAULT_MODEL,
+    );
     println!("  endpoint  {endpoint}  ({e_src})");
     println!("  model     {model}  ({m_src})");
-    println!(
-        "  file      {}{}",
-        path.display(),
-        if path.exists() { "" } else { "  (not written yet)" }
-    );
+    for (label, path) in [("corpus", &proj_path), ("user  ", &user_path)] {
+        println!(
+            "  {label}    {}{}",
+            path.display(),
+            if path.exists() { "" } else { "  (not written yet)" }
+        );
+    }
     // A query is answered from what the index recorded, so this pair reaches
     // `folio index` and nothing else.
     println!("\n`folio query` uses whatever the index recorded; run `folio status` for that.");
@@ -1064,22 +1123,26 @@ mod tests {
     }
 
     #[test]
-    fn a_flag_beats_the_environment_and_the_environment_beats_the_file() {
+    fn each_scope_beats_the_one_below_it() {
+        const K: &str = "FOLIO_TEST_ENDPOINT";
         // SAFETY: single-threaded within this test, and the key is unique to it.
-        unsafe { std::env::set_var("FOLIO_TEST_ENDPOINT", "from-env") };
-        let file = Some("from-file");
+        unsafe { std::env::set_var(K, "from-env") };
+        let (proj, user) = (Some("from-corpus"), Some("from-user"));
 
-        let (v, src) = resolve(Some("from-flag"), "FOLIO_TEST_ENDPOINT", file, "from-default");
+        let (v, src) = resolve(Some("from-flag"), K, proj, user, "from-default");
         assert_eq!((v.as_str(), src), ("from-flag", "flag"));
 
-        let (v, src) = resolve(None, "FOLIO_TEST_ENDPOINT", file, "from-default");
+        let (v, src) = resolve(None, K, proj, user, "from-default");
         assert_eq!((v.as_str(), src), ("from-env", "environment"));
 
-        unsafe { std::env::remove_var("FOLIO_TEST_ENDPOINT") };
-        let (v, src) = resolve(None, "FOLIO_TEST_ENDPOINT", file, "from-default");
-        assert_eq!((v.as_str(), src), ("from-file", "config file"));
+        unsafe { std::env::remove_var(K) };
+        let (v, src) = resolve(None, K, proj, user, "from-default");
+        assert_eq!((v.as_str(), src), ("from-corpus", PROJECT_CONFIG));
 
-        let (v, src) = resolve(None, "FOLIO_TEST_ENDPOINT", None, "from-default");
+        let (v, src) = resolve(None, K, None, user, "from-default");
+        assert_eq!((v.as_str(), src), ("from-user", "user config"));
+
+        let (v, src) = resolve(None, K, None, None, "from-default");
         assert_eq!((v.as_str(), src), ("from-default", "default"));
     }
 

@@ -35,8 +35,16 @@ endpoint, which must be running:
 folio config set endpoint http://127.0.0.1:8080/v1/embeddings
 ```
 
-`FOLIO_ENDPOINT` and `--endpoint` override that for one shell or one command.
-Run `folio config` to see which of the three answered.
+That writes the user's config. A corpus needing its own model — one in a
+language the default model was not trained for — carries its own instead:
+
+```sh
+folio config set --project model bge-m3
+```
+
+`folio.yaml` at the corpus root is committed with the corpus, so everyone who
+indexes it embeds it the same way. `FOLIO_ENDPOINT` and `--endpoint` override
+both for one shell or one command. Run `folio config` to see which answered.
 
 Only `folio index` reads any of them. A query uses the endpoint and model the
 index recorded, so a corpus indexed against one server keeps answering from it.
