@@ -11,7 +11,7 @@ use crate::sections::Section;
 use anyhow::{Context, Result};
 use rusqlite::{Connection, params};
 use serde_json::{Map, Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -103,6 +103,24 @@ impl Store {
         Ok(m)
     }
 
+    /// Set while the matrix is being compacted, because the rewritten matrix
+    /// and the renumbered records land in two steps and a crash between them
+    /// leaves records naming the wrong rows. Cleared by `renumber`.
+    pub fn compacting(&self) -> Result<bool> {
+        let n: i64 = self.conn.query_row(
+            "SELECT count(*) FROM meta WHERE k = 'compacting'",
+            [],
+            |r| r.get(0),
+        )?;
+        Ok(n > 0)
+    }
+
+    pub fn start_compacting(&self) -> Result<()> {
+        self.conn
+            .execute("INSERT OR REPLACE INTO meta(k, v) VALUES ('compacting', '1')", [])?;
+        Ok(())
+    }
+
     pub fn files(&self) -> Result<HashMap<String, Stamp>> {
         let mut q = self.conn.prepare("SELECT path, hash, len, mtime FROM files")?;
         let mut out = HashMap::new();
@@ -120,17 +138,29 @@ impl Store {
         Ok(out)
     }
 
-    /// Every section record in slot order, which is the order of the rows in
-    /// the vector file: a record's position here is its row there.
-    pub fn sections(&self) -> Result<Vec<Section>> {
+    /// The highest slot any record names, plus one. Records are deleted
+    /// without their rows being moved, so this is not the record count: it is
+    /// the row the matrix has grown to and the slot the next append takes.
+    pub fn high_water(&self) -> Result<usize> {
+        let max: Option<i64> = self
+            .conn
+            .query_row("SELECT max(slot) FROM sections", [], |r| r.get(0))?;
+        Ok(max.map_or(0, |m| m as usize + 1))
+    }
+
+    /// Every section record with the slot naming its row in the matrix. Slots
+    /// are not contiguous: a deleted record leaves its row behind.
+    pub fn sections(&self) -> Result<Vec<(usize, Section)>> {
         let mut q = self.conn.prepare(
-            "SELECT path, start, stop, heading, crumbs, fm, truncated
+            "SELECT path, start, stop, heading, crumbs, fm, truncated, slot
              FROM sections ORDER BY slot",
         )?;
         let mut out = Vec::new();
         let mut rows = q.query([])?;
         while let Some(r) = rows.next()? {
-            out.push(Section {
+            out.push((
+                r.get::<_, i64>(7)? as usize,
+                Section {
                 path: r.get(0)?,
                 start: r.get::<_, i64>(1)? as usize,
                 end: r.get::<_, i64>(2)? as usize,
@@ -139,32 +169,44 @@ impl Store {
                 fm: serde_json::from_str::<Map<String, Value>>(&r.get::<_, String>(5)?)?,
                 truncated: r.get::<_, i64>(6)? != 0,
                 text: String::new(),
-            });
+                },
+            ));
         }
         Ok(out)
     }
 
-    /// Replace the whole record set, in one transaction. The vector file is
-    /// written by the caller before this is called: a crash between the two
-    /// leaves bytes nothing points at, where the other order would leave a
-    /// record pointing at a row that is not there.
-    pub fn replace(
+    /// Retire the records of `dropped` and record `fresh` at the slots it was
+    /// written to, in one transaction.
+    ///
+    /// The vector file is written by the caller before this is called: a crash
+    /// between the two leaves rows at the end of the matrix that no record
+    /// names, where the other order would leave records naming rows that were
+    /// never written.
+    ///
+    /// A dropped record's row is not moved and not reused. Moving it would make
+    /// the write proportional to the index rather than to the change, which is
+    /// the whole reason the rows are appended.
+    pub fn apply(
         &mut self,
         meta: &Meta,
         files: &HashMap<String, Stamp>,
-        sections: &[Section],
-    ) -> Result<()> {
+        dropped: &HashSet<String>,
+        fresh: &[(usize, Section)],
+    ) -> Result<usize> {
+        let mut retired = 0;
         let tx = self.conn.transaction()?;
-        tx.execute("DELETE FROM sections", [])?;
-        tx.execute("DELETE FROM files", [])?;
         {
+            let mut del = tx.prepare("DELETE FROM sections WHERE path = ?1")?;
+            for path in dropped {
+                retired += del.execute(params![path])?;
+            }
             let mut ins = tx.prepare(
                 "INSERT INTO sections(slot, path, start, stop, heading, crumbs, fm, truncated)
                  VALUES (?1,?2,?3,?4,?5,?6,?7,?8)",
             )?;
-            for (slot, s) in sections.iter().enumerate() {
+            for (slot, s) in fresh {
                 ins.execute(params![
-                    slot as i64,
+                    *slot as i64,
                     s.path,
                     s.start as i64,
                     s.end as i64,
@@ -174,6 +216,7 @@ impl Store {
                     i64::from(s.truncated),
                 ])?;
             }
+            tx.execute("DELETE FROM files", [])?;
             let mut ins =
                 tx.prepare("INSERT INTO files(path, hash, len, mtime) VALUES (?1,?2,?3,?4)")?;
             for (path, st) in files {
@@ -183,6 +226,31 @@ impl Store {
             ins.execute(params!["model", meta.model])?;
             ins.execute(params!["endpoint", meta.endpoint])?;
             ins.execute(params!["dim", meta.dim.to_string()])?;
+        }
+        tx.commit()?;
+        Ok(retired)
+    }
+
+    /// Drop every record, for a rebuild or a change of vector space. The
+    /// caller truncates the matrix to match.
+    pub fn clear(&self) -> Result<()> {
+        self.conn.execute_batch("DELETE FROM sections; DELETE FROM files;")?;
+        Ok(())
+    }
+
+    /// Renumber `kept` to slots 0.. in the order given, which is the order the
+    /// caller wrote their rows into the new matrix.
+    pub fn renumber(&mut self, kept: &[usize]) -> Result<()> {
+        let tx = self.conn.transaction()?;
+        {
+            // Through the negatives, because the target of one move is the
+            // source of another and slot is the primary key.
+            let mut mv = tx.prepare("UPDATE sections SET slot = ?2 WHERE slot = ?1")?;
+            for (to, from) in kept.iter().enumerate() {
+                mv.execute(params![*from as i64, -(to as i64) - 1])?;
+            }
+            tx.execute("UPDATE sections SET slot = -slot - 1 WHERE slot < 0", [])?;
+            tx.execute("DELETE FROM meta WHERE k = 'compacting'", [])?;
         }
         tx.commit()?;
         Ok(())
@@ -219,17 +287,19 @@ mod tests {
             "a.md".to_string(),
             Stamp { hash: u64::MAX, len: 12, mtime: -1 },
         )]);
-        st.replace(&meta, &files, &[section("a.md", 1), section("a.md", 9)])
+        st.apply(&meta, &files, &HashSet::new(), &[(0, section("a.md", 1)), (7, section("a.md", 9))])
             .unwrap();
 
         let got = st.sections().unwrap();
         assert_eq!(got.len(), 2);
-        assert_eq!(got[0].start, 1, "slot order is the order the rows went in");
-        assert_eq!(got[1].start, 9);
-        assert_eq!(got[0].fm["tags"], json!(["a", "b"]));
-        assert!(got[0].truncated);
-        assert_eq!(got[0].breadcrumb, vec!["Top".to_string()]);
-        assert!(got[0].text.is_empty(), "the store holds no prose to return");
+        assert_eq!((got[0].0, got[1].0), (0, 7), "the slot names the matrix row");
+        assert_eq!(st.high_water().unwrap(), 8, "the next append goes past the last row");
+        assert_eq!(got[0].1.start, 1);
+        assert_eq!(got[1].1.start, 9);
+        assert_eq!(got[0].1.fm["tags"], json!(["a", "b"]));
+        assert!(got[0].1.truncated);
+        assert_eq!(got[0].1.breadcrumb, vec!["Top".to_string()]);
+        assert!(got[0].1.text.is_empty(), "the store holds no prose to return");
 
         // u64 hashes past i64::MAX and negative clocks both survive the trip.
         assert_eq!(st.files().unwrap()["a.md"].hash, u64::MAX);
@@ -238,17 +308,47 @@ mod tests {
     }
 
     #[test]
-    fn replace_leaves_nothing_of_the_previous_set() {
+    fn a_retired_record_leaves_its_row_behind() {
         let dir = tempdir();
         let mut st = Store::open(&dir).unwrap();
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3 };
-        st.replace(&meta, &HashMap::new(), &[section("a.md", 1)])
-            .unwrap();
-        st.replace(&meta, &HashMap::new(), &[section("b.md", 1)])
-            .unwrap();
+        let none = HashSet::new();
+        st.apply(&meta, &HashMap::new(), &none,
+                 &[(0, section("a.md", 1)), (1, section("b.md", 1))]).unwrap();
+        // a.md is re-indexed: its old row is not reused and not moved.
+        st.apply(&meta, &HashMap::new(), &HashSet::from(["a.md".to_string()]),
+                 &[(2, section("a.md", 5))]).unwrap();
+
         let got = st.sections().unwrap();
-        assert_eq!(got.len(), 1);
-        assert_eq!(got[0].path, "b.md");
+        assert_eq!(
+            got.iter().map(|(slot, s)| (*slot, s.path.as_str())).collect::<Vec<_>>(),
+            vec![(1, "b.md"), (2, "a.md")],
+            "slot 0 is dead space and b.md did not move"
+        );
+        assert_eq!(st.high_water().unwrap(), 3);
+    }
+
+    #[test]
+    fn compaction_renumbers_the_survivors_and_clears_its_flag() {
+        let dir = tempdir();
+        let mut st = Store::open(&dir).unwrap();
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3 };
+        st.apply(&meta, &HashMap::new(), &HashSet::new(),
+                 &[(1, section("b.md", 1)), (4, section("c.md", 1)), (9, section("d.md", 1))])
+            .unwrap();
+        st.start_compacting().unwrap();
+        assert!(st.compacting().unwrap());
+
+        let kept: Vec<usize> = st.sections().unwrap().iter().map(|(s, _)| *s).collect();
+        st.renumber(&kept).unwrap();
+
+        let got = st.sections().unwrap();
+        assert_eq!(
+            got.iter().map(|(slot, s)| (*slot, s.path.as_str())).collect::<Vec<_>>(),
+            vec![(0, "b.md"), (1, "c.md"), (2, "d.md")],
+            "survivors keep their order and take the rows from the front"
+        );
+        assert!(!st.compacting().unwrap(), "the flag is cleared with the renumbering");
     }
 
     fn tempdir() -> std::path::PathBuf {

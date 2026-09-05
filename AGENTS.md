@@ -69,6 +69,7 @@ this file to exist; a rule someone wrote here does have to leave it.
 | The anti-join reads the whole index | `D-01M1PT687ZR1QW` | **live**, fenced by `anti-join-reads-the-whole-index` |
 | Change detection lists before it reads | `D-01M1QD08S1ZJEY` | **live**, fenced by `stat-first-then-hash` |
 | The vector matrix stays out of the database | `D-01M1QHKG8KGB4Q` | **live**, fenced by `vectors-out-of-the-database` |
+| The index is written in proportion to what changed | `D-01M1QHKG7DX4QF` | **live**, fenced by `writes-are-proportional-to-the-change` |
 
 **What nothing can execute is held by bytes instead.** Two of the decisions
 above carry `fence: none`, because no black-box test proves an absence: that a

@@ -127,11 +127,11 @@ fn stamp(meta: &fs::Metadata, hash: u64) -> Stamp {
     Stamp { hash, len: meta.len(), mtime }
 }
 
-type Row = (Section, Vec<f32>);
-
 /// Metadata and section records, without the matrix. A query maps the matrix
-/// instead of reading it, so the two are loaded apart.
-fn load_sections(root: &Path) -> Result<(Meta, Vec<Section>)> {
+/// instead of reading it, so the two are loaded apart. Each record carries the
+/// slot naming its row: slots are not contiguous, because a retired record
+/// leaves its row behind rather than moving the rows after it.
+fn load_sections(root: &Path) -> Result<(Meta, Vec<(usize, Section)>)> {
     if !store::db_path(root).exists() {
         return Ok((Meta::default(), Vec::new()));
     }
@@ -144,37 +144,17 @@ fn load_sections(root: &Path) -> Result<(Meta, Vec<Section>)> {
 
     let vecs = store::vectors_path(root);
     let bytes = fs::metadata(&vecs)?.len() as usize;
-    if bytes != secs.len() * meta.dim * 4 {
+    let rows = bytes / (meta.dim * 4);
+    let last = secs.last().map_or(0, |(slot, _)| slot + 1);
+    if bytes % (meta.dim * 4) != 0 || rows < last {
         bail!(
-            "index is inconsistent: {} sections at dim {} need {} bytes and {} holds {bytes} — rerun with --rebuild",
-            secs.len(),
-            meta.dim,
-            secs.len() * meta.dim * 4,
-            vecs.display()
+            "index is inconsistent: {} holds {bytes} bytes, which is not {} whole rows at dim {} — rerun with --rebuild",
+            vecs.display(),
+            last,
+            meta.dim
         );
     }
     Ok((meta, secs))
-}
-
-/// The whole index owned, which `index` needs because it rewrites it.
-fn load(root: &Path) -> Result<(Meta, Vec<Row>)> {
-    let (meta, secs) = load_sections(root)?;
-    if secs.is_empty() {
-        return Ok((meta, Vec::new()));
-    }
-    let dim = meta.dim;
-    let raw = fs::read(store::vectors_path(root))?;
-    let floats: Vec<f32> = raw
-        .chunks_exact(4)
-        .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
-        .collect();
-    Ok((
-        meta,
-        secs.into_iter()
-            .zip(floats.chunks_exact(dim))
-            .map(|(s, v)| (s, v.to_vec()))
-            .collect(),
-    ))
 }
 
 /// The matrix as floats, mapped rather than read. Reading 367 MB costs 76 ms,
@@ -199,30 +179,6 @@ fn as_floats(map: &memmap2::Mmap) -> Result<&[f32]> {
         bail!("the vector file is not a whole number of aligned f32 values");
     }
     Ok(mid)
-}
-
-/// The vectors go down first and the records commit after. A crash in between
-/// leaves rows at the end of the matrix that no record names, which the next
-/// write discards; the other order would leave records naming rows that were
-/// never written.
-fn save(
-    root: &Path,
-    meta: &Meta,
-    files: &HashMap<String, Stamp>,
-    rows: &[Row],
-) -> Result<()> {
-    let mut st = Store::open(root)?;
-
-    let mut w = BufWriter::new(fs::File::create(store::vectors_path(root))?);
-    for (_, v) in rows {
-        for x in v {
-            w.write_all(&x.to_le_bytes())?;
-        }
-    }
-    w.flush()?;
-
-    let secs: Vec<Section> = rows.iter().map(|(s, _)| s.clone()).collect();
-    st.replace(meta, files, &secs)
 }
 
 // --------------------------------------------------------------------- embed
@@ -357,9 +313,9 @@ fn scalar_text(v: &Value) -> String {
 /// Every value any section carries under one of `keys`, flattened out of lists.
 /// This is the right side of the anti-join, and it is built from every row in
 /// the index rather than from the rows a filter left.
-fn pointed_at(rows: &[Section], keys: &[String]) -> BTreeSet<String> {
+fn pointed_at(rows: &[(usize, Section)], keys: &[String]) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
-    for s in rows {
+    for (_, s) in rows {
         for key in keys {
             match s.fm.get(key) {
                 Some(Value::Array(a)) => out.extend(a.iter().map(scalar_text)),
@@ -393,25 +349,25 @@ fn cmd_index(
         .canonicalize()
         .with_context(|| format!("{} not found", root.display()))?;
 
-    let (prev, mut rows) = if rebuild {
-        (Meta::default(), Vec::new())
-    } else {
-        load(&root)?
-    };
-    let prev_files = if rebuild {
-        HashMap::new()
-    } else {
-        Store::open(&root)?.files()?
-    };
+    let mut st = Store::open(&root)?;
+    if st.compacting()? {
+        bail!(
+            "a compaction of {} did not finish, so the records may name the wrong rows — rerun with --rebuild",
+            store::vectors_path(&root).display()
+        );
+    }
+    let prev = st.meta()?;
     // A vector space belongs to one model at one endpoint; mixing them would
     // rank incomparable numbers against each other.
-    let reuse = !rebuild
-        && prev.dim > 0
-        && prev.model == model
-        && prev.endpoint == endpoint;
+    let reuse = !rebuild && prev.dim > 0 && prev.model == model && prev.endpoint == endpoint;
+    let prev_files = if reuse { st.files()? } else { HashMap::new() };
     if !reuse {
-        rows.clear();
+        st.clear()?;
+        fs::write(store::vectors_path(&root), [])?;
     }
+    // The row the first new vector takes. Read before anything is retired, so
+    // that a crash during the write lands past every row a live record names.
+    let base = st.high_water()?;
 
     // The walk is threaded because it dominated what was left of a re-index:
     // on 14,616 files it ran 449-804 ms in one thread and 172 ms across ten.
@@ -493,9 +449,15 @@ fn cmd_index(
         current.insert(rel, st);
     }
 
-    let before = rows.len();
-    rows.retain(|(s, _)| current.contains_key(&s.path) && !changed.contains(&s.path));
-    let dropped = before - rows.len();
+    // A file that changed and a file that is gone retire their records the
+    // same way; only the first also contributes new ones.
+    let mut retired_paths: HashSet<String> = changed.clone();
+    retired_paths.extend(
+        prev_files
+            .keys()
+            .filter(|p| !current.contains_key(*p))
+            .cloned(),
+    );
 
     let mut fresh: Vec<Section> = Vec::new();
     for rel in &changed {
@@ -509,47 +471,121 @@ fn cmd_index(
         }
     }
 
+    let mut dim = if reuse { prev.dim } else { 0 };
+    let mut placed: Vec<(usize, Section)> = Vec::new();
     if !fresh.is_empty() {
         let inputs: Vec<String> = fresh.iter().map(|s| s.text.clone()).collect();
         let vectors = embed(endpoint, model, &inputs)?;
-        rows.extend(fresh.into_iter().zip(vectors));
+        if dim == 0 {
+            dim = vectors[0].len();
+        }
+        if let Some((i, v)) = vectors.iter().enumerate().find(|(_, v)| v.len() != dim) {
+            bail!(
+                "{} came back at dim {} while the index is dim {dim}",
+                fresh[i].path,
+                v.len()
+            );
+        }
+        append(&root, base, dim, &vectors)?;
+        placed = (base..).zip(fresh).collect();
     }
 
-    let dim = rows.first().map_or(0, |(_, v)| v.len());
-    if let Some((s, v)) = rows.iter().find(|(_, v)| v.len() != dim) {
-        bail!(
-            "{} came back at dim {} while the index is dim {dim}",
-            s.path,
-            v.len()
-        );
-    }
-
-    let truncated = rows.iter().filter(|(s, _)| s.truncated).count();
-    save(
-        &root,
+    let retired = st.apply(
         &Meta {
             model: model.to_string(),
             endpoint: endpoint.to_string(),
             dim,
         },
         &current,
-        &rows,
+        &retired_paths,
+        &placed,
     )?;
 
+    let live = st.sections()?;
+    let files = live.iter().map(|(_, s)| &s.path).collect::<HashSet<_>>().len();
+    let truncated = live.iter().filter(|(_, s)| s.truncated).count();
+    let dead = rows_in_matrix(&root, dim)?.saturating_sub(live.len());
+
+    println!("indexed {files} files · {} sections · dim {dim}", live.len());
     println!(
-        "indexed {} files · {} sections · dim {dim}",
-        rows
-            .iter()
-            .map(|(s, _)| &s.path)
-            .collect::<HashSet<_>>()
-            .len(),
-        rows.len()
+        "  {} re-embedded, {retired} replaced or removed, {dead} dead row(s)",
+        changed.len()
     );
-    println!("  {} re-embedded, {dropped} replaced or removed", changed.len());
     if truncated > 0 {
         println!("  {truncated} sections truncated at --max-chars {max_chars}");
     }
+
+    // A dead row costs a query nothing — it is skipped, not scanned — and costs
+    // the disk its bytes. Reclaiming them is the one full rewrite folio makes,
+    // so it waits until they outnumber the rows they sit beside.
+    if dead > live.len() && dead > 0 {
+        let reclaimed = compact(&root, &mut st, dim, &live)?;
+        println!("  compacted: {reclaimed} dead row(s) reclaimed");
+    }
     Ok(())
+}
+
+/// Rows the matrix holds, live and dead.
+fn rows_in_matrix(root: &Path, dim: usize) -> Result<usize> {
+    if dim == 0 {
+        return Ok(0);
+    }
+    let vecs = store::vectors_path(root);
+    Ok(if vecs.exists() {
+        fs::metadata(&vecs)?.len() as usize / (dim * 4)
+    } else {
+        0
+    })
+}
+
+/// Write `vectors` at row `base`, leaving every row before it untouched. The
+/// file is not truncated: rows past the end of the write are dead, and a write
+/// that fails must not shorten the matrix under the records that name them.
+fn append(root: &Path, base: usize, dim: usize, vectors: &[Vec<f32>]) -> Result<()> {
+    use std::io::{Seek, SeekFrom};
+    let path = store::vectors_path(root);
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(&path)
+        .with_context(|| format!("{} could not be written", path.display()))?;
+    file.seek(SeekFrom::Start((base * dim * 4) as u64))?;
+    let mut w = BufWriter::new(&mut file);
+    for v in vectors {
+        for x in v {
+            w.write_all(&x.to_le_bytes())?;
+        }
+    }
+    w.flush()?;
+    drop(w);
+    file.sync_all()?;
+    Ok(())
+}
+
+/// Copy the live rows to the front of a new matrix and renumber the records to
+/// match. The two land in separate steps, so a flag is set across them: an
+/// index found mid-compaction says so rather than ranking against wrong rows.
+fn compact(root: &Path, st: &mut Store, dim: usize, live: &[(usize, Section)]) -> Result<usize> {
+    let before = rows_in_matrix(root, dim)?;
+    let path = store::vectors_path(root);
+    let tmp = path.with_extension("f32.compacting");
+
+    st.start_compacting()?;
+    {
+        let map = map_vectors(root)?.context("there is no matrix to compact")?;
+        let floats = as_floats(&map)?;
+        let mut w = BufWriter::new(fs::File::create(&tmp)?);
+        for (slot, _) in live {
+            for x in &floats[slot * dim..(slot + 1) * dim] {
+                w.write_all(&x.to_le_bytes())?;
+            }
+        }
+        w.flush()?;
+        w.into_inner()?.sync_all()?;
+    }
+    fs::rename(&tmp, &path)?;
+    st.renumber(&live.iter().map(|(slot, _)| *slot).collect::<Vec<_>>())?;
+    Ok(before - live.len())
 }
 
 fn cmd_query(
@@ -583,9 +619,8 @@ fn cmd_query(
 
     let mut hits: Vec<(f32, &Section)> = rows
         .iter()
-        .enumerate()
         .filter(|(_, s)| keeps(s, &preds) && !superseded(s))
-        .map(|(i, s)| (dot(&q, &floats[i * meta.dim..(i + 1) * meta.dim]), s))
+        .map(|(slot, s)| (dot(&q, &floats[slot * meta.dim..(slot + 1) * meta.dim]), s))
         .collect();
     hits.sort_by(|a, b| b.0.total_cmp(&a.0));
 
@@ -595,7 +630,7 @@ fn cmd_query(
         0
     } else {
         rows.iter()
-            .filter(|s| keeps(s, &preds) && superseded(s))
+            .filter(|(_, s)| keeps(s, &preds) && superseded(s))
             .count()
     };
     if dropped > 0 {
@@ -624,17 +659,17 @@ fn cmd_status(root: &Path) -> Result<()> {
         println!("no index under {}", root.display());
         return Ok(());
     }
-    let keys: HashSet<&String> = rows.iter().flat_map(|s| s.fm.keys()).collect();
+    let keys: HashSet<&String> = rows.iter().flat_map(|(_, s)| s.fm.keys()).collect();
     let mut keys: Vec<&&String> = keys.iter().collect();
     keys.sort();
 
     println!("{}", root.display());
     println!(
         "  files       {}",
-        rows.iter().map(|s| &s.path).collect::<HashSet<_>>().len()
+        rows.iter().map(|(_, s)| &s.path).collect::<HashSet<_>>().len()
     );
     println!("  sections    {}", rows.len());
-    println!("  truncated   {}", rows.iter().filter(|s| s.truncated).count());
+    println!("  truncated   {}", rows.iter().filter(|(_, s)| s.truncated).count());
     println!("  model       {} @ {}", meta.model, meta.endpoint);
     println!("  dim         {}", meta.dim);
     println!(
@@ -653,7 +688,7 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn row(fm: Value) -> Section {
+    fn row(fm: Value) -> (usize, Section) {
         let section = Section {
             path: "d.md".into(),
             start: 1,
@@ -664,7 +699,7 @@ mod tests {
             truncated: false,
             text: String::new(),
         };
-        section
+        (0, section)
     }
 
     #[test]
@@ -690,7 +725,7 @@ mod tests {
         // string. Both sides go through scalar_text so the join still closes.
         let rows = vec![row(json!({"id": 1, "supersedes": ["1"]}))];
         let pointed = pointed_at(&rows, &["supersedes".to_string()]);
-        let identity = rows[0].fm.get("id").expect("an id");
+        let identity = rows[0].1.fm.get("id").expect("an id");
         assert!(pointed.contains(&scalar_text(identity)));
     }
 
