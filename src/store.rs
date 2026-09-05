@@ -95,6 +95,44 @@ impl Store {
         Ok(Store { conn })
     }
 
+    /// Take the index's write lock, or report that someone else holds it.
+    ///
+    /// This is SQLite's own `BEGIN IMMEDIATE`, held across the whole update
+    /// rather than around each statement, because the thing that has to be
+    /// atomic spans them: a writer reads the row the matrix has grown to,
+    /// appends there, and records what it wrote. Two writers that each read the
+    /// same row would append to the same bytes and the second would erase the
+    /// first.
+    ///
+    /// A reserved lock does not shut readers out, so a query still answers
+    /// while a long index runs; only the commit is exclusive, and only for as
+    /// long as it takes. The operating system drops it if the process dies, so
+    /// there is no lock left behind to explain to anyone.
+    ///
+    /// `wait` is how long to block for it. An index the user asked for waits;
+    /// a refresh nobody asked for does not, and takes `false` for an answer.
+    pub fn lock(&self, wait: std::time::Duration) -> Result<bool> {
+        self.conn.busy_timeout(wait)?;
+        match self.conn.execute_batch("BEGIN IMMEDIATE") {
+            Ok(()) => Ok(true),
+            Err(rusqlite::Error::SqliteFailure(e, _))
+                if e.code == rusqlite::ErrorCode::DatabaseBusy
+                    || e.code == rusqlite::ErrorCode::DatabaseLocked =>
+            {
+                Ok(false)
+            }
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    /// Publish everything written under the lock and release it. Dropping the
+    /// store without this rolls the whole update back, which is what an error
+    /// on the way through should do.
+    pub fn unlock(&self) -> Result<()> {
+        self.conn.execute_batch("COMMIT")?;
+        Ok(())
+    }
+
     pub fn meta(&self) -> Result<Meta> {
         let mut q = self.conn.prepare("SELECT k, v FROM meta")?;
         let mut m = Meta::default();
@@ -114,6 +152,10 @@ impl Store {
     /// Set while the matrix is being compacted, because the rewritten matrix
     /// and the renumbered records land in two steps and a crash between them
     /// leaves records naming the wrong rows. Cleared by `renumber`.
+    ///
+    /// It is raised in the same commit as the update that decided to compact,
+    /// so nobody else can start writing between the decision and the rewrite:
+    /// every other command refuses an index that carries it.
     pub fn compacting(&self) -> Result<bool> {
         let n: i64 = self.conn.query_row(
             "SELECT count(*) FROM meta WHERE k = 'compacting'",
@@ -246,14 +288,14 @@ impl Store {
     /// the write proportional to the index rather than to the change, which is
     /// the whole reason the rows are appended.
     pub fn apply(
-        &mut self,
+        &self,
         meta: &Meta,
         files: &HashMap<String, Stamp>,
         dropped: &HashSet<String>,
         fresh: &[(usize, Section)],
     ) -> Result<usize> {
         let mut retired = 0;
-        let tx = self.conn.transaction()?;
+        let tx = &self.conn;
         {
             let mut del = tx.prepare("DELETE FROM sections WHERE path = ?1")?;
             for path in dropped {
@@ -286,7 +328,6 @@ impl Store {
             ins.execute(params!["endpoint", meta.endpoint])?;
             ins.execute(params!["dim", meta.dim.to_string()])?;
         }
-        tx.commit()?;
         Ok(retired)
     }
 
@@ -299,8 +340,8 @@ impl Store {
 
     /// Renumber `kept` to slots 0.. in the order given, which is the order the
     /// caller wrote their rows into the new matrix.
-    pub fn renumber(&mut self, kept: &[usize]) -> Result<()> {
-        let tx = self.conn.transaction()?;
+    pub fn renumber(&self, kept: &[usize]) -> Result<()> {
+        let tx = &self.conn;
         {
             // Through the negatives, because the target of one move is the
             // source of another and slot is the primary key.
@@ -311,7 +352,6 @@ impl Store {
             tx.execute("UPDATE sections SET slot = -slot - 1 WHERE slot < 0", [])?;
             tx.execute("DELETE FROM meta WHERE k = 'compacting'", [])?;
         }
-        tx.commit()?;
         Ok(())
     }
 }
@@ -392,6 +432,32 @@ mod tests {
         assert_eq!(slots, vec![1, 2], "slot 0 is dead space and b.md did not move");
         assert_eq!(paths, vec!["b.md".to_string(), "a.md".to_string()]);
         assert_eq!(st.high_water().unwrap(), 3);
+    }
+
+    #[test]
+    fn only_one_writer_holds_the_index_at_a_time() {
+        use std::time::Duration;
+        let dir = tempdir();
+        let a = Store::open(&dir).unwrap();
+        let b = Store::open(&dir).unwrap();
+
+        assert!(a.lock(Duration::ZERO).unwrap());
+        assert!(
+            !b.lock(Duration::ZERO).unwrap(),
+            "a second writer must be told no, not allowed to append over the first"
+        );
+        // A reader is not shut out while a writer works.
+        assert_eq!(b.high_water().unwrap(), 0);
+
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3 };
+        a.apply(&meta, &HashMap::new(), &HashSet::new(), &[(0, section("a.md", 1))])
+            .unwrap();
+        assert_eq!(b.slots().unwrap(), Vec::<usize>::new(), "and does not see it yet");
+
+        a.unlock().unwrap();
+        assert_eq!(b.slots().unwrap(), vec![0], "until it lands");
+        assert!(b.lock(Duration::ZERO).unwrap(), "and the lock is free again");
+        b.unlock().unwrap();
     }
 
     #[test]

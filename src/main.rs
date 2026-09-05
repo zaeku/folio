@@ -135,6 +135,12 @@ fn open_index(root: &Path) -> Result<Option<(Store, Meta)>> {
         return Ok(None);
     }
     let st = Store::open(root)?;
+    if st.compacting()? {
+        bail!(
+            "a compaction of {} did not finish, so the records may name the wrong rows — rerun `folio index --rebuild`",
+            store::vectors_path(root).display()
+        );
+    }
     let meta = st.meta()?;
     if meta.dim == 0 {
         return Ok(None);
@@ -333,23 +339,45 @@ fn hash(bytes: &[u8]) -> u64 {
     h.finish()
 }
 
-fn cmd_index(
+/// What a re-index did, for whoever asked for it to say so.
+struct Indexed {
+    files: usize,
+    sections: usize,
+    truncated: usize,
+    dim: usize,
+    reembedded: usize,
+    retired: usize,
+    dead: usize,
+    compacted: usize,
+}
+
+/// Bring the index under `root` up to date with the files under it.
+///
+/// `Ok(None)` means another process holds the write lock and this one declined
+/// to wait: a re-index nobody asked for is not worth blocking on, and one the
+/// user asked for says so rather than hanging.
+fn reindex(
     root: &Path,
     endpoint: &str,
     model: &str,
     max_chars: usize,
     rebuild: bool,
-) -> Result<()> {
+    wait: std::time::Duration,
+) -> Result<Option<Indexed>> {
     let root = root
         .canonicalize()
         .with_context(|| format!("{} not found", root.display()))?;
-
-    let mut st = Store::open(&root)?;
+    let st = Store::open(&root)?;
     if st.compacting()? {
         bail!(
             "a compaction of {} did not finish, so the records may name the wrong rows — rerun with --rebuild",
             store::vectors_path(&root).display()
         );
+    }
+    // Everything below reads the row the matrix has grown to and then writes
+    // there, so it is one update and it is taken as one.
+    if !st.lock(wait)? {
+        return Ok(None);
     }
     let prev = st.meta()?;
     // A vector space belongs to one model at one endpoint; mixing them would
@@ -496,31 +524,74 @@ fn cmd_index(
         &placed,
     )?;
 
+    // Read inside the lock, so these describe what was just written and not
+    // what someone else wrote next.
     let counts = st.counts()?;
     let dead = rows_in_matrix(&root, dim)?.saturating_sub(counts.sections);
 
-    println!(
-        "indexed {} files · {} sections · dim {dim}",
-        counts.files, counts.sections
-    );
-    println!(
-        "  {} re-embedded, {retired} replaced or removed, {dead} dead row(s)",
-        changed.len()
-    );
-    if counts.truncated > 0 {
-        println!(
-            "  {} sections truncated at --max-chars {max_chars}",
-            counts.truncated
-        );
-    }
-
     // A dead row costs a query nothing — it is skipped, not scanned — and costs
     // the disk its bytes. Reclaiming them is the one full rewrite folio makes,
-    // so it waits until they outnumber the rows they sit beside.
-    if dead > counts.sections && dead > 0 {
+    // so it waits until they outnumber the rows they sit beside. The flag goes
+    // up in this commit: from here until the rewrite finishes, every command
+    // refuses the index, which is what stands in for holding the lock across a
+    // rename that no transaction can cover.
+    let due = dead > counts.sections && dead > 0;
+    if due {
+        st.start_compacting()?;
+    }
+    st.unlock()?;
+
+    let compacted = if due {
         let live = st.slots()?;
-        let reclaimed = compact(&root, &mut st, dim, &live)?;
-        println!("  compacted: {reclaimed} dead row(s) reclaimed");
+        compact(&root, &st, dim, &live)?
+    } else {
+        0
+    };
+
+    Ok(Some(Indexed {
+        files: counts.files,
+        sections: counts.sections,
+        truncated: counts.truncated,
+        dim,
+        reembedded: changed.len(),
+        retired,
+        dead,
+        compacted,
+    }))
+}
+
+fn cmd_index(
+    root: &Path,
+    endpoint: &str,
+    model: &str,
+    max_chars: usize,
+    rebuild: bool,
+) -> Result<()> {
+    // An index the user asked for waits a little for one already running, and
+    // then says who it is waiting for rather than hanging on it.
+    let wait = std::time::Duration::from_secs(10);
+    let Some(r) = reindex(root, endpoint, model, max_chars, rebuild, wait)? else {
+        bail!(
+            "another folio is writing the index under {} — try again once it is done",
+            root.display()
+        );
+    };
+    println!(
+        "indexed {} files · {} sections · dim {}",
+        r.files, r.sections, r.dim
+    );
+    println!(
+        "  {} re-embedded, {} replaced or removed, {} dead row(s)",
+        r.reembedded, r.retired, r.dead
+    );
+    if r.truncated > 0 {
+        println!(
+            "  {} sections truncated at --max-chars {max_chars}",
+            r.truncated
+        );
+    }
+    if r.compacted > 0 {
+        println!("  compacted: {} dead row(s) reclaimed", r.compacted);
     }
     Ok(())
 }
@@ -565,12 +636,10 @@ fn append(root: &Path, base: usize, dim: usize, vectors: &[Vec<f32>]) -> Result<
 /// Copy the live rows to the front of a new matrix and renumber the records to
 /// match. The two land in separate steps, so a flag is set across them: an
 /// index found mid-compaction says so rather than ranking against wrong rows.
-fn compact(root: &Path, st: &mut Store, dim: usize, live: &[usize]) -> Result<usize> {
+fn compact(root: &Path, st: &Store, dim: usize, live: &[usize]) -> Result<usize> {
     let before = rows_in_matrix(root, dim)?;
     let path = store::vectors_path(root);
     let tmp = path.with_extension("f32.compacting");
-
-    st.start_compacting()?;
     {
         let map = map_vectors(root)?.context("there is no matrix to compact")?;
         let floats = as_floats(&map)?;
@@ -584,7 +653,13 @@ fn compact(root: &Path, st: &mut Store, dim: usize, live: &[usize]) -> Result<us
         w.into_inner()?.sync_all()?;
     }
     fs::rename(&tmp, &path)?;
+    // Nobody else can be writing — they all refuse an index carrying the flag —
+    // so this waits for the lock rather than declining it.
+    if !st.lock(std::time::Duration::from_secs(30))? {
+        bail!("could not take the write lock to renumber after compacting");
+    }
     st.renumber(live)?;
+    st.unlock()?;
     Ok(before - live.len())
 }
 
