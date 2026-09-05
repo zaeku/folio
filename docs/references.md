@@ -31,16 +31,26 @@ checks, and §8 for the six lifecycle transitions. `cargo run --bin check` from
 inside `decisions/` runs the §7 checks; `cargo test` there drives one fixture
 layer carrying every §7 defect at once.
 
-**The corpora every number here was measured on.** Both are read-only to this
-project, and both are Jujutsu working copies — never write an index into one
-without an ignore entry first.
+**The public corpora, which every current number comes from.** Fetched and
+pinned by `benchmarks/run.py`, unpacked under `benchmarks/corpora/`, which is
+ignored. `benchmarks/README.md` says why these two and not others.
+
+| Corpus | Shape |
+|---|---|
+| `rust-lang/book` `src/` at `1500248d` | 112 files, 1.2 MB, no frontmatter at all |
+| `mdn/content` `files/en-us/` at `f4c14731` | 14,616 files, 59.6 MB, `status` as a list carrying `deprecated` |
+
+**The private corpora the design was chosen on.** They carry the 2026-09-04
+measurements and nothing since. Both are read-only to this project, and both are
+Jujutsu working copies — never write an index into one without an ignore entry
+first.
 
 | Path | Shape |
 |---|---|
 | `(a private decision surface)` | 116 files, 476 KB, one fact per file, `id` / `question` / `verified` / `supersedes` frontmatter |
 | `(a private prose surface)` | 5 files, 146 KB, long prose sections up to 10 KB |
 
-The first corpus carries `supersedes` on 11 sections, and every one of those 11
+The first private corpus carries `supersedes` on 11 sections, and every one of those 11
 points at an id that is not in the corpus. That is not a defect: the project it
 comes from removes a decision when it stops holding and keeps the text in
 Jujutsu history, so its surface holds only what is still true. It solves the
@@ -52,5 +62,8 @@ keep a superseded statement in place — an OKF bundle, where `deprecated` means
 filter a `--where` predicate cannot express, because the pointer sits on the
 successor rather than on the record to drop.
 
-Neither corpus exercises it, which is why the measurement for it is a fixture
-rather than a number from either of these.
+No corpus here exercises it. MDN marks retirement in place, which is the shape
+the anti-join was built for, but it marks it with `status` rather than with a
+pointer from the successor — so `--where status!=deprecated` reaches it and
+`--exclude-pointed-by` has nothing to join on. The measurement for the anti-join
+is therefore a fixture rather than a number from any of these.

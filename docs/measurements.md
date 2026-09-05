@@ -274,8 +274,9 @@ Re-check a fact before building on it.
 
 Two things are unmeasured. Do not assume either.
 
-- Where retrieval quality starts to fall as a corpus grows. Every number above
-  comes from corpora of 116 and 5 files.
+- Where retrieval quality starts to fall as a corpus grows. Cost and
+  contamination are now measured on 119,359 sections; quality is not measured
+  anywhere, for the reasons `../benchmarks/README.md` gives.
 - Whether a reranker over the top k earns its latency.
 
 **The 2026-09-04 measurements have no committed artifact.** They were taken in a

@@ -15,7 +15,8 @@ This table decides where new code goes.
 | Work | Belongs in | Why |
 |---|---|---|
 | Heading split, frontmatter flattening | `src/sections.rs` | The only non-trivial logic in the project, so it is where the tests live |
-| CLI, store format, filters, HTTP call | `src/main.rs` | Small enough that splitting it would buy indirection, not clarity |
+| Anything issuing SQL | `src/store.rs` | Every statement folio makes is there, so the engine behind it can be replaced without the rest knowing |
+| CLI, ranking, filters, HTTP call | `src/main.rs` | Small enough that splitting it further would buy indirection, not clarity |
 | Embedding inference | Outside the binary, behind the endpoint | Changing the model must not mean rebuilding folio |
 | Reading a document's body | The caller, after folio names a range | The index holds references only |
 | Exact string or regex matching | `rg`, not folio | Measured: a lexical route drowned the correct vector hit |
@@ -51,34 +52,19 @@ every adoption and every reference to one would rot silently.
 entry is left above, and it is the one nothing executable can check: whether a
 number was written down honestly.
 
-The index below is where the rest went, and it is now also where decisions born
-in the layer rather than here appear. A decision does not have to pass through
-this file to exist; a rule someone wrote here does have to leave it.
+`decisions/index.md` is where the rest went, and it is now also where decisions
+born in the layer rather than here appear. A decision does not have to pass
+through this file to exist; a rule someone wrote here does have to leave it.
+Read that index rather than listing decisions again anywhere else — a second
+list is a second thing to keep true.
 
-| Rule | Decision | State |
-|---|---|---|
-| Truncation is recorded, never silent | `D-01M1PP6HJWFT2Q` | **live**, fenced by `truncation-is-recorded` |
-| One model per vector space | `D-01M1PP6HKHF97G` | **live**, fenced by `one-model-per-vector-space` |
-| The index holds references, never bodies | `D-01M1PP6HMS8Q54` | **live**, fenced by `references-never-bodies` |
-| No frontmatter key is privileged | `D-01M1PP6HHJEQ4C` | **live**, fenced by `frontmatter-is-generic` |
-| Defaults at query time | `D-01M1PP6HJ7H3BM` | **live**, fenced by `frontmatter-is-generic` |
-| The incremental unit is the file | `D-01M1PP6HM6WGT4` | **live**, fenced by `incremental-unit-is-the-file` |
-| Retrieval names candidates | `D-01M1PP6HFHY7FW` | **live**, `fence: none` |
-| No lexical retrieval route | `D-01M1PP6HG6GSGK` | **live**, `fence: none` |
-| No approximate-nearest-neighbour index | `D-01M1PP6HGWJMQC` | **live**, fenced by `no-ann-index` |
-| The anti-join reads the whole index | `D-01M1PT687ZR1QW` | **live**, fenced by `anti-join-reads-the-whole-index` |
-| Change detection lists before it reads | `D-01M1QD08S1ZJEY` | **live**, fenced by `stat-first-then-hash` |
-| The vector matrix stays out of the database | `D-01M1QHKG8KGB4Q` | **live**, fenced by `vectors-out-of-the-database` |
-| The index is written in proportion to what changed | `D-01M1QHKG7DX4QF` | **live**, fenced by `writes-are-proportional-to-the-change` |
-| A record is read only when something decides on it | `D-01M1QWB73G6WNZ` | **live**, `fence: none` |
-| A query checks the rows it returns against their files | `D-01M1R0QJD2TTR5` | **live**, fenced by `a-result-is-checked-against-its-files` |
-
-**What nothing can execute is held by bytes instead.** Two of the decisions
-above carry `fence: none`, because no black-box test proves an absence: that a
-mode was never added, or that a lexical route was never fused in. §4 requires
-each to record in `verified:` the SHA-256 of its body at adoption, so the check
-reports when a decision drifts out from under what someone read. It does not
-judge the prose, and it does not print the hash that would silence it —
+**What nothing can execute is held by bytes instead.** Some decisions carry
+`fence: none`, because no black-box test reaches them — an absence cannot be
+proved by running something, and a saving that shows only as latency does not
+show in a fence's fixture at all. §4 requires each to record in `verified:` the
+SHA-256 of its body at adoption, so the check reports when a decision drifts out
+from under what someone read. It does not judge the prose, and it does not print
+the hash that would silence it —
 `cargo run --bin hash <path>` computes one, and running it deliberately is the
 act of re-verifying.
 
@@ -101,15 +87,22 @@ ask", and a fence that confuses them reports an outage as a violation.
 
 ## Measurements
 
-`docs/measurements.md` holds every number folio reports about itself, with how
-it was measured and when. The rule on dating a measured fact governs
-what goes there. Two things are
-still unmeasured and named in that file; do not assume either.
+`docs/measurements.md` holds every number folio reports about itself, with how it
+was measured and when. The rule on dating a measured fact governs what goes
+there, and a number quoted anywhere else — `README.md` included — should be
+traceable to an entry in it.
 
-Those numbers have no committed artifact yet. They were taken in a session and
-written down, which that rule permits and does not make reproducible. Anything
-reported as a folio number from here on should come from a script in the
-repository.
+**A folio number comes from `benchmarks/run.py`.** It fetches two public corpora
+pinned by commit and drives the `folio` command on `PATH`, so anyone can rerun
+it. `benchmarks/README.md` says what those numbers are and, at more length, what
+they are not: contamination is measured and ranking quality deliberately is not.
+`benchmarks/reports/` is scratch and is not committed; a run worth keeping goes
+into `docs/measurements.md` under its own date.
+
+The 2026-09-04 entries predate that harness and have no committed artifact. They
+are the record of how the model and the design were chosen, and they say so.
+
+Two things are still unmeasured and named in that file. Do not assume either.
 
 ## Toolchain
 
@@ -126,7 +119,8 @@ installed with `brew install llama.cpp` on 2026-09-04, and the machine's Nix
 bridge rebuild failed and rolled back, so the binary at
 `/opt/homebrew/bin/llama-server` is not in the declarative configuration and may
 not survive the next rebuild. Write the flake when it declares something real:
-`rustc`, `cargo`, and whichever embedding server the project settles on.
+`rustc`, `cargo`, a C compiler for the bundled SQLite, and whichever embedding
+server the project settles on.
 
 **The endpoint is a runtime dependency, not a build one.** folio compiles and its
 tests pass with no server running. Only `index` and `query` need one:
@@ -175,6 +169,7 @@ descriptions. Reply to the user in the language of their prompt.
 ## Reference paths
 
 `docs/references.md` names the prior art this project was measured against, the
-Open Knowledge Format specification behind the frontmatter rules, and the two
-corpora every measurement used. Both corpora are Jujutsu working copies; never
-write an index into one without an ignore entry first.
+Open Knowledge Format specification behind the frontmatter rules, and the
+corpora — the two public ones the benchmarks pin, and the two private ones the
+design was chosen on. The private pair are Jujutsu working copies; never write
+an index into one without an ignore entry first.
