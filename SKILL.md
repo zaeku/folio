@@ -29,21 +29,29 @@ is derived from the corpus and belongs to whoever built it, never to history.
 ## Before it can answer
 
 folio contains no inference code. It calls an OpenAI-compatible embeddings
-endpoint, which must be running, and reads `FOLIO_ENDPOINT` for its address:
+endpoint, which must be running:
 
 ```sh
-export FOLIO_ENDPOINT=http://127.0.0.1:8080/v1/embeddings
+folio config set endpoint http://127.0.0.1:8080/v1/embeddings
 ```
 
-Without one, `index` and `query` fail. Nothing else does. If a command reports
-it cannot reach the endpoint, say so — do not read that as an empty corpus.
+`FOLIO_ENDPOINT` and `--endpoint` override that for one shell or one command.
+Run `folio config` to see which of the three answered.
 
-## The three commands
+Only `folio index` reads any of them. A query uses the endpoint and model the
+index recorded, so a corpus indexed against one server keeps answering from it.
+
+Without a reachable endpoint, `index` and `query` fail. Nothing else does. If a
+command reports it cannot reach the endpoint, say so — do not read that as an
+empty corpus.
+
+## The commands
 
 ```sh
 folio index                 # every .md under the working directory
 folio query "does unfinished work count as a failure"
 folio status                # files, sections, model, frontmatter keys carried
+folio config                # the endpoint and model a new index would use
 ```
 
 `index` takes a positional root and `query` takes `--root`; both default to `.`.

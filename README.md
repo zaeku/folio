@@ -56,12 +56,20 @@ comes back as an HTTP 500 rather than a truncated vector.
 ## Use
 
 ```sh
-export FOLIO_ENDPOINT=http://127.0.0.1:8080/v1/embeddings
+folio config set endpoint http://127.0.0.1:8080/v1/embeddings
 
 folio index                      # every .md under the working directory
 folio query "does unfinished work count as a failure"
 folio status
 ```
+
+Only `folio index` needs to be told where the endpoint is. A query reads the
+endpoint and model the index recorded, because a vector space belongs to one of
+each and the recorded pair is the only correct answer for that corpus.
+
+`--endpoint` beats `FOLIO_ENDPOINT`, which beats the config file, which beats
+`http://127.0.0.1:8080/v1/embeddings`. `folio config` prints what won, and where
+the file is; it is YAML with two keys, so editing it by hand is fine.
 
 Output names sections, with the heading trail beneath each:
 

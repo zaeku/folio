@@ -27,6 +27,72 @@ const BATCH: usize = 32;
 /// of the models folio is measured on rather than at a round number.
 const MAX_CHARS: usize = 8_000;
 
+/// Where folio looks for an endpoint when nothing else names one.
+const DEFAULT_ENDPOINT: &str = "http://127.0.0.1:8080/v1/embeddings";
+
+/// The model name folio sends. Most single-model servers ignore it.
+const DEFAULT_MODEL: &str = "default";
+
+/// What `folio index` needs before an index exists to remember it.
+///
+/// `folio query` never reads this. An index records the endpoint and model it
+/// was built with, and a vector space belongs to one of each, so the recorded
+/// pair is the only correct answer for a corpus that has one.
+#[derive(Default, Deserialize, Serialize)]
+struct Config {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    endpoint: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    model: Option<String>,
+}
+
+fn config_path() -> PathBuf {
+    let base = std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".config")
+        });
+    base.join("folio").join("config.yaml")
+}
+
+/// Read the config file, or fail.
+///
+/// A file that does not parse is not the same as no file. Falling back to the
+/// default endpoint would index a corpus against a model the user did not
+/// choose, and vectors from the wrong model are not detectable from a ranking.
+fn read_config() -> Result<Config> {
+    let path = config_path();
+    match fs::read_to_string(&path) {
+        Ok(text) => serde_yaml_ng::from_str(&text)
+            .with_context(|| format!("{} is not valid YAML", path.display())),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
+        Err(e) => Err(e).with_context(|| format!("cannot read {}", path.display())),
+    }
+}
+
+/// Resolve one setting, and say where the answer came from.
+///
+/// A flag beats the environment, the environment beats the file, and the file
+/// beats the built-in default. `folio config` prints the source because a
+/// surprising endpoint is usually an environment variable someone forgot.
+fn resolve(
+    flag: Option<&str>,
+    env_key: &str,
+    file: Option<&str>,
+    default: &str,
+) -> (String, &'static str) {
+    if let Some(v) = flag {
+        return (v.to_string(), "flag");
+    }
+    if let Some(v) = std::env::var(env_key).ok().filter(|v| !v.is_empty()) {
+        return (v, "environment");
+    }
+    if let Some(v) = file {
+        return (v.to_string(), "config file");
+    }
+    (default.to_string(), "default")
+}
+
 /// The budget to re-index with, given what the index recorded.
 ///
 /// An index written before folio recorded the budget has none, which reads back
@@ -52,14 +118,16 @@ enum Cmd {
         #[arg(default_value = ".")]
         root: PathBuf,
         /// Any OpenAI-compatible embeddings endpoint.
-        #[arg(
-            long,
-            env = "FOLIO_ENDPOINT",
-            default_value = "http://127.0.0.1:8080/v1/embeddings"
-        )]
-        endpoint: String,
-        #[arg(long, env = "FOLIO_MODEL", default_value = "default")]
-        model: String,
+        ///
+        /// Falls back to `FOLIO_ENDPOINT`, then to the config file, then to
+        /// http://127.0.0.1:8080/v1/embeddings. `folio config` prints which one
+        /// answered.
+        #[arg(long)]
+        endpoint: Option<String>,
+        /// The model name to send. Falls back to `FOLIO_MODEL`, then to the
+        /// config file, then to `default`.
+        #[arg(long)]
+        model: Option<String>,
         /// Cap on the text sent per section. Exceeding sections are marked.
         ///
         /// A character budget standing in for the model's token limit, which
@@ -112,10 +180,25 @@ enum Cmd {
         #[arg(long)]
         no_refresh: bool,
     },
+    /// Show what `folio index` would use, or write it to the config file.
+    Config {
+        #[command(subcommand)]
+        action: Option<ConfigCmd>,
+    },
     /// Report what the index covers.
     Status {
         #[arg(default_value = ".")]
         root: PathBuf,
+    },
+}
+
+#[derive(Subcommand)]
+enum ConfigCmd {
+    /// Write one setting to the config file, creating it if it is absent.
+    Set {
+        /// `endpoint` or `model`.
+        key: String,
+        value: String,
     },
 }
 
@@ -135,7 +218,13 @@ fn main() -> Result<()> {
             model,
             max_chars,
             rebuild,
-        } => cmd_index(&root, &endpoint, &model, max_chars, rebuild),
+        } => cmd_index(
+            &root,
+            endpoint.as_deref(),
+            model.as_deref(),
+            max_chars,
+            rebuild,
+        ),
         Cmd::Query {
             text,
             root,
@@ -153,6 +242,7 @@ fn main() -> Result<()> {
             limit,
             !no_refresh,
         ),
+        Cmd::Config { action } => cmd_config(action),
         Cmd::Status { root } => cmd_status(&root),
     }
 }
@@ -258,7 +348,18 @@ fn embed(endpoint: &str, model: &str, inputs: &[String]) -> Result<Vec<Vec<f32>>
             .http_status_as_error(false)
             .build()
             .send_json(EmbedReq { model, input: batch })
-            .with_context(|| format!("no answer from the endpoint at {endpoint}"))?;
+            // The first line is unchanged on purpose: a fence in the decision
+            // layer reads "endpoint at" to tell an outage from a violation.
+            .with_context(|| {
+                format!(
+                    "no answer from the endpoint at {endpoint}\n\n\
+                     folio runs no model of its own. Start an OpenAI-compatible \
+                     /v1/embeddings service, then name it:\n\n    \
+                     folio config set endpoint <url>\n\n\
+                     One measured server, and the two flags it needs, are in \
+                     https://github.com/zaeku/folio#install"
+                )
+            })?;
         let status = response.status();
         if !status.is_success() {
             let said = response
@@ -610,11 +711,15 @@ fn reindex(
 
 fn cmd_index(
     root: &Path,
-    endpoint: &str,
-    model: &str,
+    endpoint: Option<&str>,
+    model: Option<&str>,
     max_chars: usize,
     rebuild: bool,
 ) -> Result<()> {
+    let cfg = read_config()?;
+    let (endpoint, _) = resolve(endpoint, "FOLIO_ENDPOINT", cfg.endpoint.as_deref(), DEFAULT_ENDPOINT);
+    let (model, _) = resolve(model, "FOLIO_MODEL", cfg.model.as_deref(), DEFAULT_MODEL);
+    let (endpoint, model) = (endpoint.as_str(), model.as_str());
     // An index the user asked for waits a little for one already running, and
     // then says who it is waiting for rather than hanging on it.
     let wait = std::time::Duration::from_secs(10);
@@ -880,6 +985,40 @@ fn cmd_query(
     }
 }
 
+fn cmd_config(action: Option<ConfigCmd>) -> Result<()> {
+    let path = config_path();
+    let mut cfg = read_config()?;
+
+    if let Some(ConfigCmd::Set { key, value }) = action {
+        match key.as_str() {
+            "endpoint" => cfg.endpoint = Some(value),
+            "model" => cfg.model = Some(value),
+            other => bail!("no setting named {other} — folio config holds endpoint and model"),
+        }
+        if let Some(dir) = path.parent() {
+            fs::create_dir_all(dir)
+                .with_context(|| format!("cannot create {}", dir.display()))?;
+        }
+        let text = serde_yaml_ng::to_string(&cfg)?;
+        fs::write(&path, text).with_context(|| format!("cannot write {}", path.display()))?;
+        println!("wrote {}", path.display());
+    }
+
+    let (endpoint, e_src) = resolve(None, "FOLIO_ENDPOINT", cfg.endpoint.as_deref(), DEFAULT_ENDPOINT);
+    let (model, m_src) = resolve(None, "FOLIO_MODEL", cfg.model.as_deref(), DEFAULT_MODEL);
+    println!("  endpoint  {endpoint}  ({e_src})");
+    println!("  model     {model}  ({m_src})");
+    println!(
+        "  file      {}{}",
+        path.display(),
+        if path.exists() { "" } else { "  (not written yet)" }
+    );
+    // A query is answered from what the index recorded, so this pair reaches
+    // `folio index` and nothing else.
+    println!("\n`folio query` uses whatever the index recorded; run `folio status` for that.");
+    Ok(())
+}
+
 fn cmd_status(root: &Path) -> Result<()> {
     let root = root.canonicalize()?;
     let Some((st, meta)) = open_index(&root)? else {
@@ -922,6 +1061,26 @@ mod tests {
 
     fn row(fm: Value) -> (usize, Map<String, Value>) {
         (0, fm.as_object().expect("an object").clone())
+    }
+
+    #[test]
+    fn a_flag_beats_the_environment_and_the_environment_beats_the_file() {
+        // SAFETY: single-threaded within this test, and the key is unique to it.
+        unsafe { std::env::set_var("FOLIO_TEST_ENDPOINT", "from-env") };
+        let file = Some("from-file");
+
+        let (v, src) = resolve(Some("from-flag"), "FOLIO_TEST_ENDPOINT", file, "from-default");
+        assert_eq!((v.as_str(), src), ("from-flag", "flag"));
+
+        let (v, src) = resolve(None, "FOLIO_TEST_ENDPOINT", file, "from-default");
+        assert_eq!((v.as_str(), src), ("from-env", "environment"));
+
+        unsafe { std::env::remove_var("FOLIO_TEST_ENDPOINT") };
+        let (v, src) = resolve(None, "FOLIO_TEST_ENDPOINT", file, "from-default");
+        assert_eq!((v.as_str(), src), ("from-file", "config file"));
+
+        let (v, src) = resolve(None, "FOLIO_TEST_ENDPOINT", None, "from-default");
+        assert_eq!((v.as_str(), src), ("from-default", "default"));
     }
 
     #[test]
