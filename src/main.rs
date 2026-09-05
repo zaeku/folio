@@ -153,15 +153,16 @@ fn store(root: &Path) -> (PathBuf, PathBuf, PathBuf) {
     )
 }
 
-fn load(root: &Path) -> Result<(State, Vec<Row>)> {
+/// State and section records, without the matrix. A query maps the matrix
+/// instead of reading it, so the two are loaded apart.
+fn load_sections(root: &Path) -> Result<(State, Vec<Section>)> {
     let (jsonl, vecs, state) = store(root);
     if !state.exists() {
         return Ok((State::default(), Vec::new()));
     }
     let state: State = serde_json::from_slice(&fs::read(&state)?)
         .with_context(|| format!("{} is unreadable", state.display()))?;
-    let dim = state.dim;
-    if dim == 0 {
+    if state.dim == 0 {
         return Ok((state, Vec::new()));
     }
 
@@ -171,20 +172,31 @@ fn load(root: &Path) -> Result<(State, Vec<Row>)> {
         .collect::<Result<_>>()
         .with_context(|| format!("{} is unreadable", jsonl.display()))?;
 
-    let raw = fs::read(&vecs)?;
+    let bytes = fs::metadata(&vecs)?.len() as usize;
+    if bytes != secs.len() * state.dim * 4 {
+        bail!(
+            "index is inconsistent: {} sections at dim {} need {} bytes and {} holds {bytes} — rerun with --rebuild",
+            secs.len(),
+            state.dim,
+            secs.len() * state.dim * 4,
+            vecs.display()
+        );
+    }
+    Ok((state, secs))
+}
+
+/// The whole index owned, which `index` needs because it rewrites it.
+fn load(root: &Path) -> Result<(State, Vec<Row>)> {
+    let (state, secs) = load_sections(root)?;
+    if secs.is_empty() {
+        return Ok((state, Vec::new()));
+    }
+    let dim = state.dim;
+    let raw = fs::read(store(root).1)?;
     let floats: Vec<f32> = raw
         .chunks_exact(4)
         .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
         .collect();
-    if floats.len() != secs.len() * dim {
-        bail!(
-            "index is inconsistent: {} sections but {} floats at dim {} — rerun with --rebuild",
-            secs.len(),
-            floats.len(),
-            dim
-        );
-    }
-
     Ok((
         state,
         secs.into_iter()
@@ -192,6 +204,30 @@ fn load(root: &Path) -> Result<(State, Vec<Row>)> {
             .map(|(s, v)| (s, v.to_vec()))
             .collect(),
     ))
+}
+
+/// The matrix as floats, mapped rather than read. Reading 367 MB costs 76 ms,
+/// converting it to `f32` another 76 ms and splitting it per row 80 ms; mapping
+/// it costs nothing and a scan over the map pages in only what it touches.
+fn map_vectors(root: &Path) -> Result<Option<memmap2::Mmap>> {
+    let vecs = store(root).1;
+    if !vecs.exists() {
+        return Ok(None);
+    }
+    let file = fs::File::open(&vecs)?;
+    // Safety: the index is folio's own file. A concurrent `folio index`
+    // rewrites it, and the consistency check above is what catches that.
+    Ok(Some(unsafe { memmap2::Mmap::map(&file)? }))
+}
+
+/// A page-aligned map divides into `f32` exactly; anything else is not a
+/// matrix folio wrote.
+fn as_floats(map: &memmap2::Mmap) -> Result<&[f32]> {
+    let (head, mid, tail) = unsafe { map.align_to::<f32>() };
+    if !head.is_empty() || !tail.is_empty() {
+        bail!("the vector file is not a whole number of aligned f32 values");
+    }
+    Ok(mid)
 }
 
 fn save(root: &Path, state: &State, rows: &[Row]) -> Result<()> {
@@ -349,9 +385,9 @@ fn scalar_text(v: &Value) -> String {
 /// Every value any section carries under one of `keys`, flattened out of lists.
 /// This is the right side of the anti-join, and it is built from every row in
 /// the index rather than from the rows a filter left.
-fn pointed_at(rows: &[Row], keys: &[String]) -> BTreeSet<String> {
+fn pointed_at(rows: &[Section], keys: &[String]) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
-    for (s, _) in rows {
+    for s in rows {
         for key in keys {
             match s.fm.get(key) {
                 Some(Value::Array(a)) => out.extend(a.iter().map(scalar_text)),
@@ -550,10 +586,12 @@ fn cmd_query(
     limit: usize,
 ) -> Result<()> {
     let root = root.canonicalize()?;
-    let (state, rows) = load(&root)?;
+    let (state, rows) = load_sections(&root)?;
     if rows.is_empty() {
         bail!("no index under {} — run `folio index` first", root.display());
     }
+    let map = map_vectors(&root)?.context("the index has records but no vectors")?;
+    let floats = as_floats(&map)?;
 
     let q = embed(&state.endpoint, &state.model, &[text.to_string()])?
         .pop()
@@ -570,8 +608,9 @@ fn cmd_query(
 
     let mut hits: Vec<(f32, &Section)> = rows
         .iter()
-        .filter(|(s, _)| keeps(s, &preds) && !superseded(s))
-        .map(|(s, v)| (dot(&q, v), s))
+        .enumerate()
+        .filter(|(_, s)| keeps(s, &preds) && !superseded(s))
+        .map(|(i, s)| (dot(&q, &floats[i * state.dim..(i + 1) * state.dim]), s))
         .collect();
     hits.sort_by(|a, b| b.0.total_cmp(&a.0));
 
@@ -581,7 +620,7 @@ fn cmd_query(
         0
     } else {
         rows.iter()
-            .filter(|(s, _)| keeps(s, &preds) && superseded(s))
+            .filter(|s| keeps(s, &preds) && superseded(s))
             .count()
     };
     if dropped > 0 {
@@ -605,19 +644,19 @@ fn cmd_query(
 
 fn cmd_status(root: &Path) -> Result<()> {
     let root = root.canonicalize()?;
-    let (state, rows) = load(&root)?;
+    let (state, rows) = load_sections(&root)?;
     if rows.is_empty() {
         println!("no index under {}", root.display());
         return Ok(());
     }
-    let keys: HashSet<&String> = rows.iter().flat_map(|(s, _)| s.fm.keys()).collect();
+    let keys: HashSet<&String> = rows.iter().flat_map(|s| s.fm.keys()).collect();
     let mut keys: Vec<&&String> = keys.iter().collect();
     keys.sort();
 
     println!("{}", root.display());
     println!("  files       {}", state.files.len());
     println!("  sections    {}", rows.len());
-    println!("  truncated   {}", rows.iter().filter(|(s, _)| s.truncated).count());
+    println!("  truncated   {}", rows.iter().filter(|s| s.truncated).count());
     println!("  model       {} @ {}", state.model, state.endpoint);
     println!("  dim         {}", state.dim);
     println!(
@@ -636,7 +675,7 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn row(fm: Value) -> Row {
+    fn row(fm: Value) -> Section {
         let section = Section {
             path: "d.md".into(),
             start: 1,
@@ -647,7 +686,7 @@ mod tests {
             truncated: false,
             text: String::new(),
         };
-        (section, Vec::new())
+        section
     }
 
     #[test]
@@ -673,7 +712,7 @@ mod tests {
         // string. Both sides go through scalar_text so the join still closes.
         let rows = vec![row(json!({"id": 1, "supersedes": ["1"]}))];
         let pointed = pointed_at(&rows, &["supersedes".to_string()]);
-        let identity = rows[0].0.fm.get("id").expect("an id");
+        let identity = rows[0].fm.get("id").expect("an id");
         assert!(pointed.contains(&scalar_text(identity)));
     }
 

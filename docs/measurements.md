@@ -116,9 +116,12 @@ corpus rather than to the change.
 **Where a query's time goes, in Rust.** Of the 350 ms to load the MDN index:
 parsing 119,359 JSON records is 128 ms, reading the 367 MB matrix 76 ms,
 converting those bytes to `f32` 76 ms, and splitting them into one `Vec` per row
-80 ms. Reading the matrix through `mmap` costs 0 ms and a full scan over it with
-no allocation costs 102 ms, so the 232 ms of reading, converting and splitting
-can become part of the scan itself.
+80 ms. Mapping the matrix costs 0 ms and a full scan over the map with no
+allocation costs 102 ms.
+
+With the matrix mapped rather than read, a query over 119,359 sections is
+**240 ms** against 446 ms, and `folio status` **150 ms** against 350 ms. What is
+left of a query is parsing the records, which is now its largest term.
 
 ## 2026-09-04 — private corpora
 
