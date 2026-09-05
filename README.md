@@ -30,8 +30,12 @@ filters, so a query can say which of two similar passages still holds.
 ## Install
 
 ```sh
-cargo install --path .
+cargo install folio-cli
 ```
+
+The crate is `folio-cli`, because the name `folio` is held on crates.io by a
+placeholder. The command it installs is `folio`. To build from a clone instead,
+run `cargo install --path .`.
 
 folio calls an OpenAI-compatible embeddings endpoint and contains no inference
 code, so the model is yours to choose. Any server exposing `/v1/embeddings`

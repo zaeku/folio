@@ -17,8 +17,10 @@ and it reads the file, so a result is a candidate rather than a quotation.
 ## Install
 
 ```sh
-cargo install --path .        # from a clone of the folio repository
+cargo install folio-cli
 ```
+
+The crate is `folio-cli` and the command it installs is `folio`.
 
 `folio index` writes the index to `.folio/` under the root it indexes. Add
 `.folio/` to that corpus's ignore file before you index a repository. An index
