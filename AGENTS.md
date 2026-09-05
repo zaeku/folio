@@ -71,6 +71,7 @@ this file to exist; a rule someone wrote here does have to leave it.
 | The vector matrix stays out of the database | `D-01M1QHKG8KGB4Q` | **live**, fenced by `vectors-out-of-the-database` |
 | The index is written in proportion to what changed | `D-01M1QHKG7DX4QF` | **live**, fenced by `writes-are-proportional-to-the-change` |
 | A record is read only when something decides on it | `D-01M1QWB73G6WNZ` | **live**, `fence: none` |
+| A query checks the rows it returns against their files | `D-01M1R0QJD2TTR5` | **live**, fenced by `a-result-is-checked-against-its-files` |
 
 **What nothing can execute is held by bytes instead.** Two of the decisions
 above carry `fence: none`, because no black-box test proves an absence: that a
