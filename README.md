@@ -61,13 +61,16 @@ services on your machine, and installing it is yours to do:
 
 ```sh
 folio unit > ~/Library/LaunchAgents/dev.folio.embeddings.plist
-launchctl load ~/Library/LaunchAgents/dev.folio.embeddings.plist
+launchctl bootstrap gui/$UID ~/Library/LaunchAgents/dev.folio.embeddings.plist
 ```
 
 ```sh
 folio unit --systemd > ~/.config/systemd/user/folio-embeddings.service
 systemctl --user enable --now folio-embeddings
 ```
+
+`launchctl bootout gui/$UID/dev.folio.embeddings` stops it again. On macOS
+before Ventura, `launchctl load` and `unload` are the pair to use instead.
 
 `folio unit` writes nothing and starts nothing. It fills in the port your
 configuration already points at, and the absolute path to `llama-server`,
