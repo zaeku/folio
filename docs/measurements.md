@@ -30,10 +30,12 @@ these compare two storage layouts over the same numbers.
 | Bytes written to the matrix per edit | 406 MB | 27 KB |
 | Query | 240 ms | 260 ms |
 | `folio status` | — | 0.18 s |
-| Record store on disk | 39 MB JSONL + 2.6 MB state | 48 MB `index.db` |
+| Record store on disk | 39 MB JSONL + 2.6 MB state | 47 MB `index.db` |
 
 The edit replaced eight sections and added one, and the matrix grew by exactly
-nine rows: 27,648 bytes, which is 9 x 768 x 4.
+nine rows: 27,648 bytes, which is 9 x 768 x 4. `benchmarks/run.py` makes the
+same measurement on its own edit and reports it, so the figure is checked on
+every run rather than taken once.
 
 The record store on its own did not pay for itself. Measured in between, with
 the records in SQL and the matrix still rewritten whole, an unchanged re-index
@@ -66,10 +68,12 @@ filtering path unused.
 | Fact | Value |
 |---|---|
 | Sections | 548 from 112 files |
-| Index | 40.0 s |
+| Index | 39.6 s |
 | Vectors | 1.7 MB at dim 768, exactly dim x 4 x sections |
-| Query | 16 ms median, 17 ms worst, over 40 queries at top 10 |
-| Re-index after one changed file | 0.06 s, one file re-embedded |
+| Section records | 0.12 MB `index.db` |
+| Query | 15 ms median, 19 ms worst, over 40 queries at top 10 |
+| Re-index after one changed file | 0.05 s, one file re-embedded |
+| Matrix growth from that re-index | 6,144 bytes, 2 rows |
 
 Two things the numbers say that the private corpora could not. Embedding cost
 tracks tokens rather than files: 548 prose sections took 40 s where 116 short
@@ -82,35 +86,52 @@ checks on every run rather than taking on faith.
 This corpus carries `status` as a list containing `deprecated`, so it measures
 the filtering path and the contamination the filters exist to remove.
 
+A first index writes the same bytes whichever way the matrix is stored, and it
+took 1991 s here against 1908 s before the storage changed. Nothing in the
+change accounts for 4%: a 33-minute embedding job on a laptop is not a
+repeatable stopwatch, and one run either side of it is not a comparison.
+
 | Fact | Value |
 |---|---|
 | Sections | 119,359 from 14,616 files |
-| Index | 1908 s |
-| Vectors | 352 MB at dim 768, exactly dim x 4 x sections |
-| Section records | 38 MB |
-| Query | 446 ms median, 471 ms worst, over 40 queries at top 10 |
-| Re-index after one changed file | 2.74 s, one file re-embedded |
+| Index | 1991 s |
+| Vectors | 366.7 MB at dim 768, exactly dim x 4 x sections |
+| Section records | 47.1 MB `index.db` |
+| Query | 267 ms median, 345 ms worst, over 40 queries at top 10 |
+| Re-index after one changed file | 0.54 s, one file re-embedded |
+| Matrix growth from that re-index | 24,576 bytes, 8 rows |
 | Deprecated sections | 4,256, or 3.57% of the corpus |
-| Deprecated share of the top ten | 4.0% |
+| Deprecated share of the top ten | 2.5% |
 | Deprecated share once `--where status!=deprecated` is passed | 0.0% |
 
-**Where a query's 446 ms goes.** `folio status` loads the same index and ranks
-nothing, and takes 350 ms. One embedding round trip is 7 ms. The scan over
-119,359 vectors is therefore about 70 ms of the total, against the 30 ms
+**Where a query's 267 ms goes.** `folio status` loads the same index and ranks
+nothing, and takes 180 ms. One embedding round trip is 8 ms. The scan over
+119,359 vectors is therefore about 80 ms of the total, against the 30 ms
 estimated for 100,000 before any of this was measured.
 
 That decomposition is the strongest thing the corpus said about the no-ANN
 decision, and it says it in the decision's favour. An approximate index would
-optimise the 16% of a query that is arithmetic and leave the 81% that is
-loading the matrix, while adding a graph that makes the loading larger. If
-query latency ever has to come down, the thing to remove is re-reading a 352 MB
-matrix on every invocation — which is a daemon, and folio not having one is a
-cost this number now names rather than a cost it hides.
+optimise the 30% of a query that is arithmetic and leave the 67% that is
+loading the section records, while adding a graph to load beside them. The
+matrix is no longer part of that: it is mapped rather than read, and a scan
+pages in only what it touches.
+
+The 180 ms is reading 119,359 section records, and folio reads all of them
+because two decisions say it must — `no-ann-index` ranks every section and
+`anti-join-reads-the-whole-index` collects pointers from every record. So the
+thing to remove is not the reading but the doing it again on the next
+invocation, which is a daemon, and folio not having one is a cost this number
+names rather than hides. It came down from 350 ms when the records moved out of
+a JSONL file, which is the only part of query latency the storage change
+touched.
 
 **Contamination is modest here and the filter is exact.** Deprecated sections
-are 3.57% of the corpus and 4.0% of what the top ten returns, so retired
-material is very slightly over-represented rather than flooding the results,
-and the filter takes it to zero. The queries were drawn from section titles at
+are 3.57% of the corpus and 2.5% of what the top ten returns, so retired
+material is not over-represented and does not flood the results, and the filter
+takes what there is to zero. An earlier run of the same 40 queries put it at
+4.0%: the queries are fixed by seed and the corpus is pinned, so that spread is
+ranking that moves near the top-ten boundary between runs, and one figure alone
+should not be read as a trend. The queries were drawn from section titles at
 random with a fixed seed and without reference to `status`; a query set aimed
 at deprecated pages would have produced a larger and meaningless number.
 
@@ -147,7 +168,8 @@ in place than on the bench, because in a real run it was already warm.
 
 What is left of a re-index is loading the index at 350 ms and rewriting it at
 470 ms — 69% of it — and the rewrite is the term that stays proportional to the
-corpus rather than to the change.
+corpus rather than to the change. Both terms are gone; *the storage layout*
+above is where they went.
 
 **Where a query's time goes, in Rust.** Of the 350 ms to load the MDN index:
 parsing 119,359 JSON records is 128 ms, reading the 367 MB matrix 76 ms,
@@ -157,7 +179,9 @@ allocation costs 102 ms.
 
 With the matrix mapped rather than read, a query over 119,359 sections is
 **240 ms** against 446 ms, and `folio status` **150 ms** against 350 ms. What is
-left of a query is parsing the records, which is now its largest term.
+left of a query is reading the records, which is now its largest term and still
+is: moving them into a database changed the way they are read and not how many
+of them folio reads.
 
 ## 2026-09-04 — private corpora
 

@@ -45,7 +45,7 @@ hitting it is worth writing down where the next reader will look.
 
 | Kind | Needs | Here |
 |---|---|---|
-| **Cost** — index time, query latency, index size, re-index after an edit | a large corpus pinned by commit | yes |
+| **Cost** — index time, query latency, index size, re-index after an edit and what that edit writes | a large corpus pinned by commit | yes |
 | **Contamination** — how much retired material a query surfaces | a corpus that marks its own lifecycle | yes, on MDN |
 | **Ranking quality** — whether the ordering is good | queries with gold answers | **no** |
 
@@ -113,7 +113,9 @@ MDN grows, and a corpus that grew is not the corpus the last report measured.
 It reads no folio source and imports nothing from the crate. It sees the `folio`
 command, its stdout, and the files it writes under `.folio/` — the same surface
 the decision layer's fences are held to, for the same reason. A harness that
-reached inside would measure an implementation rather than a tool.
+reached inside would measure an implementation rather than a tool. Reading the
+section records means reading `.folio/index.db` with `sqlite3`, which is on that
+surface: it is a file folio writes, in a format it did not invent.
 
 Python is used because the contamination figure is a join between query output
 and section records, and because the harness is not part of what folio ships.

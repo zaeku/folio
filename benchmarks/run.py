@@ -196,6 +196,9 @@ def measure(name, spec, model, keep):
 
     args = ["index", "--max-chars", str(MAX_CHARS)]
     args += ["--model", model] if model else []
+    # index_seconds is only a full index if there is no index to update, and
+    # --keep is about reusing the download.
+    shutil.rmtree(root / ".folio", ignore_errors=True)
     _, index_seconds = timed(lambda: folio(*args, cwd=root))
     rows = records(root)
     dim = int(
@@ -220,6 +223,10 @@ def measure(name, spec, model, keep):
     victim = next(root.rglob("*.md"))
     victim.write_text(victim.read_text() + "\n<!-- benchmark -->\n")
     incremental_out, incremental_seconds = timed(lambda: folio(*args, cwd=root))
+    # What the edit cost the matrix. New rows go on the end and the rows they
+    # replace are left where they are, so this is the size of the change and
+    # not the size of the index.
+    grew = (root / ".folio" / "vectors.f32").stat().st_size - vectors
     reembedded = next(
         (
             line.strip().split()[0]
@@ -247,6 +254,8 @@ def measure(name, spec, model, keep):
         "top_k": TOP_K,
         "incremental_seconds": round(incremental_seconds, 2),
         "incremental_reembedded": reembedded,
+        "incremental_growth_bytes": grew,
+        "incremental_growth_rows": grew / (dim * 4),
         "max_chars": MAX_CHARS,
         "model": model or "(endpoint default)",
         "endpoint": os.environ.get("FOLIO_ENDPOINT", "(folio default)"),
@@ -308,6 +317,8 @@ def write_report(reports):
             f"over {r['queries']} queries at top {r['top_k']} |",
             f"| Re-index after one changed file | {r['incremental_seconds']} s, "
             f"{r['incremental_reembedded']} file re-embedded |",
+            f"| Matrix growth from that re-index | {r['incremental_growth_bytes']} bytes, "
+            f"{r['incremental_growth_rows']:g} rows |",
         ]
         if "contamination_pct" in r:
             lines += [
