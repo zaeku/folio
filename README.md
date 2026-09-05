@@ -8,7 +8,8 @@ text. That is what this index stores: for every markdown heading section, a path
 a line range, the heading trail that names it, and the document's frontmatter.
 Ask it a question and it ranks the sections you should read. Reading them is
 your next step, and it reads the file, so an index that has fallen behind costs
-you a wasted candidate rather than a wrong quotation.
+you a wasted candidate rather than a wrong quotation — and where that would cost
+more than a candidate, a query notices and catches the index up first.
 
 ## Why it exists
 
@@ -108,9 +109,49 @@ that reading to you.
 
 ### Keeping it current
 
-`folio index` hashes every file and re-embeds only the ones that changed. There
-is no watcher and no background daemon, because the files are the truth and
-hashing them is cheap: re-indexing one changed file out of 116 takes 45 ms.
+`folio index` lists every file and re-embeds only the ones whose contents
+changed. Listing is what makes it cheap — a file whose length and modification
+time are what the index recorded is never opened — so on 14,616 files a re-index
+with nothing changed is 0.27 s, and one changed file is 0.47 s.
+
+There is no watcher and no daemon. A query checks itself instead. Before
+returning a row it stats the file behind it, and if that file has moved since it
+was indexed, folio brings the index up to date and answers again:
+
+```
+$ folio query "when is revenue recognised"
+(1 of the files behind this result had changed; 1 file(s) re-embedded before answering)
+#1  0.812  finance/revenue.md:42-57
+        Recognition > Timing
+```
+
+This is the one place a stale index does harm rather than waste. A line range is
+not a candidate; it is an instruction to read lines 40 to 55, and once two lines
+are inserted above that section, following the instruction reads the wrong
+lines.
+
+It costs one stat per returned row, which is nothing: over 119,359 sections a
+query with nothing changed is 0.12 s either way. It checks the rows it returns
+and not the corpus — a file that changed without surfacing still costs you a
+candidate, which is the trade this index makes everywhere else too. Walking the
+whole tree to close that would cost 0.27 s on every query, twice what the query
+costs.
+
+`--no-refresh` turns off the writing, not the checking. A row whose file has
+moved is still marked, because the caller who asked to be answered from the
+index as it stands is the one who most needs to know where it does not:
+
+```
+$ folio query "when is revenue recognised" --no-refresh
+#1  0.812  finance/revenue.md:40-55  (stale)
+        Recognition > Timing
+```
+
+A refreshing query takes the same write lock `folio index` takes, and declines
+rather than waits when another folio holds it, since that one is already
+producing an index at least as fresh. It refreshes at most once: a row still
+stale afterwards means the files are moving while folio reads them, and saying
+so beats looping.
 
 ## What it does not do
 
@@ -121,9 +162,14 @@ hashing them is cheap: re-indexing one changed file out of 116 takes 45 ms.
 
 ## Sizing
 
-One `f32` matrix, scanned end to end. No approximate index, no recall parameter:
-348 sections rank in microseconds, 35,000 in about 10 ms, 100,000 in about 30 ms
-over 410 MB.
+One `f32` matrix, mapped and scanned end to end. No approximate index and no
+recall parameter: a query over 548 sections is 15 ms and one over 119,359 is
+132 ms, of which about 102 ms is the scan itself. The rest is one embedding
+round trip and reading the list of rows that are still live.
+
+Three quarters of a query is therefore the exhaustive arithmetic — which is the
+part an approximate index replaces, and it would replace 102 ms with a graph to
+build, a recall parameter to defend, and more bytes to load beside the matrix.
 
 Pointer precision is set by your headings, not by the model. A file whose long
 sections carry `###` subheadings returns 12-line ranges; the same content under
