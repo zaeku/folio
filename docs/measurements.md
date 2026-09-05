@@ -107,10 +107,10 @@ filtering path unused.
 | Fact | Value |
 |---|---|
 | Sections | 548 from 112 files |
-| Index | 39.6 s |
+| Index | 39.1 s |
 | Vectors | 1.7 MB at dim 768, exactly dim x 4 x sections |
 | Section records | 0.12 MB `index.db` |
-| Query | 15 ms median, 19 ms worst, over 40 queries at top 10 |
+| Query | 14 ms median, 24 ms worst, over 40 queries at top 10 |
 | Re-index after one changed file | 0.05 s, one file re-embedded |
 | Matrix growth from that re-index | 6,144 bytes, 2 rows |
 
@@ -125,54 +125,68 @@ checks on every run rather than taking on faith.
 This corpus carries `status` as a list containing `deprecated`, so it measures
 the filtering path and the contamination the filters exist to remove.
 
-A first index writes the same bytes whichever way the matrix is stored, and it
-took 1991 s here against 1908 s before the storage changed. Nothing in the
-change accounts for 4%: a 33-minute embedding job on a laptop is not a
-repeatable stopwatch, and one run either side of it is not a comparison.
+A first index writes the same bytes whichever way the matrix is stored. Three
+runs took 1908 s, 1991 s and 1917 s, which is the spread of a 32-minute
+embedding job on a laptop and not a difference any of the storage changes
+made.
 
 | Fact | Value |
 |---|---|
 | Sections | 119,359 from 14,616 files |
-| Index | 1991 s |
+| Index | 1917 s |
 | Vectors | 366.7 MB at dim 768, exactly dim x 4 x sections |
-| Section records | 47.1 MB `index.db` |
-| Query | 267 ms median, 345 ms worst, over 40 queries at top 10 |
-| Re-index after one changed file | 0.54 s, one file re-embedded |
+| Section records | 47.2 MB `index.db` |
+| Query | 134 ms median, 156 ms worst, over 40 queries at top 10 |
+| Re-index after one changed file | 0.48 s, one file re-embedded |
 | Matrix growth from that re-index | 24,576 bytes, 8 rows |
 | Deprecated sections | 4,256, or 3.57% of the corpus |
-| Deprecated share of the top ten | 2.5% |
+| Deprecated share of the top ten | 5.75%, and see below |
 | Deprecated share once `--where status!=deprecated` is passed | 0.0% |
 
-**Where a query's 267 ms goes.** `folio status` loads the same index and ranks
-nothing, and takes 180 ms. One embedding round trip is 8 ms. The scan over
-119,359 vectors is therefore about 80 ms of the total, against the 30 ms
-estimated for 100,000 before any of this was measured.
+**Where a query's 134 ms goes.** The same query on `rust-lang/book` — 548
+sections, same endpoint, same binary — is 14 ms, and that is everything that
+does not scale: process start, the embedding round trip, and a scan too small
+to see. The remaining 120 ms is what 119,359 sections cost, of which reading
+the live row list is 10 ms and scanning the mapped matrix about 102 ms.
 
 That decomposition is the strongest thing the corpus said about the no-ANN
-decision, and it says it in the decision's favour. An approximate index would
-optimise the 30% of a query that is arithmetic and leave the 67% that is
-loading the section records, while adding a graph to load beside them. The
-matrix is no longer part of that: it is mapped rather than read, and a scan
-pages in only what it touches.
+decision, and it says it in the decision's favour. About 76% of a query is now
+the exhaustive scan itself, which is the part an approximate index would
+replace — and it would replace 102 ms with a graph to build, a recall parameter
+to defend, and bytes to load beside the matrix. What it removed was never the
+arithmetic.
 
-The 180 ms is reading 119,359 section records, and folio reads all of them
-because two decisions say it must — `no-ann-index` ranks every section and
-`anti-join-reads-the-whole-index` collects pointers from every record. So the
-thing to remove is not the reading but the doing it again on the next
-invocation, which is a daemon, and folio not having one is a cost this number
-names rather than hides. It came down from 350 ms when the records moved out of
-a JSONL file, which is the only part of query latency the storage change
-touched.
+Reading records was 180 ms of this before the query stopped reading records it
+does not decide on. `folio status` still pays it, and should: which frontmatter
+keys the corpus carries is a question about every record.
 
-**Contamination is modest here and the filter is exact.** Deprecated sections
-are 3.57% of the corpus and 2.5% of what the top ten returns, so retired
-material is not over-represented and does not flood the results, and the filter
-takes what there is to zero. An earlier run of the same 40 queries put it at
-4.0%: the queries are fixed by seed and the corpus is pinned, so that spread is
-ranking that moves near the top-ten boundary between runs, and one figure alone
-should not be read as a trend. The queries were drawn from section titles at
-random with a fixed seed and without reference to `status`; a query set aimed
-at deprecated pages would have produced a larger and meaningless number.
+**Contamination is small, the filter is exact, and the unfiltered figure is
+noisier than one number can show.** Three runs of the same 40 seeded queries
+over the same pinned corpus returned 4.0%, 2.5% and 5.75%. The filtered figure
+was 0.0% every time.
+
+The spread is not the query path. Measured against one unchanged index, two
+sweeps of those 40 queries returned byte-identical rankings, and a filter that
+keeps every record returned the same rankings again — so ranking is
+deterministic, and the two read paths agree over 400 real hits and not only
+over a fence's fixture. What differs between runs is the index: each run
+re-embeds the corpus, llama.cpp on Metal does not reduce in a fixed order, and
+sections separated by a thousandth of a cosine change places at the top-ten
+boundary.
+
+It is also a small-sample estimator. 400 hits sounds like 400 draws but they
+arrive in 40 clusters, because one query about a retired API contributes
+several deprecated hits at once; two or three queries landing differently move
+the figure by the whole spread above. **So the unfiltered number is a range,
+2.5% to 5.75% over three runs, not the point value the report prints.** What
+the report prints is one run, which is what a report is.
+
+None of that touches the number the corpus is here for. Deprecated material is
+3.57% of the corpus, it is not over-represented in results at any of the three
+figures, and the filter took it to zero in all three. The queries were drawn
+from section titles at random with a fixed seed and without reference to
+`status`; a query set aimed at deprecated pages would have produced a larger
+and meaningless number.
 
 **Two runs failed before this one, each differently, and both are the reason
 the character budget moved.** The first died with `input (8216 tokens) is too

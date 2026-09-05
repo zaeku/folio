@@ -78,6 +78,16 @@ The filtered figure should be zero. It is reported rather than asserted, because
 a filter that quietly stopped working would otherwise look like a corpus that
 had cleaned itself up.
 
+**Read the unfiltered figure as a range.** A run reports one number, and three
+runs of the same seeded queries over the same pinned corpus gave 4.0%, 2.5% and
+5.75%. Ranking is deterministic against a given index — two sweeps of the same
+index return identical hits — so the spread is the index: every run re-embeds
+the corpus, llama.cpp on Metal does not reduce in a fixed order, and near-ties
+swap at the top-ten boundary. 400 hits also arrive in 40 clusters rather than as
+400 independent draws, so a handful of queries landing differently moves the
+whole figure. `../docs/measurements.md` carries all three. The filtered figure
+was zero in every one, and that is the one the filter is judged on.
+
 ## The two corpora, and why both
 
 Counted over the subpath each one is measured on, not the whole repository.
