@@ -105,6 +105,32 @@ Output names sections, with the heading trail beneath each:
         Does an incomplete session count as a failure?
 ```
 
+### Checking the endpoint
+
+Two ways a server disappoints folio are silent. A section longer than the
+server's physical batch comes back as an HTTP error rather than a short vector,
+and a pooling mode the model was not trained for returns vectors that rank badly
+while looking like vectors.
+
+```
+$ folio doctor
+  endpoint   http://127.0.0.1:8080/v1/embeddings  (user config)
+  model      default
+  reachable  yes, 768 dimensions, 43 ms for one input
+  long input 8000 characters accepted, the longest section in ./docs/measurements.md, cut to the budget
+  structure  paraphrase 0.900, unrelated 0.352 — ok
+```
+
+The batch question is asked with your own longest section, because characters
+are not tokens: repeated filler tokenizes several times more cheaply than prose,
+and a corpus that is not written in English packs more tokens into the same
+characters. The structure question is asked with an English triple, so it says
+less about a corpus in another language; it catches a space that is inverted or
+collapsed, not one that is merely mediocre.
+
+`folio doctor` exits 1 when a question fails, and prints the server's own
+sentence with it.
+
 ### Filtering on frontmatter
 
 Frontmatter is flattened to dotted keys and stored as written — no field is

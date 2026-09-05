@@ -199,6 +199,19 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         root: PathBuf,
     },
+    /// Ask the endpoint three questions folio's ranking depends on.
+    Doctor {
+        /// The corpus whose `folio.yaml` names the endpoint to test.
+        #[arg(long, default_value = ".")]
+        root: PathBuf,
+        #[arg(long)]
+        endpoint: Option<String>,
+        #[arg(long)]
+        model: Option<String>,
+        /// The section budget to test the endpoint's batch size against.
+        #[arg(long, default_value_t = MAX_CHARS, value_parser = at_least_one)]
+        max_chars: usize,
+    },
     /// Report what the index covers.
     Status {
         #[arg(default_value = ".")]
@@ -262,6 +275,12 @@ fn main() -> Result<()> {
             !no_refresh,
         ),
         Cmd::Config { action, root } => cmd_config(action, &root),
+        Cmd::Doctor { root, endpoint, model, max_chars } => cmd_doctor(
+            &root,
+            endpoint.as_deref(),
+            model.as_deref(),
+            max_chars,
+        ),
         Cmd::Status { root } => cmd_status(&root),
     }
 }
@@ -1075,6 +1094,158 @@ fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
     // A query is answered from what the index recorded, so this pair reaches
     // `folio index` and nothing else.
     println!("\n`folio query` uses whatever the index recorded; run `folio status` for that.");
+    Ok(())
+}
+
+/// The longest section under `root`, capped at the budget, for the batch test.
+///
+/// Synthetic filler would answer the wrong question. Repeated words tokenize
+/// far more cheaply than prose, so a probe built from them fits a batch that
+/// the corpus itself would overflow.
+fn longest_section(root: &Path, max_chars: usize) -> (String, String) {
+    let mut best = String::new();
+    let mut where_from = String::new();
+    for entry in ignore::WalkBuilder::new(root).build().flatten() {
+        if !entry.file_type().is_some_and(|t| t.is_file()) {
+            continue;
+        }
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) != Some("md") {
+            continue;
+        }
+        let Ok(text) = fs::read_to_string(path) else {
+            continue;
+        };
+        for sec in sections::split(&path.to_string_lossy(), &text) {
+            if sec.text.chars().count() > best.chars().count() {
+                where_from = format!("the longest section in {}", sec.path);
+                best = sec.text;
+            }
+        }
+    }
+    if best.is_empty() {
+        // ponytail: prose-like filler at roughly four characters per token,
+        // which is English. A corpus is the better probe whenever one is there.
+        let filler = "The quarterly figures arrived late again this morning. ";
+        return (
+            filler.repeat(max_chars / filler.len() + 1)[..max_chars].to_string(),
+            "synthetic English prose, no corpus under this root".to_string(),
+        );
+    }
+    if best.chars().count() > max_chars {
+        best = best.chars().take(max_chars).collect();
+        where_from = format!("{where_from}, cut to the budget");
+    }
+    (best, where_from)
+}
+
+/// Ask the endpoint what folio's ranking assumes of it.
+///
+/// Two of its failures are silent. A section longer than the server's physical
+/// batch comes back as an HTTP error rather than a truncated vector, and a
+/// pooling mode the model was not trained for returns vectors that rank badly
+/// while looking like vectors. Neither shows in a result list.
+fn cmd_doctor(
+    root: &Path,
+    endpoint: Option<&str>,
+    model: Option<&str>,
+    max_chars: usize,
+) -> Result<()> {
+    let proj = read_config_at(&root.join(PROJECT_CONFIG))?;
+    let user = read_config_at(&config_path())?;
+    let (endpoint, e_src) = resolve(
+        endpoint,
+        "FOLIO_ENDPOINT",
+        proj.endpoint.as_deref(),
+        user.endpoint.as_deref(),
+        DEFAULT_ENDPOINT,
+    );
+    let (model, _) = resolve(
+        model,
+        "FOLIO_MODEL",
+        proj.model.as_deref(),
+        user.model.as_deref(),
+        DEFAULT_MODEL,
+    );
+    println!("  endpoint   {endpoint}  ({e_src})");
+    println!("  model      {model}");
+
+    let mut failed = false;
+
+    // 1. It answers, and with how many dimensions.
+    let t = std::time::Instant::now();
+    let probe = match embed(&endpoint, &model, &["a sentence to embed".to_string()]) {
+        Ok(v) => v,
+        Err(e) => {
+            println!("  reachable  no");
+            return Err(e);
+        }
+    };
+    println!(
+        "  reachable  yes, {} dimensions, {} ms for one input",
+        probe[0].len(),
+        t.elapsed().as_millis()
+    );
+
+    // 2. The longest thing this corpus would send fits the server's physical
+    //    batch. `-b`/`-ub` below it is an HTTP 500, not a truncation. The text
+    //    comes from the corpus because characters are not tokens: the same
+    //    8,000 characters are about 2,000 tokens of English and several times
+    //    that in a language that does not spell words with spaces.
+    let (long, from) = longest_section(root, max_chars);
+    match embed(&endpoint, &model, &[long.clone()]) {
+        Ok(_) => println!("  long input {} characters accepted, {from}", long.chars().count()),
+        Err(e) => {
+            failed = true;
+            println!(
+                "  long input {} characters refused, {from} — raise the server's batch \
+                 (-b and -ub) to at least your longest section, or lower --max-chars\n             {}",
+                long.chars().count(),
+                e.to_string().lines().next().unwrap_or_default()
+            );
+        }
+    }
+
+    // 3. Similarity still has structure. A pooling mode the model was not
+    //    trained for either inverts this pair or collapses every distance.
+    let probes = [
+        "The cat sat on the warm windowsill.".to_string(),
+        "A cat was sitting on the sunny window ledge.".to_string(),
+        "Quarterly revenue is recognised when the goods ship.".to_string(),
+    ];
+    match embed(&endpoint, &model, &probes) {
+        Err(e) => {
+            failed = true;
+            println!("  structure  could not measure: {e}");
+        }
+        Ok(v) => {
+            let (near, far) = (dot(&v[0], &v[1]), dot(&v[0], &v[2]));
+            print!("  structure  paraphrase {near:.3}, unrelated {far:.3}");
+            // ponytail: two thresholds on one English triple. It catches an
+            // inverted or collapsed space, not a merely mediocre one; a real
+            // quality measure is the unmeasured question in docs/measurements.md.
+            let inverted = near <= far;
+            let collapsed = far > 0.95;
+            if inverted {
+                println!(" — an unrelated sentence ranks as close as a paraphrase");
+            } else if collapsed {
+                println!(" — unrelated sentences are nearly identical");
+            } else {
+                println!(" — ok");
+            }
+            if inverted || collapsed {
+                failed = true;
+                println!("             check the server's pooling: this model family wants one \
+                          specific mode, and the default is wrong for some of them");
+            }
+        }
+    }
+
+    println!("\n  The probe is English. On a corpus in another language the last");
+    println!("  question says less, and the first two say the same.");
+    if failed {
+        bail!("the endpoint is reachable but answers in a way folio's ranking cannot use");
+    }
     Ok(())
 }
 

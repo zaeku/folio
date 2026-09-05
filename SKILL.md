@@ -60,7 +60,13 @@ folio index                 # every .md under the working directory
 folio query "does unfinished work count as a failure"
 folio status                # files, sections, model, frontmatter keys carried
 folio config                # the endpoint and model a new index would use
+folio doctor                # ask the endpoint what ranking depends on
 ```
+
+Run `folio doctor` when results look wrong rather than absent. It reports
+whether the endpoint answers, whether your longest section fits its batch, and
+whether a paraphrase still ranks above an unrelated sentence. It exits 1 when
+one of those fails.
 
 `index` takes a positional root and `query` takes `--root`; both default to `.`.
 The index lives in `.folio/` under that root. `query` prints five rows by
