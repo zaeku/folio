@@ -11,3 +11,5 @@
 .folio/
 /benchmarks/corpora/
 /benchmarks/reports/
+
+__pycache__/

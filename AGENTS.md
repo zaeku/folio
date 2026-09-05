@@ -31,8 +31,10 @@ same place you use it. An undated number is a guess to the next reader.
 ## Decision layer
 
 `decisions/` is a separate repository carrying its own toolchain, so that a clone
-of it alone can verify itself. `decisions/SPEC.md` is its charter: it defines
-what a decision document is, what a fence is, and the checks that enforce both.
+of it alone can verify itself. It is not published, and it is ignored here, so
+the §references below reach it only from a machine that has it.
+`decisions/SPEC.md` is its charter: it defines what a decision document is, what
+a fence is, and the checks that enforce both.
 Read §7 and §12 before you add a decision or a fence.
 
 **What belongs there rather than here.** A hard rule above is a rule someone has

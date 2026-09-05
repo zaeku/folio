@@ -178,4 +178,4 @@ before you change models.
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).

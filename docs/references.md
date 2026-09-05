@@ -1,9 +1,9 @@
 # Reference paths
 
 **`zvec-grep`, the prior art this project was measured against.** Source:
-https://github.com/zvec-ai/zvec-grep (Apache 2.0). A local checkout sits at
-`~/workspace/References/zvec-grep`. Treat it as read-only. It is not
-installed on this machine and does not need to be.
+https://github.com/zvec-ai/zvec-grep (Apache 2.0). A local checkout sits under
+`~/workspace/References/`. Treat it as read-only. It is not installed on this
+machine and does not need to be.
 
 Read these files when you need the design folio departs from:
 
@@ -45,13 +45,13 @@ measurements and nothing since. Both are read-only to this project, and both are
 Jujutsu working copies — never write an index into one without an ignore entry
 first.
 
-| Path | Shape |
+| Corpus | Shape |
 |---|---|
-| `(a private decision surface)` | 116 files, 476 KB, one fact per file, `id` / `question` / `verified` / `supersedes` frontmatter |
-| `(a private prose surface)` | 5 files, 146 KB, long prose sections up to 10 KB |
+| A decision surface | 116 files, 476 KB, one fact per file, `id` / `question` / `verified` / `supersedes` frontmatter |
+| A prose surface | 5 files, 146 KB, long prose sections up to 10 KB |
 
-The first private corpus carries `supersedes` on 11 sections, and every one of those 11
-points at an id that is not in the corpus. That is not a defect: the project it
+The decision surface carries `supersedes` on 11 sections, and every one of those
+11 points at an id that is not in the corpus. That is not a defect: the project it
 comes from removes a decision when it stops holding and keeps the text in
 Jujutsu history, so its surface holds only what is still true. It solves the
 problem folio's anti-join solves, one layer earlier and more thoroughly.
