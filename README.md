@@ -87,12 +87,14 @@ socket rather than accepting one, so neither launchd nor systemd can start it on
 demand, and it is not free while it waits.
 
 What it holds is set by the longest section folio sends it, not by the model
-file. Measured on the machine in `docs/measurements.md`: 69 MB once loaded,
-330 MB after a section at the default 8,000-character budget, and 1,899 MB after
-one of 8,000 tokens. It does not give any of that back until it restarts, so a
-corpus of shorter sections is a smaller server as well as a more precise index.
-The first query after several idle hours costs 231 ms against 9-10 ms warm,
-because macOS has swapped most of it out by then.
+file: the server allocates for the largest input it is asked to embed, and keeps
+that allocation until it restarts. A corpus of shorter sections is therefore a
+smaller server as well as a more precise index. Waking it after idle hours costs
+one slow query, because the machine has paged most of it out by then.
+
+`docs/measurements.md` has the figures, and they belong there rather than here.
+They describe llama.cpp's allocation rather than folio's, so they move when it
+changes, and a number on this page would ask for a release every time it did.
 
 If you already run an embeddings endpoint, ignore all of this and name it:
 `folio config set endpoint http://your-host:port/v1/embeddings`.
