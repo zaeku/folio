@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 description = "Section-scoped semantic search over a markdown corpus. The index holds references, never bodies."
 license = "MIT"
+repository = "https://github.com/zaeku/folio"
+readme = "README.md"
+keywords = ["search", "semantic", "markdown", "embeddings", "cli"]
+categories = ["command-line-utilities", "text-processing"]
 
 [[bin]]
 name = "folio"
