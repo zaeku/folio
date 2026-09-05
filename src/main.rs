@@ -212,6 +212,33 @@ enum Cmd {
         #[arg(long, default_value_t = MAX_CHARS, value_parser = at_least_one)]
         max_chars: usize,
     },
+    /// Print a service file that runs the embeddings server. Installs nothing.
+    Unit {
+        /// The corpus whose `folio.yaml` names the endpoint to serve.
+        #[arg(long, default_value = ".")]
+        root: PathBuf,
+        /// Write a launchd agent. The default on macOS.
+        #[arg(long, conflicts_with = "systemd")]
+        launchd: bool,
+        /// Write a systemd user service. The default elsewhere.
+        #[arg(long)]
+        systemd: bool,
+        /// The model repository the server should pull.
+        #[arg(long, default_value = "keisuke-miyako/gte-modernbert-base-gguf")]
+        hf: String,
+        /// The file within that repository.
+        #[arg(long, default_value = "gte-modernbert-base-Q8_0.gguf")]
+        hf_file: String,
+        /// The pooling this model wants. `cls` for gte-modernbert, `last` for
+        /// the Qwen3-Embedding family. The server's own default is wrong for
+        /// both, and a wrong one ranks badly without failing.
+        #[arg(long, default_value = "cls")]
+        pooling: String,
+        /// Context, and the physical batch, in tokens. Must exceed your longest
+        /// section: an encoder needs its whole input in one batch.
+        #[arg(long, default_value_t = 8192)]
+        context: usize,
+    },
     /// Report what the index covers.
     Status {
         #[arg(default_value = ".")]
@@ -280,6 +307,9 @@ fn main() -> Result<()> {
             endpoint.as_deref(),
             model.as_deref(),
             max_chars,
+        ),
+        Cmd::Unit { root, launchd, systemd, hf, hf_file, pooling, context } => cmd_unit(
+            &root, launchd, systemd, &hf, &hf_file, &pooling, context,
         ),
         Cmd::Status { root } => cmd_status(&root),
     }
@@ -1097,6 +1127,122 @@ fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
     Ok(())
 }
 
+/// The host and port a service should bind, read from the endpoint folio uses.
+fn host_port(endpoint: &str) -> Result<(String, u16)> {
+    let rest = endpoint.split_once("://").map_or(endpoint, |(_, r)| r);
+    let authority = rest.split(['/', '?']).next().unwrap_or_default();
+    let (host, port) = authority
+        .rsplit_once(':')
+        .with_context(|| format!("{endpoint} names no port, so a service cannot bind it"))?;
+    let port: u16 = port
+        .parse()
+        .with_context(|| format!("{port} is not a port number"))?;
+    Ok((host.to_string(), port))
+}
+
+/// Print a service file. Writing it and loading it stay with the reader.
+///
+/// folio speaks HTTP and nothing else, so it does not know which model file or
+/// pooling mode the server needs. Those arrive as flags, defaulting to the pair
+/// docs/measurements.md was measured on. What folio does know is the port its
+/// own configuration points at, which is the part that is easy to get wrong.
+fn cmd_unit(
+    root: &Path,
+    launchd: bool,
+    systemd: bool,
+    hf: &str,
+    hf_file: &str,
+    pooling: &str,
+    context: usize,
+) -> Result<()> {
+    let proj = read_config_at(&root.join(PROJECT_CONFIG))?;
+    let user = read_config_at(&config_path())?;
+    let (endpoint, _) = resolve(
+        None,
+        "FOLIO_ENDPOINT",
+        proj.endpoint.as_deref(),
+        user.endpoint.as_deref(),
+        DEFAULT_ENDPOINT,
+    );
+    let (host, port) = host_port(&endpoint)?;
+
+    // launchd starts a job with a bare environment, so an unqualified name is
+    // not found. The path is resolved here rather than left to the reader.
+    let server = which_llama_server();
+    let args = [
+        "--embeddings".to_string(),
+        "-hf".to_string(), hf.to_string(),
+        "--hf-file".to_string(), hf_file.to_string(),
+        "--pooling".to_string(), pooling.to_string(),
+        "-c".to_string(), context.to_string(),
+        "-b".to_string(), context.to_string(),
+        "-ub".to_string(), context.to_string(),
+        "--host".to_string(), host,
+        "--port".to_string(), port.to_string(),
+    ];
+
+    let use_launchd = if launchd || systemd { launchd } else { cfg!(target_os = "macos") };
+    if use_launchd {
+        let argv: String = std::iter::once(server.clone())
+            .chain(args)
+            .map(|a| format!("    <string>{a}</string>\n"))
+            .collect();
+        print!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Serves {endpoint} for folio. It runs from login until you unload it;
+     llama-server cannot be started on demand, because it binds its own socket
+     rather than accepting one from launchd. Measured idle cost on 2026-09-05:
+     488 MB resident, 0.1% CPU. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>dev.folio.embeddings</string>
+  <key>ProgramArguments</key>
+  <array>
+{argv}  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/tmp/folio-embeddings.log</string>
+  <key>StandardErrorPath</key><string>/tmp/folio-embeddings.log</string>
+</dict>
+</plist>
+"#
+        );
+    } else {
+        let argv = args.join(" ");
+        print!(
+            "# Serves {endpoint} for folio. It runs from login until you stop it;\n\
+             # llama-server cannot be socket-activated, because it binds its own\n\
+             # socket rather than accepting one from systemd. Measured idle cost on\n\
+             # 2026-09-05: 488 MB resident, 0.1% CPU.\n\
+             [Unit]\n\
+             Description=Embeddings endpoint for folio\n\
+             After=network.target\n\
+             \n\
+             [Service]\n\
+             ExecStart={server} {argv}\n\
+             Restart=on-failure\n\
+             \n\
+             [Install]\n\
+             WantedBy=default.target\n"
+        );
+    }
+    Ok(())
+}
+
+/// The server's absolute path, or the bare name with a note when it is absent.
+fn which_llama_server() -> String {
+    let name = "llama-server";
+    for dir in std::env::var("PATH").unwrap_or_default().split(':') {
+        let candidate = Path::new(dir).join(name);
+        if candidate.is_file() {
+            return candidate.to_string_lossy().into_owned();
+        }
+    }
+    eprintln!("{name} is not on PATH; the service file names it unqualified, and a service manager will not find it");
+    name.to_string()
+}
+
 /// The longest section under `root`, capped at the budget, for the batch test.
 ///
 /// Synthetic filler would answer the wrong question. Repeated words tokenize
@@ -1293,7 +1439,21 @@ mod tests {
         (0, fm.as_object().expect("an object").clone())
     }
 
-    #[test]
+#[test]
+    fn a_service_binds_what_the_endpoint_names() {
+        assert_eq!(
+            host_port("http://127.0.0.1:8080/v1/embeddings").unwrap(),
+            ("127.0.0.1".to_string(), 8080)
+        );
+        assert_eq!(
+            host_port("https://box.local:9999/v1/embeddings").unwrap(),
+            ("box.local".to_string(), 9999)
+        );
+        // A port folio cannot read is a service that would bind the wrong one.
+        assert!(host_port("http://example.com/v1/embeddings").is_err());
+    }
+
+        #[test]
     fn each_scope_beats_the_one_below_it() {
         const K: &str = "FOLIO_TEST_ENDPOINT";
         // SAFETY: single-threaded within this test, and the key is unique to it.

@@ -53,6 +53,40 @@ instead. And `-b`/`-ub` must be at least your longest section: an encoder needs
 its whole input in one physical batch, so at the default 512 a longer section
 comes back as an HTTP 500 rather than a truncated vector.
 
+### Keeping the server up
+
+Preparing a server to run a command-line tool is a strange shape for a CLI, and
+folio does not manage one. It prints a service file for whatever manages
+services on your machine, and installing it is yours to do:
+
+```sh
+folio unit > ~/Library/LaunchAgents/dev.folio.embeddings.plist
+launchctl load ~/Library/LaunchAgents/dev.folio.embeddings.plist
+```
+
+```sh
+folio unit --systemd > ~/.config/systemd/user/folio-embeddings.service
+systemctl --user enable --now folio-embeddings
+```
+
+`folio unit` writes nothing and starts nothing. It fills in the port your
+configuration already points at, and the absolute path to `llama-server`,
+because a service manager starts a job with a bare environment and will not find
+an unqualified name. The model and its pooling arrive as flags:
+
+```sh
+folio unit --hf Qwen/Qwen3-Embedding-0.6B-GGUF \
+  --hf-file Qwen3-Embedding-0.6B-Q8_0.gguf --pooling last
+```
+
+The service runs from login until you stop it. `llama-server` binds its own
+socket rather than accepting one, so neither launchd nor systemd can start it on
+demand. Measured idle cost on 2026-09-05, on the machine in `docs/measurements.md`:
+488 MB resident and 0.1% CPU after 15 hours.
+
+If you already run an embeddings endpoint, ignore all of this and name it:
+`folio config set endpoint http://your-host:port/v1/embeddings`.
+
 ## Use
 
 ```sh
