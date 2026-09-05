@@ -88,8 +88,8 @@ change to folio. That is the whole reason the boundary is HTTP.
 
 **Jujutsu, colocated.** `.jj` and `.git` coexist. Measured on **jj 0.44.0**.
 
-Read `jj help <command>` before an unfamiliar command. The rules that cost
-something here:
+Read the `use-jujutsu-safely` skill before an unfamiliar command, or `jj help
+<command>` if you do not have the skill. The rules that cost something here:
 
 - **Record finished work with `jj commit -m`, not `jj describe`.** `jj commit`
   describes `@` and opens a new empty change, so your next edit lands somewhere
