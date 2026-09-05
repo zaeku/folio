@@ -48,7 +48,13 @@ CORPORA = {
     },
 }
 
-QUERY_COUNT = 40
+# 40 queries could not resolve the contamination figure it was reporting.
+# Measured on 2026-09-05 over mdn/content, resampling queries whole because hits
+# arrive per query: at 40 the 95% interval is 9.5 points wide around a figure
+# near 4%, and it narrows as 1/sqrt(n) -- 4.9 points at 160, 3.0 at 400. At 400
+# the interval covers the corpus's own 3.57%, which is the finding that a single
+# run of 40 could not support: retired material is not over-represented.
+QUERY_COUNT = 400
 TOP_K = 10
 
 # Below the 8192-token context of the model this is measured on. The binding
