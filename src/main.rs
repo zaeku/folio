@@ -16,6 +16,7 @@ use std::fs;
 use std::hash::{DefaultHasher, Hasher};
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use std::time::UNIX_EPOCH;
 
 const DIR: &str = ".folio";
@@ -399,39 +400,81 @@ fn cmd_index(
         rows.clear();
     }
 
+    // The walk is threaded because it dominated what was left of a re-index:
+    // on 14,616 files it ran 449-804 ms in one thread and 172 ms across ten.
+    // Results land in whatever order the threads finish, which is fine because
+    // they are collected into maps and a set.
+    let threads = std::thread::available_parallelism().map_or(4, |n| n.get());
+    let found: Mutex<Vec<(String, u64, (u64, i64), bool)>> = Mutex::new(Vec::new());
+    let failed: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+    ignore::WalkBuilder::new(&root)
+        .threads(threads)
+        .build_parallel()
+        .run(|| {
+            Box::new(|entry| {
+                let entry = match entry {
+                    Ok(e) => e,
+                    Err(e) => {
+                        failed.lock().unwrap().push(e.to_string());
+                        return ignore::WalkState::Continue;
+                    }
+                };
+                if !entry.file_type().is_some_and(|t| t.is_file()) {
+                    return ignore::WalkState::Continue;
+                }
+                let path = entry.path();
+                if path.extension().and_then(|e| e.to_str()) != Some("md") {
+                    return ignore::WalkState::Continue;
+                }
+                let Ok(suffix) = path.strip_prefix(&root) else {
+                    return ignore::WalkState::Continue;
+                };
+                let rel = suffix.to_string_lossy().replace('\\', "/");
+
+                // Listing a file is cheap and reading it is not: stamping all
+                // 14,616 costs 33 ms against 1294 ms to read and hash them. So a
+                // file whose length and modification time are what the index
+                // recorded keeps the hash recorded beside them and is never
+                // opened. Every other file is read, and its content decides.
+                let now = match entry.metadata() {
+                    Ok(m) => stamp(&m),
+                    Err(e) => {
+                        failed.lock().unwrap().push(format!("{rel}: {e}"));
+                        return ignore::WalkState::Continue;
+                    }
+                };
+                let recorded = if reuse && prev.stamps.get(&rel) == Some(&now) {
+                    prev.files.get(&rel).copied()
+                } else {
+                    None
+                };
+                let h = match recorded {
+                    Some(h) => h,
+                    None => match fs::read(path) {
+                        Ok(bytes) => hash(&bytes),
+                        Err(e) => {
+                            failed.lock().unwrap().push(format!("{rel}: {e}"));
+                            return ignore::WalkState::Continue;
+                        }
+                    },
+                };
+                let moved = !reuse || prev.files.get(&rel) != Some(&h);
+                found.lock().unwrap().push((rel, h, now, moved));
+                ignore::WalkState::Continue
+            })
+        });
+
+    let failed = failed.into_inner().unwrap();
+    if let Some(first) = failed.first() {
+        bail!("{} file(s) could not be read, starting with {first}", failed.len());
+    }
+
     let mut current: HashMap<String, u64> = HashMap::new();
     let mut stamps: HashMap<String, (u64, i64)> = HashMap::new();
     let mut changed: HashSet<String> = HashSet::new();
-    for entry in ignore::WalkBuilder::new(&root).build() {
-        let entry = entry?;
-        if !entry.file_type().is_some_and(|t| t.is_file()) {
-            continue;
-        }
-        let path = entry.path();
-        if path.extension().and_then(|e| e.to_str()) != Some("md") {
-            continue;
-        }
-        let rel = path
-            .strip_prefix(&root)?
-            .to_string_lossy()
-            .replace('\\', "/");
-        // Listing a file is cheap and reading it is not: on a corpus of 14,616
-        // files, stamping every one costs 33 ms against 1294 ms to read and
-        // hash them. So a file whose length and modification time are what the
-        // index recorded keeps the hash recorded beside them and is never
-        // opened. Every other file is read, and its content is what decides.
-        let now = stamp(&entry.metadata()?);
-        let recorded = if reuse && prev.stamps.get(&rel) == Some(&now) {
-            prev.files.get(&rel).copied()
-        } else {
-            None
-        };
-
-        let h = match recorded {
-            Some(h) => h,
-            None => hash(&fs::read(path)?),
-        };
-        if !reuse || prev.files.get(&rel) != Some(&h) {
+    for (rel, h, now, moved) in found.into_inner().unwrap() {
+        if moved {
             changed.insert(rel.clone());
         }
         current.insert(rel.clone(), h);

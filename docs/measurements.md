@@ -104,9 +104,14 @@ so a version control system is 7.6x to 14x slower than the stat it would
 replace, and `git status` stats every file anyway before comparing its index.
 With a stat prefilter in place, a single-file re-index is **1.24 s**.
 
-The tree walk is now the largest remaining term at 822 ms, and the full index
-rewrite at 470 ms is the one that stays proportional to the corpus rather than
-to the change.
+Walking the tree in one thread took 449-804 ms depending on how warm the cache
+was, and 172 ms across ten. With that threaded too, a re-index with nothing
+changed is **0.895 s** and one changed file is **1.19 s**. The walk gained less
+in place than on the bench, because in a real run it was already warm.
+
+What is left of a re-index is loading the index at 350 ms and rewriting it at
+470 ms — 69% of it — and the rewrite is the term that stays proportional to the
+corpus rather than to the change.
 
 **Where a query's time goes, in Rust.** Of the 350 ms to load the MDN index:
 parsing 119,359 JSON records is 128 ms, reading the 367 MB matrix 76 ms,
