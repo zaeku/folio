@@ -81,8 +81,8 @@ folio unit --hf Qwen/Qwen3-Embedding-0.6B-GGUF \
 
 The service runs from login until you stop it. `llama-server` binds its own
 socket rather than accepting one, so neither launchd nor systemd can start it on
-demand. Measured idle cost on 2026-09-05, on the machine in `docs/measurements.md`:
-488 MB resident and 0.1% CPU after 15 hours.
+demand. Resident size and CPU sampled once while idle on 2026-09-05, on the
+machine in `docs/measurements.md`: 488 MB and 0.1%.
 
 If you already run an embeddings endpoint, ignore all of this and name it:
 `folio config set endpoint http://your-host:port/v1/embeddings`.
@@ -116,6 +116,13 @@ machine indexing it:
 folio config set --project model bge-m3
 folio config set --project endpoint http://127.0.0.1:8081/v1/embeddings
 ```
+
+Check the budget too. folio counts characters because it cannot see the model's
+tokenizer, and the default 8,000 was set below an 8,192-token context on
+English, which runs about 3.7 characters per token. Korean prose on the same
+tokenizer runs 0.66, so 8,192 tokens is about 5,400 characters and the default
+sends sections the server refuses. `folio doctor` asks that question with your
+own longest section.
 
 That writes `folio.yaml` at the corpus root. Commit it, and everyone who indexes
 that corpus embeds it the same way. It is deliberately not inside `.folio/`: the

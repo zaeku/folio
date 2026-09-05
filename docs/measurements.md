@@ -15,6 +15,44 @@ estimate. They are kept because they are what the model choice was made on, and
 they are labelled so nobody quotes them as a result. `benchmarks/` is where a
 reproducible number will come from.
 
+## 2026-09-05 — characters are not tokens, and the endpoint itself
+
+Measured with `gte-modernbert-base-Q8_0` under `llama-server`, `--pooling cls`,
+`-c 8192 -b 8192 -ub 8192`, through its `/tokenize` endpoint and through
+`folio doctor`.
+
+**A character budget is a token budget only for the language it was set on.**
+folio budgets characters because it cannot see the model's tokenizer, and
+`--max-chars 8000` was set below an 8,192-token context on English.
+
+| Text | Chars per token |
+|---|---|
+| `"section "` repeated | 7.98 |
+| One English sentence repeated | 6.10 |
+| English prose, this project's README | 3.66 |
+| Korean prose | 0.66 |
+
+At 0.66, 8,192 tokens is about 5,400 characters, so the default budget sends a
+Korean section that this server refuses. A corpus in a language that does not
+spell words with spaces wants `--max-chars` near 4,000, and the number to check
+it against is its own longest section rather than a rule of thumb.
+
+That spread is also why `folio doctor` probes with the corpus's own longest
+section. Synthetic filler tokenizes at nearly twice the rate of real prose:
+40,000 characters of `"section "` passed a batch that 18,007 tokens of repeated
+English prose overflowed, and the server said so — `input (18007 tokens) is too
+large to process. increase the physical batch size (current batch size: 8192)`.
+
+**What `folio doctor` reports on this machine.** 768 dimensions. One input costs
+142 ms cold and 9-10 ms warm over five runs, which agrees with the 8 ms round
+trip measured below. Its similarity probe — a paraphrase pair against an
+unrelated sentence — gives 0.900 and 0.352.
+
+**Running the server costs 488 MB.** Resident size and CPU sampled once while
+idle: 488 MB, 0.1%. After the long-input probes above it held 516 MB. Neither
+figure is a measurement of growth over time; nothing here sampled it twice with
+a day between.
+
 ## 2026-09-05 — what a query reads, and the daemon it replaced
 
 On `mdn/content`, 119,359 sections at dim 768, against the index the run below
