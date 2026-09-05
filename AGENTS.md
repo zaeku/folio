@@ -88,6 +88,26 @@ under `.folio/`. A fence that reads `src/`, names a Cargo target, or calls a Rus
 function is not a black-box test whatever its exit code says; that test belongs
 in the code layer.
 
+**`check` tests what you published, not what you built.** §5 reaches folio
+through the `folio` command on `PATH`; `target/release/` is not on it. Run
+`cargo install --path .` before `cargo run --bin check`, or a fence will
+correctly report that the binary someone could actually run does not hold the
+decision you just wrote. This has happened: a `folio` eight hours old failed
+eight fences, and the fences were right.
+
+**A fence names the binary it tested.** Every `fail` leads with
+`$(command -v folio)`, because the failure that matters is often about which
+binary answered rather than about the code in front of you. It leads rather than
+trails so that a multi-line message from the tool cannot push it out of sight.
+
+**A fence that cannot read the record store exits 2, not 1.** Reading
+`.folio/index.db` is how most fences see what folio indexed, and a folio that
+writes something else has not violated *their* decision — it has made them
+unevaluable. `vectors-out-of-the-database` and `no-ann-index` are the fences
+that guard the store's shape, and they are the ones that fail. That division is
+what keeps a changed store format from reporting as eight simultaneous
+violations.
+
 **A folio fence needs a corpus and an endpoint.** folio does nothing without
 both, so a fence builds its own fixture corpus in a temporary directory, and
 exits 2 rather than 1 when no embeddings endpoint is reachable (§5). Exit 2 is
