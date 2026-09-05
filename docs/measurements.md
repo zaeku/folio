@@ -48,10 +48,30 @@ large to process. increase the physical batch size (current batch size: 8192)`.
 trip measured below. Its similarity probe — a paraphrase pair against an
 unrelated sentence — gives 0.900 and 0.352.
 
-**Running the server costs 488 MB.** Resident size and CPU sampled once while
-idle: 488 MB, 0.1%. After the long-input probes above it held 516 MB. Neither
-figure is a measurement of growth over time; nothing here sampled it twice with
-a day between.
+**Running the server costs 2.25 GB, and `ps` will not say so.** Measured
+2026-09-06 on a server up 23 hours, idle:
+
+| Figure | Value |
+|---|---|
+| `phys_footprint` | 2,305 MB, peak 2,308 MB |
+| Resident size (`ps` RSS) | 315 MB |
+| Writable regions | 2.0 GB written, 5% resident, 80% swapped out |
+| CPU | 0.1-0.3% |
+
+RSS counts resident pages only. An idle llama-server has most of the model
+compressed or swapped out, so RSS falls away while the memory is still the
+process's to hold; `phys_footprint`, which is what Activity Monitor shows, is
+the figure that does not move with memory pressure. On a 32 GB machine it was
+the largest process running.
+
+Two earlier RSS samples, 488 MB on 2026-09-05 and 315 MB on 2026-09-06, were
+read as the cost of running the server and are not that. They measured how much
+of it had not been paged out yet.
+
+**Waking it costs 231 ms.** The first `folio doctor` probe after several idle
+hours took 231 ms for one input against 9-10 ms warm. That is the swapped-out
+2.1 GB being read back, so the idle cost does not disappear — it moves from
+memory into the latency of the next query.
 
 ## 2026-09-05 — what a query reads, and the daemon it replaced
 

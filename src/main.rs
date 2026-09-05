@@ -1192,8 +1192,8 @@ fn cmd_unit(
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!-- Serves {endpoint} for folio. It runs from login until you unload it;
      llama-server cannot be started on demand, because it binds its own socket
-     rather than accepting one from launchd. Resident size and CPU sampled once
-     while idle on 2026-09-05: 488 MB, 0.1%. -->
+     rather than accepting one from launchd. It is not free while idle:
+     docs/measurements.md in the folio repository carries what it costs. -->
 <plist version="1.0">
 <dict>
   <key>Label</key><string>dev.folio.embeddings</string>
@@ -1213,8 +1213,8 @@ fn cmd_unit(
         print!(
             "# Serves {endpoint} for folio. It runs from login until you stop it;\n\
              # llama-server cannot be socket-activated, because it binds its own\n\
-             # socket rather than accepting one from systemd. Resident size and CPU\n\
-             # sampled once while idle on 2026-09-05: 488 MB, 0.1%.\n\
+             # socket rather than accepting one from systemd. It is not free while\n\
+             # idle: docs/measurements.md in the folio repository carries the cost.\n\
              [Unit]\n\
              Description=Embeddings endpoint for folio\n\
              After=network.target\n\

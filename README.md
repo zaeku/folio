@@ -81,8 +81,11 @@ folio unit --hf Qwen/Qwen3-Embedding-0.6B-GGUF \
 
 The service runs from login until you stop it. `llama-server` binds its own
 socket rather than accepting one, so neither launchd nor systemd can start it on
-demand. Resident size and CPU sampled once while idle on 2026-09-05, on the
-machine in `docs/measurements.md`: 488 MB and 0.1%.
+demand, and it is not free while it waits. Idle on the machine in
+`docs/measurements.md`, it held a 2.25 GB physical footprint and the first query
+after several idle hours cost 231 ms against 9-10 ms warm. `ps` reports a
+fraction of that, because most of the model is swapped out until something asks
+for it.
 
 If you already run an embeddings endpoint, ignore all of this and name it:
 `folio config set endpoint http://your-host:port/v1/embeddings`.
