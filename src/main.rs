@@ -5,21 +5,22 @@
 //! stale index costs a wasted candidate and never a wrong quotation.
 
 mod sections;
+mod store;
 
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
 use sections::Section;
 use serde::{Deserialize, Serialize};
+use store::{Meta, Stamp, Store};
 use serde_json::Value;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::hash::{DefaultHasher, Hasher};
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::UNIX_EPOCH;
 
-const DIR: &str = ".folio";
 const BATCH: usize = 32;
 
 #[derive(Parser)]
@@ -114,91 +115,61 @@ fn main() -> Result<()> {
 
 // ---------------------------------------------------------------- persistence
 
-#[derive(Serialize, Deserialize, Default)]
-struct State {
-    model: String,
-    endpoint: String,
-    dim: usize,
-    /// Path to content hash. Content decides what is re-embedded; no file
-    /// watcher, because the files are the only source of truth.
-    files: HashMap<String, u64>,
-    /// Path to (length, modification time in nanoseconds). A prefilter and
-    /// never a verdict: a file whose stamp is unchanged keeps the hash already
-    /// recorded for it and is not opened, and every other file is read and
-    /// hashed as before. Absent in an index written before this existed, in
-    /// which case every file is read once and stamped on the way through.
-    #[serde(default)]
-    stamps: HashMap<String, (u64, i64)>,
-}
-
-/// The pair a prefilter compares. Zero for a clock the platform will not
-/// answer for, which makes the file look changed and sends it to be read.
-fn stamp(meta: &fs::Metadata) -> (u64, i64) {
+/// The pair a prefilter compares, alongside the hash it stands in for. Zero
+/// for a clock the platform will not answer for, which makes the file look
+/// changed and sends it to be read.
+fn stamp(meta: &fs::Metadata, hash: u64) -> Stamp {
     let mtime = meta
         .modified()
         .ok()
         .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
         .map_or(0, |d| d.as_nanos() as i64);
-    (meta.len(), mtime)
+    Stamp { hash, len: meta.len(), mtime }
 }
 
 type Row = (Section, Vec<f32>);
 
-fn store(root: &Path) -> (PathBuf, PathBuf, PathBuf) {
-    let d = root.join(DIR);
-    (
-        d.join("sections.jsonl"),
-        d.join("vectors.f32"),
-        d.join("state.json"),
-    )
-}
-
-/// State and section records, without the matrix. A query maps the matrix
+/// Metadata and section records, without the matrix. A query maps the matrix
 /// instead of reading it, so the two are loaded apart.
-fn load_sections(root: &Path) -> Result<(State, Vec<Section>)> {
-    let (jsonl, vecs, state) = store(root);
-    if !state.exists() {
-        return Ok((State::default(), Vec::new()));
+fn load_sections(root: &Path) -> Result<(Meta, Vec<Section>)> {
+    if !store::db_path(root).exists() {
+        return Ok((Meta::default(), Vec::new()));
     }
-    let state: State = serde_json::from_slice(&fs::read(&state)?)
-        .with_context(|| format!("{} is unreadable", state.display()))?;
-    if state.dim == 0 {
-        return Ok((state, Vec::new()));
+    let st = Store::open(root)?;
+    let meta = st.meta()?;
+    if meta.dim == 0 {
+        return Ok((meta, Vec::new()));
     }
+    let secs = st.sections()?;
 
-    let secs: Vec<Section> = BufReader::new(fs::File::open(&jsonl)?)
-        .lines()
-        .map(|l| Ok(serde_json::from_str(&l?)?))
-        .collect::<Result<_>>()
-        .with_context(|| format!("{} is unreadable", jsonl.display()))?;
-
+    let vecs = store::vectors_path(root);
     let bytes = fs::metadata(&vecs)?.len() as usize;
-    if bytes != secs.len() * state.dim * 4 {
+    if bytes != secs.len() * meta.dim * 4 {
         bail!(
             "index is inconsistent: {} sections at dim {} need {} bytes and {} holds {bytes} — rerun with --rebuild",
             secs.len(),
-            state.dim,
-            secs.len() * state.dim * 4,
+            meta.dim,
+            secs.len() * meta.dim * 4,
             vecs.display()
         );
     }
-    Ok((state, secs))
+    Ok((meta, secs))
 }
 
 /// The whole index owned, which `index` needs because it rewrites it.
-fn load(root: &Path) -> Result<(State, Vec<Row>)> {
-    let (state, secs) = load_sections(root)?;
+fn load(root: &Path) -> Result<(Meta, Vec<Row>)> {
+    let (meta, secs) = load_sections(root)?;
     if secs.is_empty() {
-        return Ok((state, Vec::new()));
+        return Ok((meta, Vec::new()));
     }
-    let dim = state.dim;
-    let raw = fs::read(store(root).1)?;
+    let dim = meta.dim;
+    let raw = fs::read(store::vectors_path(root))?;
     let floats: Vec<f32> = raw
         .chunks_exact(4)
         .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
         .collect();
     Ok((
-        state,
+        meta,
         secs.into_iter()
             .zip(floats.chunks_exact(dim))
             .map(|(s, v)| (s, v.to_vec()))
@@ -210,7 +181,7 @@ fn load(root: &Path) -> Result<(State, Vec<Row>)> {
 /// converting it to `f32` another 76 ms and splitting it per row 80 ms; mapping
 /// it costs nothing and a scan over the map pages in only what it touches.
 fn map_vectors(root: &Path) -> Result<Option<memmap2::Mmap>> {
-    let vecs = store(root).1;
+    let vecs = store::vectors_path(root);
     if !vecs.exists() {
         return Ok(None);
     }
@@ -230,18 +201,19 @@ fn as_floats(map: &memmap2::Mmap) -> Result<&[f32]> {
     Ok(mid)
 }
 
-fn save(root: &Path, state: &State, rows: &[Row]) -> Result<()> {
-    let (jsonl, vecs, state_path) = store(root);
-    fs::create_dir_all(root.join(DIR))?;
+/// The vectors go down first and the records commit after. A crash in between
+/// leaves rows at the end of the matrix that no record names, which the next
+/// write discards; the other order would leave records naming rows that were
+/// never written.
+fn save(
+    root: &Path,
+    meta: &Meta,
+    files: &HashMap<String, Stamp>,
+    rows: &[Row],
+) -> Result<()> {
+    let mut st = Store::open(root)?;
 
-    let mut w = BufWriter::new(fs::File::create(&jsonl)?);
-    for (s, _) in rows {
-        serde_json::to_writer(&mut w, s)?;
-        w.write_all(b"\n")?;
-    }
-    w.flush()?;
-
-    let mut w = BufWriter::new(fs::File::create(&vecs)?);
+    let mut w = BufWriter::new(fs::File::create(store::vectors_path(root))?);
     for (_, v) in rows {
         for x in v {
             w.write_all(&x.to_le_bytes())?;
@@ -249,8 +221,8 @@ fn save(root: &Path, state: &State, rows: &[Row]) -> Result<()> {
     }
     w.flush()?;
 
-    fs::write(&state_path, serde_json::to_vec_pretty(state)?)?;
-    Ok(())
+    let secs: Vec<Section> = rows.iter().map(|(s, _)| s.clone()).collect();
+    st.replace(meta, files, &secs)
 }
 
 // --------------------------------------------------------------------- embed
@@ -422,9 +394,14 @@ fn cmd_index(
         .with_context(|| format!("{} not found", root.display()))?;
 
     let (prev, mut rows) = if rebuild {
-        (State::default(), Vec::new())
+        (Meta::default(), Vec::new())
     } else {
         load(&root)?
+    };
+    let prev_files = if rebuild {
+        HashMap::new()
+    } else {
+        Store::open(&root)?.files()?
     };
     // A vector space belongs to one model at one endpoint; mixing them would
     // rank incomparable numbers against each other.
@@ -441,7 +418,7 @@ fn cmd_index(
     // Results land in whatever order the threads finish, which is fine because
     // they are collected into maps and a set.
     let threads = std::thread::available_parallelism().map_or(4, |n| n.get());
-    let found: Mutex<Vec<(String, u64, (u64, i64), bool)>> = Mutex::new(Vec::new());
+    let found: Mutex<Vec<(String, Stamp, bool)>> = Mutex::new(Vec::new());
     let failed: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
     ignore::WalkBuilder::new(&root)
@@ -473,30 +450,31 @@ fn cmd_index(
                 // file whose length and modification time are what the index
                 // recorded keeps the hash recorded beside them and is never
                 // opened. Every other file is read, and its content decides.
-                let now = match entry.metadata() {
-                    Ok(m) => stamp(&m),
+                let meta = match entry.metadata() {
+                    Ok(m) => m,
                     Err(e) => {
                         failed.lock().unwrap().push(format!("{rel}: {e}"));
                         return ignore::WalkState::Continue;
                     }
                 };
-                let recorded = if reuse && prev.stamps.get(&rel) == Some(&now) {
-                    prev.files.get(&rel).copied()
+                let was = if reuse { prev_files.get(&rel) } else { None };
+                let unmoved = was.is_some_and(|w| {
+                    let s = stamp(&meta, w.hash);
+                    s.len == w.len && s.mtime == w.mtime
+                });
+                let h = if unmoved {
+                    was.expect("unmoved implies a recorded stamp").hash
                 } else {
-                    None
-                };
-                let h = match recorded {
-                    Some(h) => h,
-                    None => match fs::read(path) {
+                    match fs::read(path) {
                         Ok(bytes) => hash(&bytes),
                         Err(e) => {
                             failed.lock().unwrap().push(format!("{rel}: {e}"));
                             return ignore::WalkState::Continue;
                         }
-                    },
+                    }
                 };
-                let moved = !reuse || prev.files.get(&rel) != Some(&h);
-                found.lock().unwrap().push((rel, h, now, moved));
+                let moved = was.is_none_or(|w| w.hash != h);
+                found.lock().unwrap().push((rel, stamp(&meta, h), moved));
                 ignore::WalkState::Continue
             })
         });
@@ -506,15 +484,13 @@ fn cmd_index(
         bail!("{} file(s) could not be read, starting with {first}", failed.len());
     }
 
-    let mut current: HashMap<String, u64> = HashMap::new();
-    let mut stamps: HashMap<String, (u64, i64)> = HashMap::new();
+    let mut current: HashMap<String, Stamp> = HashMap::new();
     let mut changed: HashSet<String> = HashSet::new();
-    for (rel, h, now, moved) in found.into_inner().unwrap() {
+    for (rel, st, moved) in found.into_inner().unwrap() {
         if moved {
             changed.insert(rel.clone());
         }
-        current.insert(rel.clone(), h);
-        stamps.insert(rel, now);
+        current.insert(rel, st);
     }
 
     let before = rows.len();
@@ -551,13 +527,12 @@ fn cmd_index(
     let truncated = rows.iter().filter(|(s, _)| s.truncated).count();
     save(
         &root,
-        &State {
+        &Meta {
             model: model.to_string(),
             endpoint: endpoint.to_string(),
             dim,
-            files: current,
-            stamps,
         },
+        &current,
         &rows,
     )?;
 
@@ -586,14 +561,14 @@ fn cmd_query(
     limit: usize,
 ) -> Result<()> {
     let root = root.canonicalize()?;
-    let (state, rows) = load_sections(&root)?;
+    let (meta, rows) = load_sections(&root)?;
     if rows.is_empty() {
         bail!("no index under {} — run `folio index` first", root.display());
     }
     let map = map_vectors(&root)?.context("the index has records but no vectors")?;
     let floats = as_floats(&map)?;
 
-    let q = embed(&state.endpoint, &state.model, &[text.to_string()])?
+    let q = embed(&meta.endpoint, &meta.model, &[text.to_string()])?
         .pop()
         .expect("one input yields one vector");
 
@@ -610,7 +585,7 @@ fn cmd_query(
         .iter()
         .enumerate()
         .filter(|(_, s)| keeps(s, &preds) && !superseded(s))
-        .map(|(i, s)| (dot(&q, &floats[i * state.dim..(i + 1) * state.dim]), s))
+        .map(|(i, s)| (dot(&q, &floats[i * meta.dim..(i + 1) * meta.dim]), s))
         .collect();
     hits.sort_by(|a, b| b.0.total_cmp(&a.0));
 
@@ -644,7 +619,7 @@ fn cmd_query(
 
 fn cmd_status(root: &Path) -> Result<()> {
     let root = root.canonicalize()?;
-    let (state, rows) = load_sections(&root)?;
+    let (meta, rows) = load_sections(&root)?;
     if rows.is_empty() {
         println!("no index under {}", root.display());
         return Ok(());
@@ -654,11 +629,14 @@ fn cmd_status(root: &Path) -> Result<()> {
     keys.sort();
 
     println!("{}", root.display());
-    println!("  files       {}", state.files.len());
+    println!(
+        "  files       {}",
+        rows.iter().map(|s| &s.path).collect::<HashSet<_>>().len()
+    );
     println!("  sections    {}", rows.len());
     println!("  truncated   {}", rows.iter().filter(|s| s.truncated).count());
-    println!("  model       {} @ {}", state.model, state.endpoint);
-    println!("  dim         {}", state.dim);
+    println!("  model       {} @ {}", meta.model, meta.endpoint);
+    println!("  dim         {}", meta.dim);
     println!(
         "  frontmatter {}",
         if keys.is_empty() {

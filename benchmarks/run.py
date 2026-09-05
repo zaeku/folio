@@ -20,6 +20,7 @@ import argparse
 import json
 import os
 import shutil
+import sqlite3
 import statistics
 import subprocess
 import sys
@@ -118,9 +119,16 @@ def shape(root):
 
 
 def records(root):
+    db = sqlite3.connect(root / ".folio" / "index.db")
+    try:
+        rows = db.execute(
+            "SELECT path, start, stop, heading, fm FROM sections ORDER BY slot"
+        ).fetchall()
+    finally:
+        db.close()
     return [
-        json.loads(line)
-        for line in (root / ".folio" / "sections.jsonl").read_text().splitlines()
+        {"path": p, "start": a, "end": b, "heading": h, "fm": json.loads(fm)}
+        for p, a, b, h, fm in rows
     ]
 
 
