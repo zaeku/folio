@@ -153,6 +153,12 @@ producing an index at least as fresh. It refreshes at most once: a row still
 stale afterwards means the files are moving while folio reads them, and saying
 so beats looping.
 
+### From an agent
+
+`SKILL.md` is the same surface written for an agent to act on: the commands, the
+filters, and when to reach for `rg` instead. Point a skill-loading agent at it,
+or copy it into wherever that agent keeps skills.
+
 ## What it does not do
 
 - **Exact matching.** Use `rg`. It is exhaustive and folio is not, and a lexical
