@@ -23,6 +23,21 @@ use std::time::UNIX_EPOCH;
 
 const BATCH: usize = 32;
 
+/// The default character budget per section. Set below the 8192-token context
+/// of the models folio is measured on rather than at a round number.
+const MAX_CHARS: usize = 8_000;
+
+/// The budget to re-index with, given what the index recorded.
+///
+/// An index written before folio recorded the budget has none, which reads back
+/// as zero. Zero is not a budget: taken literally it truncates every section to
+/// the empty string and embeds that, which is a silent and total corruption of
+/// the index rather than an error. So it means "not recorded" and nothing else,
+/// and `--max-chars` will not accept it.
+fn budget(recorded: usize) -> usize {
+    if recorded == 0 { MAX_CHARS } else { recorded }
+}
+
 #[derive(Parser)]
 #[command(name = "folio", version, about, long_about = None)]
 struct Cli {
@@ -53,7 +68,7 @@ enum Cmd {
         /// character — so this default is set below the 8192-token context of
         /// the models folio is measured on rather than at a round number. Raise
         /// it for a longer-context model, and read the truncated count.
-        #[arg(long, default_value_t = 8_000)]
+        #[arg(long, default_value_t = MAX_CHARS, value_parser = at_least_one)]
         max_chars: usize,
         /// Discard the existing index instead of updating it.
         #[arg(long)]
@@ -84,12 +99,32 @@ enum Cmd {
         identity: String,
         #[arg(long, short, default_value_t = 5)]
         limit: usize,
+        /// Answer from the index as it stands, without re-indexing first.
+        ///
+        /// By default a query stats the files behind the rows it is about to
+        /// return, and re-indexes if any of them has moved. That is the case
+        /// where a stale index does harm rather than waste: the line range it
+        /// names has shifted, so the caller reads the wrong lines. It costs one
+        /// stat per returned row and nothing else when nothing has changed.
+        ///
+        /// The stat happens either way. A row whose file has moved is marked
+        /// `(stale)` whether folio was allowed to fix it or not.
+        #[arg(long)]
+        no_refresh: bool,
     },
     /// Report what the index covers.
     Status {
         #[arg(default_value = ".")]
         root: PathBuf,
     },
+}
+
+fn at_least_one(s: &str) -> Result<usize, String> {
+    match s.parse::<usize>() {
+        Ok(0) => Err("a section budget of 0 characters would embed nothing".into()),
+        Ok(n) => Ok(n),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 fn main() -> Result<()> {
@@ -108,7 +143,16 @@ fn main() -> Result<()> {
             exclude_pointed_by,
             identity,
             limit,
-        } => cmd_query(&root, &text, &wheres, &exclude_pointed_by, &identity, limit),
+            no_refresh,
+        } => cmd_query(
+            &root,
+            &text,
+            &wheres,
+            &exclude_pointed_by,
+            &identity,
+            limit,
+            !no_refresh,
+        ),
         Cmd::Status { root } => cmd_status(&root),
     }
 }
@@ -367,6 +411,9 @@ fn reindex(
     let root = root
         .canonicalize()
         .with_context(|| format!("{} not found", root.display()))?;
+    if max_chars == 0 {
+        bail!("a section budget of 0 characters would embed nothing");
+    }
     let st = Store::open(&root)?;
     if st.compacting()? {
         bail!(
@@ -518,6 +565,7 @@ fn reindex(
             model: model.to_string(),
             endpoint: endpoint.to_string(),
             dim,
+            max_chars,
         },
         &current,
         &retired_paths,
@@ -663,43 +711,28 @@ fn compact(root: &Path, st: &Store, dim: usize, live: &[usize]) -> Result<usize>
     Ok(before - live.len())
 }
 
-fn cmd_query(
-    root: &Path,
-    text: &str,
-    wheres: &[String],
+/// The rows a query keeps, best first, and how many the anti-join dropped.
+fn rank(
+    st: &Store,
+    meta: &store::Meta,
+    floats: &[f32],
+    q: &[f32],
+    preds: &[Pred],
     exclude_pointed_by: &[String],
     identity: &str,
-    limit: usize,
-) -> Result<()> {
-    let root = root.canonicalize()?;
-    let Some((st, meta)) = open_index(&root)? else {
-        bail!("no index under {} — run `folio index` first", root.display());
-    };
-    let map = map_vectors(&root)?.context("the index has records but no vectors")?;
-    let floats = as_floats(&map)?;
-
-    let q = embed(&meta.endpoint, &meta.model, &[text.to_string()])?
-        .pop()
-        .expect("one input yields one vector");
-    let score = |slot: usize| dot(&q, &floats[slot * meta.dim..(slot + 1) * meta.dim]);
+) -> Result<(Vec<(f32, usize)>, usize)> {
+    let score = |slot: usize| dot(q, &floats[slot * meta.dim..(slot + 1) * meta.dim]);
 
     // Frontmatter is read only when something decides on it. Without a filter
     // and without a join, ranking needs the vectors and the list of rows that
     // are still live, and nothing else: on 119,359 sections that is 10 ms of
     // slots against 180 ms of whole records.
-    let preds = parse_preds(wheres);
     let (mut hits, dropped): (Vec<(f32, usize)>, usize) =
         if preds.is_empty() && exclude_pointed_by.is_empty() {
             let slots = st.slots()?;
-            if slots.is_empty() {
-                bail!("no index under {} — run `folio index` first", root.display());
-            }
             (slots.into_iter().map(|slot| (score(slot), slot)).collect(), 0)
         } else {
             let rows = st.slots_with_fm()?;
-            if rows.is_empty() {
-                bail!("no index under {} — run `folio index` first", root.display());
-            }
             // The right side of the anti-join is still built from every row in
             // the index, which is what `--exclude-pointed-by` means.
             let pointed = pointed_at(&rows, exclude_pointed_by);
@@ -710,7 +743,7 @@ fn cmd_query(
                         .is_some_and(|v| pointed.contains(&scalar_text(v)))
             };
             let kept: Vec<&(usize, Map<String, Value>)> =
-                rows.iter().filter(|(_, fm)| keeps(fm, &preds)).collect();
+                rows.iter().filter(|(_, fm)| keeps(fm, preds)).collect();
             let dropped = kept.iter().filter(|(_, fm)| superseded(fm)).count();
             (
                 kept.iter()
@@ -721,30 +754,130 @@ fn cmd_query(
             )
         };
     hits.sort_by(|a, b| b.0.total_cmp(&a.0));
+    Ok((hits, dropped))
+}
 
-    // Reported before the empty case, so that "nothing matched" is never the
-    // only thing a caller hears when the anti-join is what emptied the result.
-    if dropped > 0 {
-        println!(
-            "({dropped} section(s) dropped as pointed at by {})",
-            exclude_pointed_by.join(", ")
-        );
+/// Which of `sections`' files no longer look the way the index recorded them.
+///
+/// Only the files behind the rows about to be returned, because those are the
+/// ones a caller is about to open. A file that changed and did not surface
+/// costs a candidate, which the index was always allowed to cost.
+fn moved_since_indexed(st: &Store, root: &Path, sections: &[Section]) -> Result<HashSet<String>> {
+    let mut out = HashSet::new();
+    for path in sections.iter().map(|s| &s.path).collect::<BTreeSet<_>>() {
+        let Some(was) = st.stamp_of(path)? else {
+            out.insert(path.clone());
+            continue;
+        };
+        match fs::metadata(root.join(path)) {
+            Ok(m) => {
+                let now = stamp(&m, was.hash);
+                if now.len != was.len || now.mtime != was.mtime {
+                    out.insert(path.clone());
+                }
+            }
+            Err(_) => {
+                out.insert(path.clone());
+            }
+        }
     }
-    if hits.is_empty() {
-        println!("no section passed the filter");
+    Ok(out)
+}
+
+fn cmd_query(
+    root: &Path,
+    text: &str,
+    wheres: &[String],
+    exclude_pointed_by: &[String],
+    identity: &str,
+    limit: usize,
+    refresh: bool,
+) -> Result<()> {
+    let root = root.canonicalize()?;
+    let preds = parse_preds(wheres);
+    let mut q: Option<Vec<f32>> = None;
+    // At most one refresh. A result still stale after re-indexing means the
+    // files are moving while folio reads them, and saying so beats looping.
+    let mut refreshed = false;
+
+    loop {
+        let Some((st, meta)) = open_index(&root)? else {
+            bail!("no index under {} — run `folio index` first", root.display());
+        };
+        let map = map_vectors(&root)?.context("the index has records but no vectors")?;
+        let floats = as_floats(&map)?;
+        if q.is_none() {
+            q = Some(
+                embed(&meta.endpoint, &meta.model, &[text.to_string()])?
+                    .pop()
+                    .expect("one input yields one vector"),
+            );
+        }
+        let q = q.as_deref().expect("embedded above");
+
+        let (hits, dropped) = rank(
+            &st,
+            &meta,
+            floats,
+            q,
+            &preds,
+            exclude_pointed_by,
+            identity,
+        )?;
+        let top: Vec<usize> = hits.iter().take(limit).map(|(_, slot)| *slot).collect();
+        let rows = st.hydrate(&top)?;
+
+        // Always asked, whatever `refresh` says: one stat per returned row is
+        // free, and a caller told to answer from the index as it stands is the
+        // one who most needs to know where it does not.
+        let stale = moved_since_indexed(&st, &root, &rows)?;
+        if refresh && !refreshed && !stale.is_empty() {
+            drop(map);
+            drop(st);
+            // Declined rather than waited: another folio is already writing,
+            // and its result will be at least as fresh as this one's would be.
+            if let Some(r) = reindex(
+                &root,
+                &meta.endpoint,
+                &meta.model,
+                budget(meta.max_chars),
+                false,
+                std::time::Duration::ZERO,
+            )? {
+                println!(
+                    "({} of the files behind this result had changed; {} file(s) re-embedded before answering)",
+                    stale.len(),
+                    r.reembedded
+                );
+                refreshed = true;
+                continue;
+            }
+        }
+
+        // Reported before the empty case, so that "nothing matched" is never the
+        // only thing a caller hears when the anti-join is what emptied the result.
+        if dropped > 0 {
+            println!(
+                "({dropped} section(s) dropped as pointed at by {})",
+                exclude_pointed_by.join(", ")
+            );
+        }
+        if hits.is_empty() {
+            println!("no section passed the filter");
+            return Ok(());
+        }
+        for (i, (s, (score, _))) in rows.iter().zip(&hits).enumerate() {
+            // A row still stale here is one the refresh could not take, so the
+            // line range may have moved. Said out loud rather than left to the
+            // caller to discover by reading the wrong lines.
+            let mark = if stale.contains(&s.path) { "  (stale)" } else { "" };
+            println!("#{}  {score:.3}  {}:{}-{}{mark}", i + 1, s.path, s.start, s.end);
+            let mut trail = s.breadcrumb.clone();
+            trail.push(s.heading.clone().unwrap_or_else(|| "(preamble)".to_string()));
+            println!("        {}", trail.join(" > "));
+        }
         return Ok(());
     }
-
-    // Only the rows that won are read whole. The heading trail and the line
-    // range are printed, never ranked on.
-    let top: Vec<usize> = hits.iter().take(limit).map(|(_, slot)| *slot).collect();
-    for (i, (s, (score, _))) in st.hydrate(&top)?.iter().zip(&hits).enumerate() {
-        println!("#{}  {score:.3}  {}:{}-{}", i + 1, s.path, s.start, s.end);
-        let mut trail = s.breadcrumb.clone();
-        trail.push(s.heading.clone().unwrap_or_else(|| "(preamble)".to_string()));
-        println!("        {}", trail.join(" > "));
-    }
-    Ok(())
 }
 
 fn cmd_status(root: &Path) -> Result<()> {
@@ -789,6 +922,19 @@ mod tests {
 
     fn row(fm: Value) -> (usize, Map<String, Value>) {
         (0, fm.as_object().expect("an object").clone())
+    }
+
+    #[test]
+    fn an_unrecorded_budget_is_not_a_budget_of_zero() {
+        // The case: an index written before folio recorded the budget reads
+        // back as zero, and a refresh took it literally, truncated every
+        // section of the file it was refreshing to nothing, and embedded the
+        // empty string. Fifteen sections of MDN went silently blank that way.
+        assert_eq!(budget(0), MAX_CHARS);
+        assert_eq!(budget(1), 1);
+        assert_eq!(budget(12_000), 12_000);
+        assert!(at_least_one("0").is_err(), "and nobody can ask for it on purpose");
+        assert_eq!(at_least_one("1"), Ok(1));
     }
 
     #[test]

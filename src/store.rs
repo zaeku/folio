@@ -33,6 +33,10 @@ pub struct Meta {
     pub model: String,
     pub endpoint: String,
     pub dim: usize,
+    /// The character budget the index was built with, kept so that a re-index
+    /// folio starts on its own uses the one the user chose rather than a
+    /// default they never saw.
+    pub max_chars: usize,
 }
 
 /// What the index covers.
@@ -143,6 +147,7 @@ impl Store {
                 "model" => m.model = v,
                 "endpoint" => m.endpoint = v,
                 "dim" => m.dim = v.parse().unwrap_or(0),
+                "max_chars" => m.max_chars = v.parse().unwrap_or(0),
                 _ => {}
             }
         }
@@ -226,6 +231,24 @@ impl Store {
             ));
         }
         Ok(out)
+    }
+
+    /// What the index recorded about one file, for asking whether it has moved
+    /// since. One row, so that checking the handful of files behind a result
+    /// does not read the stamps of every file in the corpus.
+    pub fn stamp_of(&self, path: &str) -> Result<Option<Stamp>> {
+        let mut q = self
+            .conn
+            .prepare("SELECT hash, len, mtime FROM files WHERE path = ?1")?;
+        let mut rows = q.query(params![path])?;
+        Ok(match rows.next()? {
+            Some(r) => Some(Stamp {
+                hash: r.get::<_, i64>(0)? as u64,
+                len: r.get::<_, i64>(1)? as u64,
+                mtime: r.get(2)?,
+            }),
+            None => None,
+        })
     }
 
     /// The full records for the slots a query settled on, in the order asked.
@@ -327,6 +350,7 @@ impl Store {
             ins.execute(params!["model", meta.model])?;
             ins.execute(params!["endpoint", meta.endpoint])?;
             ins.execute(params!["dim", meta.dim.to_string()])?;
+            ins.execute(params!["max_chars", meta.max_chars.to_string()])?;
         }
         Ok(retired)
     }
@@ -381,7 +405,7 @@ mod tests {
     fn a_record_round_trips_without_its_prose() {
         let dir = tempdir();
         let mut st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         let files = HashMap::from([(
             "a.md".to_string(),
             Stamp { hash: u64::MAX, len: 12, mtime: -1 },
@@ -419,7 +443,7 @@ mod tests {
     fn a_retired_record_leaves_its_row_behind() {
         let dir = tempdir();
         let mut st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         let none = HashSet::new();
         st.apply(&meta, &HashMap::new(), &none,
                  &[(0, section("a.md", 1)), (1, section("b.md", 1))]).unwrap();
@@ -449,7 +473,7 @@ mod tests {
         // A reader is not shut out while a writer works.
         assert_eq!(b.high_water().unwrap(), 0);
 
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         a.apply(&meta, &HashMap::new(), &HashSet::new(), &[(0, section("a.md", 1))])
             .unwrap();
         assert_eq!(b.slots().unwrap(), Vec::<usize>::new(), "and does not see it yet");
@@ -464,7 +488,7 @@ mod tests {
     fn compaction_renumbers_the_survivors_and_clears_its_flag() {
         let dir = tempdir();
         let mut st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         st.apply(&meta, &HashMap::new(), &HashSet::new(),
                  &[(1, section("b.md", 1)), (4, section("c.md", 1)), (9, section("d.md", 1))])
             .unwrap();
