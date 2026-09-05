@@ -88,8 +88,8 @@ change to folio. That is the whole reason the boundary is HTTP.
 
 **Jujutsu, colocated.** `.jj` and `.git` coexist. Measured on **jj 0.44.0**.
 
-Read the `use-jujutsu-safely` skill before an unfamiliar command. The rules that
-cost something:
+Read `jj help <command>` before an unfamiliar command. The rules that cost
+something here:
 
 - **Record finished work with `jj commit -m`, not `jj describe`.** `jj commit`
   describes `@` and opens a new empty change, so your next edit lands somewhere
@@ -106,9 +106,6 @@ cost something:
   effect of a command that may reset the working copy in the same breath.
 - Do not discard existing changes. Existing changes belong to the user unless a
   task identifies them as agent changes.
-
-`.gitignore` excludes `.folio/`. An index is derived from the corpus and belongs
-to whoever built it, never to history.
 
 ## Language
 

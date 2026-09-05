@@ -14,6 +14,16 @@ folio ranks markdown heading sections by meaning and names where they sit. It
 returns references, never bodies: reading the range it names is your next step,
 and it reads the file, so a result is a candidate rather than a quotation.
 
+## Install
+
+```sh
+cargo install --path .        # from a clone of the folio repository
+```
+
+`folio index` writes the index to `.folio/` under the root it indexes. Add
+`.folio/` to that corpus's ignore file before you index a repository. An index
+is derived from the corpus and belongs to whoever built it, never to history.
+
 ## Before it can answer
 
 folio contains no inference code. It calls an OpenAI-compatible embeddings
