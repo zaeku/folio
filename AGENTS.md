@@ -52,11 +52,20 @@ every adoption and every reference to one would rot silently.
 entry is left above, and it is the one nothing executable can check: whether a
 number was written down honestly.
 
-`decisions/index.md` is where the rest went, and it is now also where decisions
-born in the layer rather than here appear. A decision does not have to pass
-through this file to exist; a rule someone wrote here does have to leave it.
-Read that index rather than listing decisions again anywhere else — a second
-list is a second thing to keep true.
+**No list of decisions is kept anywhere.** `decisions/live/` is the list: one
+file per decision, named by its id and title, and `cargo run --bin check` there
+derives the rest. §2 allows the code layer to point at the decision layer and
+forbids the reverse, and it says the decision → fence relationship is derived by
+scanning rather than stored — so a written index would be a stored reverse
+reference, and a generated committed one would be the same thing rebuilt on
+every run. A table of them used to live in this file and was already wrong twice
+over by the time it was removed.
+
+A decision does not have to pass through this file to exist. A rule someone
+wrote here does have to leave it when it is adopted, and how to find which
+decision a departed rule became is §9's question, answered by
+`jj log -r 'diff_contains("D-...")' -p` in whichever layer you are standing in:
+the change that deletes the rule is the mapping.
 
 **What nothing can execute is held by bytes instead.** Some decisions carry
 `fence: none`, because no black-box test reaches them — an absence cannot be
