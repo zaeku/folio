@@ -6,9 +6,9 @@ boundaries this project defends. It is not a description of the product — read
 
 **Terms.** *Section* means one markdown heading span, the unit folio indexes and
 returns. *Reference* means the `path:start-end` triple plus frontmatter that a
-section record holds; the section's text is never stored. *Endpoint* means the
-OpenAI-compatible `/v1/embeddings` service folio calls. *Corpus* means the tree
-folio indexes.
+section record holds; folio never stores the section's text. *Endpoint* means
+the OpenAI-compatible `/v1/embeddings` service folio calls. *Corpus* means the
+tree folio indexes.
 
 This table decides where new code goes.
 
@@ -31,8 +31,8 @@ same place you use it. An undated number is a guess to the next reader.
 ## Decision layer
 
 `decisions/` is a separate repository carrying its own toolchain, so that a clone
-of it alone can verify itself. It is not published, and it is ignored here, so
-the §references below reach it only from a machine that has it.
+of it alone can verify itself. No one has published it, and this repository
+ignores it, so the §references below reach it only from a machine that has it.
 `decisions/SPEC.md` is its charter: it defines what a decision document is, what
 a fence is, and the checks that enforce both.
 Read §7 and §12 before you add a decision or a fence.
@@ -42,32 +42,32 @@ to remember. A decision in `live/` with a fence in `fences/` is a rule that fail
 a check when it is broken. Anything mechanically checkable should end up there,
 and this file should end up holding only what cannot be.
 
-**Adopting a rule means writing its fence in the same change** (§8 Adopt), and
-deleting the rule from this file. A rule kept in both places drifts, and the
-copy without the fence is the one that goes stale.
+**Adopting a rule means writing its fence in the same change** (§8 Adopt).
+Delete the rule from this file in that same change. A rule kept in both places
+drifts, and the copy without the fence is the one that goes stale.
 
 **A rule is identified by its opening sentence, not by a number.** Rules leave
 this file one at a time as they are adopted, so a position would shift under
 every adoption and every reference to one would rot silently.
 
-**`intake/` is empty and every rule that could become a decision has.** One
-entry is left above, and it is the one nothing executable can check: whether a
-number was written down honestly.
+**`intake/` is empty, and every rule that could become a decision has become
+one.** One entry is left above, and it is the one nothing executable can check:
+whether a number was written down honestly.
 
 **No list of decisions is kept anywhere.** `decisions/live/` is the list: one
 file per decision, named by its id and title, and `cargo run --bin check` there
 derives the rest. §2 allows the code layer to point at the decision layer and
-forbids the reverse, and it says the decision → fence relationship is derived by
-scanning rather than stored — so a written index would be a stored reverse
-reference, and a generated committed one would be the same thing rebuilt on
+forbids the reverse. It also says the decision → fence relationship is derived
+by scanning rather than stored. A written index would therefore be a stored
+reverse reference. A generated committed one would be the same thing rebuilt on
 every run. A table of them used to live in this file and was already wrong twice
 over by the time it was removed.
 
 A decision does not have to pass through this file to exist. A rule someone
-wrote here does have to leave it when it is adopted, and how to find which
-decision a departed rule became is §9's question, answered by
-`jj log -r 'diff_contains("D-...")' -p` in whichever layer you are standing in:
-the change that deletes the rule is the mapping.
+wrote here does have to leave it when it is adopted. To find which decision a
+departed rule became (§9), run `jj log -r 'diff_contains("D-...")' -p` in
+whichever layer you are standing in. The change that deletes the rule is the
+mapping.
 
 **What nothing can execute is held by bytes instead.** Some decisions carry
 `fence: none`, because no black-box test reaches them — an absence cannot be
@@ -75,9 +75,8 @@ proved by running something, and a saving that shows only as latency does not
 show in a fence's fixture at all. §4 requires each to record in `verified:` the
 SHA-256 of its body at adoption, so the check reports when a decision drifts out
 from under what someone read. It does not judge the prose, and it does not print
-the hash that would silence it —
-`cargo run --bin hash <path>` computes one, and running it deliberately is the
-act of re-verifying.
+the hash that would silence it. Run `cargo run --bin hash <path>` to compute
+one. Running it deliberately is the act of re-verifying.
 
 **Date every measured fact you rely on** is not a decision. It is a
 documentation discipline, and nothing executable checks that a number was
@@ -103,12 +102,16 @@ binary answered rather than about the code in front of you. It leads rather than
 trails so that a multi-line message from the tool cannot push it out of sight.
 
 **A fence that cannot read the record store exits 2, not 1.** Reading
-`.folio/index.db` is how most fences see what folio indexed, and a folio that
-writes something else has not violated *their* decision — it has made them
-unevaluable. `vectors-out-of-the-database` and `no-ann-index` are the fences
-that guard the store's shape, and they are the ones that fail. That division is
-what keeps a changed store format from reporting as eight simultaneous
-violations.
+`.folio/index.db` is how most fences see what folio indexed. A folio that writes
+something else has not violated *their* decision — it has made them unevaluable.
+So a store folio no longer writes splits the fences in two:
+
+- A fence that reads the store only to reach its own subject: exit 2.
+- `vectors-out-of-the-database` and `no-ann-index`: fail, because the store's
+  shape is the decision they guard.
+
+That division is what keeps a changed store format from reporting as eight
+simultaneous violations.
 
 **A folio fence needs a corpus and an endpoint.** folio does nothing without
 both, so a fence builds its own fixture corpus in a temporary directory, and
@@ -127,8 +130,8 @@ traceable to an entry in it.
 pinned by commit and drives the `folio` command on `PATH`, so anyone can rerun
 it. `benchmarks/README.md` says what those numbers are and, at more length, what
 they are not: contamination is measured and ranking quality deliberately is not.
-`benchmarks/reports/` is scratch and is not committed; a run worth keeping goes
-into `docs/measurements.md` under its own date.
+`.gitignore` excludes `benchmarks/reports/`, which is scratch. A run worth
+keeping goes into `docs/measurements.md` under its own date.
 
 The 2026-09-04 entries predate that harness and have no committed artifact. They
 are the record of how the model and the design were chosen, and they say so.
@@ -138,7 +141,7 @@ Two things are still unmeasured and named in that file. Do not assume either.
 ## Toolchain
 
 Nix declares the tools on this machine. Do not install a tool globally to make a
-task work; add it to the flake that needs it, so the next reader gets it.
+task work. Add it to the flake that needs it, so the next reader gets it.
 
 **The decision layer carries its own flake.** `decisions/flake.nix` declares
 `cargo`, `rustc`, `jujutsu` and `git`. It stays independent of this layer so
@@ -146,8 +149,8 @@ that a clone of `decisions/` alone can still verify itself. Enter it with `nix
 develop` from inside `decisions/`, or run `direnv allow` there once.
 
 **The code layer has no flake yet, and `llama-server` sits outside Nix.** It was
-installed with `brew install llama.cpp` on 2026-09-04, and the machine's Nix
-bridge rebuild failed and rolled back, so the binary at
+installed with `brew install llama.cpp` on 2026-09-04, and the rebuild of the
+machine's Nix bridge failed and rolled back, so the binary at
 `/opt/homebrew/bin/llama-server` is not in the declarative configuration and may
 not survive the next rebuild. Write the flake when it declares something real:
 `rustc`, `cargo`, a C compiler for the bundled SQLite, and whichever embedding
@@ -181,26 +184,26 @@ cost something:
 - **Pass `-r` to `jj new` every time.** `@` is per workspace, and the default
   parent is wrong as soon as a second workspace exists.
 - **`jj describe` on a change that already has a description replaces it
-  silently.** Check `jj log` first, and resolve a revset to a commit id before
-  passing it to `-r`.
+  silently.** Read `jj log` first. Resolve a revset to a commit id before you
+  pass it to `-r`.
 - **`jj util snapshot` when a session in a workspace ends.** It records the
   working copy and does nothing else; `jj status` also snapshots, but as a side
   effect of a command that may reset the working copy in the same breath.
 - Do not discard existing changes. Existing changes belong to the user unless a
   task identifies them as agent changes.
 
-`.folio/` is ignored. An index is derived from the corpus and belongs to whoever
-built it, never to history.
+`.gitignore` excludes `.folio/`. An index is derived from the corpus and belongs
+to whoever built it, never to history.
 
 ## Language
 
-English for documentation, project artifacts, code comments, and change
-descriptions. Reply to the user in the language of their prompt.
+Write documentation, project artifacts, code comments, and change descriptions
+in English. Reply to the user in the language of their prompt.
 
 ## Reference paths
 
 `docs/references.md` names the prior art this project was measured against, the
 Open Knowledge Format specification behind the frontmatter rules, and the
 corpora — the two public ones the benchmarks pin, and the two private ones the
-design was chosen on. The private pair are Jujutsu working copies; never write
-an index into one without an ignore entry first.
+design was chosen on. The private pair are Jujutsu working copies. Add an
+ignore entry before you write an index into one.
