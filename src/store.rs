@@ -404,7 +404,7 @@ mod tests {
     #[test]
     fn a_record_round_trips_without_its_prose() {
         let dir = tempdir();
-        let mut st = Store::open(&dir).unwrap();
+        let st = Store::open(&dir).unwrap();
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         let files = HashMap::from([(
             "a.md".to_string(),
@@ -442,7 +442,7 @@ mod tests {
     #[test]
     fn a_retired_record_leaves_its_row_behind() {
         let dir = tempdir();
-        let mut st = Store::open(&dir).unwrap();
+        let st = Store::open(&dir).unwrap();
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         let none = HashSet::new();
         st.apply(&meta, &HashMap::new(), &none,
@@ -487,7 +487,7 @@ mod tests {
     #[test]
     fn compaction_renumbers_the_survivors_and_clears_its_flag() {
         let dir = tempdir();
-        let mut st = Store::open(&dir).unwrap();
+        let st = Store::open(&dir).unwrap();
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         st.apply(&meta, &HashMap::new(), &HashSet::new(),
                  &[(1, section("b.md", 1)), (4, section("c.md", 1)), (9, section("d.md", 1))])
