@@ -225,6 +225,36 @@ def measure(name, spec, model, keep):
         _, seconds = timed(lambda q=q: hits(root, q))
         latencies.append(seconds)
 
+    # Before the edit below, so that the ranges in `retired` are the ranges the
+    # index holds. An edit above a section moves every later section in its
+    # file, and a key that no longer matches would be counted as clean.
+    contamination = {}
+    retired = deprecated_keys(rows)
+    if retired:
+        total = surfaced = 0
+        for q in queries:
+            got = hits(root, q)
+            total += len(got)
+            surfaced += sum(1 for h in got if h in retired)
+        filtered_total = filtered_surfaced = 0
+        for q in queries:
+            got = hits(root, q, ("--where", "status!=deprecated"))
+            filtered_total += len(got)
+            filtered_surfaced += sum(1 for h in got if h in retired)
+        contamination = {
+            "deprecated_sections": len(retired),
+            "deprecated_share_of_corpus": round(100 * len(retired) / len(rows), 2),
+            "contamination_pct": round(100 * surfaced / max(total, 1), 2),
+            "contamination_filtered_pct": round(
+                100 * filtered_surfaced / max(filtered_total, 1), 2
+            ),
+        }
+        print(
+            f"  deprecated: {contamination['deprecated_share_of_corpus']}% of the corpus, "
+            f"{contamination['contamination_pct']}% of hits, "
+            f"{contamination['contamination_filtered_pct']}% once filtered"
+        )
+
     # One file changed, so the whole file is re-embedded and nothing else is.
     victim = next(root.rglob("*.md"))
     victim.write_text(victim.read_text() + "\n<!-- benchmark -->\n")
@@ -265,31 +295,9 @@ def measure(name, spec, model, keep):
         "max_chars": MAX_CHARS,
         "model": model or "(endpoint default)",
         "endpoint": os.environ.get("FOLIO_ENDPOINT", "(folio default)"),
+        **contamination,
     }
 
-    retired = deprecated_keys(rows)
-    if retired:
-        total = surfaced = 0
-        for q in queries:
-            got = hits(root, q)
-            total += len(got)
-            surfaced += sum(1 for h in got if h in retired)
-        filtered_total = filtered_surfaced = 0
-        for q in queries:
-            got = hits(root, q, ("--where", "status!=deprecated"))
-            filtered_total += len(got)
-            filtered_surfaced += sum(1 for h in got if h in retired)
-        report["deprecated_sections"] = len(retired)
-        report["deprecated_share_of_corpus"] = round(100 * len(retired) / len(rows), 2)
-        report["contamination_pct"] = round(100 * surfaced / max(total, 1), 2)
-        report["contamination_filtered_pct"] = round(
-            100 * filtered_surfaced / max(filtered_total, 1), 2
-        )
-        print(
-            f"  deprecated: {report['deprecated_share_of_corpus']}% of the corpus, "
-            f"{report['contamination_pct']}% of hits, "
-            f"{report['contamination_filtered_pct']}% once filtered"
-        )
     return report
 
 

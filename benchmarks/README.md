@@ -78,15 +78,15 @@ The filtered figure should be zero. It is reported rather than asserted, because
 a filter that quietly stopped working would otherwise look like a corpus that
 had cleaned itself up.
 
-**Read the unfiltered figure as a range.** A run reports one number, and three
-runs of the same seeded queries over the same pinned corpus gave 4.0%, 2.5% and
-5.75%. Ranking is deterministic against a given index — two sweeps of the same
-index return identical hits — so the spread is the index: every run re-embeds
-the corpus, llama.cpp on Metal does not reduce in a fixed order, and near-ties
-swap at the top-ten boundary. 400 hits also arrive in 40 clusters rather than as
-400 independent draws, so a handful of queries landing differently moves the
-whole figure. `../docs/measurements.md` carries all three. The filtered figure
-was zero in every one, and that is the one the filter is judged on.
+**The unfiltered figure needed 400 queries to mean anything.** At 40 its 95%
+interval was 9.5 points wide around a value near 4%, and four runs of the same
+seeded queries over the same pinned corpus returned 4.0%, 2.5%, 5.75% and 3.0%.
+400 hits are not 400 draws: they arrive in clusters, one per query, because a
+query about a retired API contributes several deprecated hits at once. The
+interval narrows as 1/sqrt(n), so `QUERY_COUNT` is 400 and the interval is 3.0
+points, which is finally narrower than the thing being measured.
+`../docs/measurements.md` carries the table. The filtered figure was zero in
+every run, and that is the one the filter is judged on.
 
 ## The two corpora, and why both
 
