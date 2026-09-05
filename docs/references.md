@@ -24,12 +24,9 @@ lifecycle" for the `status`, `stale_after`, `verified` and `generated` families
 before you touch filtering. The spec is the only source of truth for OKF; never
 author against a remembered template.
 
-**The decision layer.** `decisions/` is a separate repository. `decisions/SPEC.md`
-is its charter. Read §4 for a decision document's four frontmatter keys, §5 for
-what a fence and a tripwire are and the three exit values they share, §7 for the
-checks, and §8 for the six lifecycle transitions. `cargo run --bin check` from
-inside `decisions/` runs the §7 checks; `cargo test` there drives one fixture
-layer carrying every §7 defect at once.
+**The decision layer.** `decisions/` is a separate repository, and it is not
+published. Its own `AGENTS.md` and `SPEC.md` say what a decision document is,
+what a fence is, and how to check both.
 
 **The public corpora, which every current number comes from.** Fetched and
 pinned by `benchmarks/run.py`, unpacked under `benchmarks/corpora/`, which is

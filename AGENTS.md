@@ -30,94 +30,14 @@ same place you use it. An undated number is a guess to the next reader.
 
 ## Decision layer
 
-`decisions/` is a separate repository carrying its own toolchain, so that a clone
-of it alone can verify itself. No one has published it, and this repository
-ignores it, so the §references below reach it only from a machine that has it.
-`decisions/SPEC.md` is its charter: it defines what a decision document is, what
-a fence is, and the checks that enforce both.
-Read §7 and §12 before you add a decision or a fence.
+`decisions/` is a separate, unpublished repository. It holds every rule of this
+project that a check can reach: each rule is a document paired with a fence, and
+the fence fails when the rule is broken. That repository carries its own
+`AGENTS.md`, so nothing about working in it is repeated here.
 
-**What belongs there rather than here.** A hard rule above is a rule someone has
-to remember. A decision in `live/` with a fence in `fences/` is a rule that fails
-a check when it is broken. Anything mechanically checkable should end up there,
-and this file should end up holding only what cannot be.
-
-**Adopting a rule means writing its fence in the same change** (§8 Adopt).
-Delete the rule from this file in that same change. A rule kept in both places
-drifts, and the copy without the fence is the one that goes stale.
-
-**A rule is identified by its opening sentence, not by a number.** Rules leave
-this file one at a time as they are adopted, so a position would shift under
-every adoption and every reference to one would rot silently.
-
-**`intake/` is empty, and every rule that could become a decision has become
-one.** One entry is left above, and it is the one nothing executable can check:
-whether a number was written down honestly.
-
-**No list of decisions is kept anywhere.** `decisions/live/` is the list: one
-file per decision, named by its id and title, and `cargo run --bin check` there
-derives the rest. §2 allows the code layer to point at the decision layer and
-forbids the reverse. It also says the decision → fence relationship is derived
-by scanning rather than stored. A written index would therefore be a stored
-reverse reference. A generated committed one would be the same thing rebuilt on
-every run. A table of them used to live in this file and was already wrong twice
-over by the time it was removed.
-
-A decision does not have to pass through this file to exist. A rule someone
-wrote here does have to leave it when it is adopted. To find which decision a
-departed rule became (§9), run `jj log -r 'diff_contains("D-...")' -p` in
-whichever layer you are standing in. The change that deletes the rule is the
-mapping.
-
-**What nothing can execute is held by bytes instead.** Some decisions carry
-`fence: none`, because no black-box test reaches them — an absence cannot be
-proved by running something, and a saving that shows only as latency does not
-show in a fence's fixture at all. §4 requires each to record in `verified:` the
-SHA-256 of its body at adoption, so the check reports when a decision drifts out
-from under what someone read. It does not judge the prose, and it does not print
-the hash that would silence it. Run `cargo run --bin hash <path>` to compute
-one. Running it deliberately is the act of re-verifying.
-
-**Date every measured fact you rely on** is not a decision. It is a
-documentation discipline, and nothing executable checks that a number was
-written down honestly. It stays in this file for good.
-
-**How a fence reaches folio.** §5 requires a fence to test the code layer as a
-black box, through whatever it exposes to anyone else. For folio that is the
-`folio` command on `PATH`, its exit codes and output, and the files it writes
-under `.folio/`. A fence that reads `src/`, names a Cargo target, or calls a Rust
-function is not a black-box test whatever its exit code says; that test belongs
-in the code layer.
-
-**`check` tests what you published, not what you built.** §5 reaches folio
-through the `folio` command on `PATH`; `target/release/` is not on it. Run
-`cargo install --path .` before `cargo run --bin check`, or a fence will
-correctly report that the binary someone could actually run does not hold the
-decision you just wrote. This has happened: a `folio` eight hours old failed
-eight fences, and the fences were right.
-
-**A fence names the binary it tested.** Every `fail` leads with
-`$(command -v folio)`, because the failure that matters is often about which
-binary answered rather than about the code in front of you. It leads rather than
-trails so that a multi-line message from the tool cannot push it out of sight.
-
-**A fence that cannot read the record store exits 2, not 1.** Reading
-`.folio/index.db` is how most fences see what folio indexed. A folio that writes
-something else has not violated *their* decision — it has made them unevaluable.
-So a store folio no longer writes splits the fences in two:
-
-- A fence that reads the store only to reach its own subject: exit 2.
-- `vectors-out-of-the-database` and `no-ann-index`: fail, because the store's
-  shape is the decision they guard.
-
-That division is what keeps a changed store format from reporting as eight
-simultaneous violations.
-
-**A folio fence needs a corpus and an endpoint.** folio does nothing without
-both, so a fence builds its own fixture corpus in a temporary directory, and
-exits 2 rather than 1 when no embeddings endpoint is reachable (§5). Exit 2 is
-the difference between "the decision is broken" and "nothing was running to
-ask", and a fence that confuses them reports an outage as a violation.
+A rule a check can reach belongs there rather than in this file. What stays here
+is what no check reaches: the hard rule above stays for good, because nothing
+executable can test whether a number was written down honestly.
 
 ## Measurements
 
@@ -142,11 +62,6 @@ Two things are still unmeasured and named in that file. Do not assume either.
 
 Nix declares the tools on this machine. Do not install a tool globally to make a
 task work. Add it to the flake that needs it, so the next reader gets it.
-
-**The decision layer carries its own flake.** `decisions/flake.nix` declares
-`cargo`, `rustc`, `jujutsu` and `git`. It stays independent of this layer so
-that a clone of `decisions/` alone can still verify itself. Enter it with `nix
-develop` from inside `decisions/`, or run `direnv allow` there once.
 
 **The code layer has no flake yet, and `llama-server` sits outside Nix.** It was
 installed with `brew install llama.cpp` on 2026-09-04, and the rebuild of the
