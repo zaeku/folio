@@ -12,7 +12,7 @@ use clap::{Parser, Subcommand};
 use sections::Section;
 use serde::{Deserialize, Serialize};
 use store::{Meta, Stamp, Store};
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::hash::{DefaultHasher, Hasher};
@@ -127,34 +127,29 @@ fn stamp(meta: &fs::Metadata, hash: u64) -> Stamp {
     Stamp { hash, len: meta.len(), mtime }
 }
 
-/// Metadata and section records, without the matrix. A query maps the matrix
-/// instead of reading it, so the two are loaded apart. Each record carries the
-/// slot naming its row: slots are not contiguous, because a retired record
-/// leaves its row behind rather than moving the rows after it.
-fn load_sections(root: &Path) -> Result<(Meta, Vec<(usize, Section)>)> {
+/// Open the index for reading and check the matrix against it. Nothing is
+/// deserialised here: a caller asks the store for the part of a record it
+/// actually decides on.
+fn open_index(root: &Path) -> Result<Option<(Store, Meta)>> {
     if !store::db_path(root).exists() {
-        return Ok((Meta::default(), Vec::new()));
+        return Ok(None);
     }
     let st = Store::open(root)?;
     let meta = st.meta()?;
     if meta.dim == 0 {
-        return Ok((meta, Vec::new()));
+        return Ok(None);
     }
-    let secs = st.sections()?;
-
     let vecs = store::vectors_path(root);
     let bytes = fs::metadata(&vecs)?.len() as usize;
-    let rows = bytes / (meta.dim * 4);
-    let last = secs.last().map_or(0, |(slot, _)| slot + 1);
-    if bytes % (meta.dim * 4) != 0 || rows < last {
+    let last = st.high_water()?;
+    if bytes % (meta.dim * 4) != 0 || bytes / (meta.dim * 4) < last {
         bail!(
-            "index is inconsistent: {} holds {bytes} bytes, which is not {} whole rows at dim {} — rerun with --rebuild",
+            "index is inconsistent: {} holds {bytes} bytes, which is not {last} whole rows at dim {} — rerun with --rebuild",
             vecs.display(),
-            last,
             meta.dim
         );
     }
-    Ok((meta, secs))
+    Ok(Some((st, meta)))
 }
 
 /// The matrix as floats, mapped rather than read. Reading 367 MB costs 76 ms,
@@ -281,11 +276,11 @@ fn parse_preds(raw: &[String]) -> Vec<Pred> {
         .collect()
 }
 
-fn keeps(s: &Section, preds: &[Pred]) -> bool {
+fn keeps(fm: &Map<String, Value>, preds: &[Pred]) -> bool {
     preds.iter().all(|p| match p {
-        Pred::Has(k) => s.fm.contains_key(k),
-        Pred::Eq(k, v) => s.fm.get(k).is_some_and(|got| holds(got, v)),
-        Pred::Ne(k, v) => !s.fm.get(k).is_some_and(|got| holds(got, v)),
+        Pred::Has(k) => fm.contains_key(k),
+        Pred::Eq(k, v) => fm.get(k).is_some_and(|got| holds(got, v)),
+        Pred::Ne(k, v) => !fm.get(k).is_some_and(|got| holds(got, v)),
     })
 }
 
@@ -313,11 +308,11 @@ fn scalar_text(v: &Value) -> String {
 /// Every value any section carries under one of `keys`, flattened out of lists.
 /// This is the right side of the anti-join, and it is built from every row in
 /// the index rather than from the rows a filter left.
-fn pointed_at(rows: &[(usize, Section)], keys: &[String]) -> BTreeSet<String> {
+fn pointed_at(rows: &[(usize, Map<String, Value>)], keys: &[String]) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
-    for (_, s) in rows {
+    for (_, fm) in rows {
         for key in keys {
-            match s.fm.get(key) {
+            match fm.get(key) {
                 Some(Value::Array(a)) => out.extend(a.iter().map(scalar_text)),
                 Some(v) => {
                     out.insert(scalar_text(v));
@@ -501,24 +496,29 @@ fn cmd_index(
         &placed,
     )?;
 
-    let live = st.sections()?;
-    let files = live.iter().map(|(_, s)| &s.path).collect::<HashSet<_>>().len();
-    let truncated = live.iter().filter(|(_, s)| s.truncated).count();
-    let dead = rows_in_matrix(&root, dim)?.saturating_sub(live.len());
+    let counts = st.counts()?;
+    let dead = rows_in_matrix(&root, dim)?.saturating_sub(counts.sections);
 
-    println!("indexed {files} files · {} sections · dim {dim}", live.len());
+    println!(
+        "indexed {} files · {} sections · dim {dim}",
+        counts.files, counts.sections
+    );
     println!(
         "  {} re-embedded, {retired} replaced or removed, {dead} dead row(s)",
         changed.len()
     );
-    if truncated > 0 {
-        println!("  {truncated} sections truncated at --max-chars {max_chars}");
+    if counts.truncated > 0 {
+        println!(
+            "  {} sections truncated at --max-chars {max_chars}",
+            counts.truncated
+        );
     }
 
     // A dead row costs a query nothing — it is skipped, not scanned — and costs
     // the disk its bytes. Reclaiming them is the one full rewrite folio makes,
     // so it waits until they outnumber the rows they sit beside.
-    if dead > live.len() && dead > 0 {
+    if dead > counts.sections && dead > 0 {
+        let live = st.slots()?;
         let reclaimed = compact(&root, &mut st, dim, &live)?;
         println!("  compacted: {reclaimed} dead row(s) reclaimed");
     }
@@ -565,7 +565,7 @@ fn append(root: &Path, base: usize, dim: usize, vectors: &[Vec<f32>]) -> Result<
 /// Copy the live rows to the front of a new matrix and renumber the records to
 /// match. The two land in separate steps, so a flag is set across them: an
 /// index found mid-compaction says so rather than ranking against wrong rows.
-fn compact(root: &Path, st: &mut Store, dim: usize, live: &[(usize, Section)]) -> Result<usize> {
+fn compact(root: &Path, st: &mut Store, dim: usize, live: &[usize]) -> Result<usize> {
     let before = rows_in_matrix(root, dim)?;
     let path = store::vectors_path(root);
     let tmp = path.with_extension("f32.compacting");
@@ -575,7 +575,7 @@ fn compact(root: &Path, st: &mut Store, dim: usize, live: &[(usize, Section)]) -
         let map = map_vectors(root)?.context("there is no matrix to compact")?;
         let floats = as_floats(&map)?;
         let mut w = BufWriter::new(fs::File::create(&tmp)?);
-        for (slot, _) in live {
+        for slot in live {
             for x in &floats[slot * dim..(slot + 1) * dim] {
                 w.write_all(&x.to_le_bytes())?;
             }
@@ -584,7 +584,7 @@ fn compact(root: &Path, st: &mut Store, dim: usize, live: &[(usize, Section)]) -
         w.into_inner()?.sync_all()?;
     }
     fs::rename(&tmp, &path)?;
-    st.renumber(&live.iter().map(|(slot, _)| *slot).collect::<Vec<_>>())?;
+    st.renumber(live)?;
     Ok(before - live.len())
 }
 
@@ -597,42 +597,58 @@ fn cmd_query(
     limit: usize,
 ) -> Result<()> {
     let root = root.canonicalize()?;
-    let (meta, rows) = load_sections(&root)?;
-    if rows.is_empty() {
+    let Some((st, meta)) = open_index(&root)? else {
         bail!("no index under {} — run `folio index` first", root.display());
-    }
+    };
     let map = map_vectors(&root)?.context("the index has records but no vectors")?;
     let floats = as_floats(&map)?;
 
     let q = embed(&meta.endpoint, &meta.model, &[text.to_string()])?
         .pop()
         .expect("one input yields one vector");
+    let score = |slot: usize| dot(&q, &floats[slot * meta.dim..(slot + 1) * meta.dim]);
 
+    // Frontmatter is read only when something decides on it. Without a filter
+    // and without a join, ranking needs the vectors and the list of rows that
+    // are still live, and nothing else: on 119,359 sections that is 10 ms of
+    // slots against 180 ms of whole records.
     let preds = parse_preds(wheres);
-    let pointed = pointed_at(&rows, exclude_pointed_by);
-    let superseded = |s: &Section| {
-        !pointed.is_empty()
-            && s.fm
-                .get(identity)
-                .is_some_and(|v| pointed.contains(&scalar_text(v)))
-    };
-
-    let mut hits: Vec<(f32, &Section)> = rows
-        .iter()
-        .filter(|(_, s)| keeps(s, &preds) && !superseded(s))
-        .map(|(slot, s)| (dot(&q, &floats[slot * meta.dim..(slot + 1) * meta.dim]), s))
-        .collect();
+    let (mut hits, dropped): (Vec<(f32, usize)>, usize) =
+        if preds.is_empty() && exclude_pointed_by.is_empty() {
+            let slots = st.slots()?;
+            if slots.is_empty() {
+                bail!("no index under {} — run `folio index` first", root.display());
+            }
+            (slots.into_iter().map(|slot| (score(slot), slot)).collect(), 0)
+        } else {
+            let rows = st.slots_with_fm()?;
+            if rows.is_empty() {
+                bail!("no index under {} — run `folio index` first", root.display());
+            }
+            // The right side of the anti-join is still built from every row in
+            // the index, which is what `--exclude-pointed-by` means.
+            let pointed = pointed_at(&rows, exclude_pointed_by);
+            let superseded = |fm: &Map<String, Value>| {
+                !pointed.is_empty()
+                    && fm
+                        .get(identity)
+                        .is_some_and(|v| pointed.contains(&scalar_text(v)))
+            };
+            let kept: Vec<&(usize, Map<String, Value>)> =
+                rows.iter().filter(|(_, fm)| keeps(fm, &preds)).collect();
+            let dropped = kept.iter().filter(|(_, fm)| superseded(fm)).count();
+            (
+                kept.iter()
+                    .filter(|(_, fm)| !superseded(fm))
+                    .map(|(slot, _)| (score(*slot), *slot))
+                    .collect(),
+                dropped,
+            )
+        };
     hits.sort_by(|a, b| b.0.total_cmp(&a.0));
 
     // Reported before the empty case, so that "nothing matched" is never the
     // only thing a caller hears when the anti-join is what emptied the result.
-    let dropped = if pointed.is_empty() {
-        0
-    } else {
-        rows.iter()
-            .filter(|(_, s)| keeps(s, &preds) && superseded(s))
-            .count()
-    };
     if dropped > 0 {
         println!(
             "({dropped} section(s) dropped as pointed at by {})",
@@ -643,7 +659,11 @@ fn cmd_query(
         println!("no section passed the filter");
         return Ok(());
     }
-    for (i, (score, s)) in hits.iter().take(limit).enumerate() {
+
+    // Only the rows that won are read whole. The heading trail and the line
+    // range are printed, never ranked on.
+    let top: Vec<usize> = hits.iter().take(limit).map(|(_, slot)| *slot).collect();
+    for (i, (s, (score, _))) in st.hydrate(&top)?.iter().zip(&hits).enumerate() {
         println!("#{}  {score:.3}  {}:{}-{}", i + 1, s.path, s.start, s.end);
         let mut trail = s.breadcrumb.clone();
         trail.push(s.heading.clone().unwrap_or_else(|| "(preamble)".to_string()));
@@ -654,22 +674,26 @@ fn cmd_query(
 
 fn cmd_status(root: &Path) -> Result<()> {
     let root = root.canonicalize()?;
-    let (meta, rows) = load_sections(&root)?;
-    if rows.is_empty() {
+    let Some((st, meta)) = open_index(&root)? else {
+        println!("no index under {}", root.display());
+        return Ok(());
+    };
+    let counts = st.counts()?;
+    if counts.sections == 0 {
         println!("no index under {}", root.display());
         return Ok(());
     }
-    let keys: HashSet<&String> = rows.iter().flat_map(|(_, s)| s.fm.keys()).collect();
+    // The one place that reads every record whole: reporting which frontmatter
+    // keys the corpus carries is a question about all of them.
+    let rows = st.slots_with_fm()?;
+    let keys: HashSet<&String> = rows.iter().flat_map(|(_, fm)| fm.keys()).collect();
     let mut keys: Vec<&&String> = keys.iter().collect();
     keys.sort();
 
     println!("{}", root.display());
-    println!(
-        "  files       {}",
-        rows.iter().map(|(_, s)| &s.path).collect::<HashSet<_>>().len()
-    );
-    println!("  sections    {}", rows.len());
-    println!("  truncated   {}", rows.iter().filter(|(_, s)| s.truncated).count());
+    println!("  files       {}", counts.files);
+    println!("  sections    {}", counts.sections);
+    println!("  truncated   {}", counts.truncated);
     println!("  model       {} @ {}", meta.model, meta.endpoint);
     println!("  dim         {}", meta.dim);
     println!(
@@ -688,18 +712,8 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn row(fm: Value) -> (usize, Section) {
-        let section = Section {
-            path: "d.md".into(),
-            start: 1,
-            end: 1,
-            heading: None,
-            breadcrumb: Vec::new(),
-            fm: fm.as_object().expect("an object").clone(),
-            truncated: false,
-            text: String::new(),
-        };
-        (0, section)
+    fn row(fm: Value) -> (usize, Map<String, Value>) {
+        (0, fm.as_object().expect("an object").clone())
     }
 
     #[test]
@@ -725,7 +739,7 @@ mod tests {
         // string. Both sides go through scalar_text so the join still closes.
         let rows = vec![row(json!({"id": 1, "supersedes": ["1"]}))];
         let pointed = pointed_at(&rows, &["supersedes".to_string()]);
-        let identity = rows[0].1.fm.get("id").expect("an id");
+        let identity = rows[0].1.get("id").expect("an id");
         assert!(pointed.contains(&scalar_text(identity)));
     }
 

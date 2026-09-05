@@ -35,6 +35,14 @@ pub struct Meta {
     pub dim: usize,
 }
 
+/// What the index covers.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Counts {
+    pub files: usize,
+    pub sections: usize,
+    pub truncated: usize,
+}
+
 pub struct Store {
     conn: Connection,
 }
@@ -148,31 +156,82 @@ impl Store {
         Ok(max.map_or(0, |m| m as usize + 1))
     }
 
-    /// Every section record with the slot naming its row in the matrix. Slots
-    /// are not contiguous: a deleted record leaves its row behind.
-    pub fn sections(&self) -> Result<Vec<(usize, Section)>> {
-        let mut q = self.conn.prepare(
-            "SELECT path, start, stop, heading, crumbs, fm, truncated, slot
-             FROM sections ORDER BY slot",
-        )?;
+    /// How many rows a query has to consider, without deserialising any of
+    /// them. This is the whole cost of a query that carries no filter: ranking
+    /// needs the vectors, and the records only become interesting once the top
+    /// of the ranking is known.
+    pub fn slots(&self) -> Result<Vec<usize>> {
+        let mut q = self.conn.prepare("SELECT slot FROM sections ORDER BY slot")?;
+        let mut out = Vec::new();
+        let mut rows = q.query([])?;
+        while let Some(r) = rows.next()? {
+            out.push(r.get::<_, i64>(0)? as usize);
+        }
+        Ok(out)
+    }
+
+    /// Slots with their frontmatter, for a query that filters or joins. The
+    /// heading trail and the line range are left on disk: nothing decides a
+    /// query on those, they are only printed for the rows that win.
+    pub fn slots_with_fm(&self) -> Result<Vec<(usize, Map<String, Value>)>> {
+        let mut q = self.conn.prepare("SELECT slot, fm FROM sections ORDER BY slot")?;
         let mut out = Vec::new();
         let mut rows = q.query([])?;
         while let Some(r) = rows.next()? {
             out.push((
-                r.get::<_, i64>(7)? as usize,
-                Section {
-                path: r.get(0)?,
-                start: r.get::<_, i64>(1)? as usize,
-                end: r.get::<_, i64>(2)? as usize,
-                heading: r.get(3)?,
-                breadcrumb: serde_json::from_str(&r.get::<_, String>(4)?)?,
-                fm: serde_json::from_str::<Map<String, Value>>(&r.get::<_, String>(5)?)?,
-                truncated: r.get::<_, i64>(6)? != 0,
-                text: String::new(),
-                },
+                r.get::<_, i64>(0)? as usize,
+                serde_json::from_str(&r.get::<_, String>(1)?)?,
             ));
         }
         Ok(out)
+    }
+
+    /// The full records for the slots a query settled on, in the order asked.
+    pub fn hydrate(&self, slots: &[usize]) -> Result<Vec<Section>> {
+        let mut q = self.conn.prepare(
+            "SELECT path, start, stop, heading, crumbs, fm, truncated
+             FROM sections WHERE slot = ?1",
+        )?;
+        let mut out = Vec::new();
+        for slot in slots {
+            let s = q.query_row(params![*slot as i64], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, i64>(1)?,
+                    r.get::<_, i64>(2)?,
+                    r.get::<_, Option<String>>(3)?,
+                    r.get::<_, String>(4)?,
+                    r.get::<_, String>(5)?,
+                    r.get::<_, i64>(6)?,
+                ))
+            })?;
+            out.push(Section {
+                path: s.0,
+                start: s.1 as usize,
+                end: s.2 as usize,
+                heading: s.3,
+                breadcrumb: serde_json::from_str(&s.4)?,
+                fm: serde_json::from_str(&s.5)?,
+                truncated: s.6 != 0,
+                text: String::new(),
+            });
+        }
+        Ok(out)
+    }
+
+    /// What the index covers, counted in the database rather than by walking
+    /// the records out of it.
+    pub fn counts(&self) -> Result<Counts> {
+        let (files, sections, truncated) = self.conn.query_row(
+            "SELECT count(DISTINCT path), count(*), coalesce(sum(truncated), 0) FROM sections",
+            [],
+            |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?, r.get::<_, i64>(2)?)),
+        )?;
+        Ok(Counts {
+            files: files as usize,
+            sections: sections as usize,
+            truncated: truncated as usize,
+        })
     }
 
     /// Retire the records of `dropped` and record `fresh` at the slots it was
@@ -290,16 +349,25 @@ mod tests {
         st.apply(&meta, &files, &HashSet::new(), &[(0, section("a.md", 1)), (7, section("a.md", 9))])
             .unwrap();
 
-        let got = st.sections().unwrap();
-        assert_eq!(got.len(), 2);
-        assert_eq!((got[0].0, got[1].0), (0, 7), "the slot names the matrix row");
+        assert_eq!(st.slots().unwrap(), vec![0, 7], "the slot names the matrix row");
         assert_eq!(st.high_water().unwrap(), 8, "the next append goes past the last row");
-        assert_eq!(got[0].1.start, 1);
-        assert_eq!(got[1].1.start, 9);
-        assert_eq!(got[0].1.fm["tags"], json!(["a", "b"]));
-        assert!(got[0].1.truncated);
-        assert_eq!(got[0].1.breadcrumb, vec!["Top".to_string()]);
-        assert!(got[0].1.text.is_empty(), "the store holds no prose to return");
+        assert_eq!(
+            st.counts().unwrap(),
+            Counts { files: 1, sections: 2, truncated: 2 }
+        );
+
+        // Read back in the order asked for, not the order stored.
+        let got = st.hydrate(&[7, 0]).unwrap();
+        assert_eq!((got[0].start, got[1].start), (9, 1));
+        assert_eq!(got[1].fm["tags"], json!(["a", "b"]));
+        assert!(got[1].truncated);
+        assert_eq!(got[1].breadcrumb, vec!["Top".to_string()]);
+        assert!(got[1].text.is_empty(), "the store holds no prose to return");
+
+        // A filtering query reads frontmatter and nothing else.
+        let fm = st.slots_with_fm().unwrap();
+        assert_eq!(fm.iter().map(|(s, _)| *s).collect::<Vec<_>>(), vec![0, 7]);
+        assert_eq!(fm[0].1["id"], json!("M-1"));
 
         // u64 hashes past i64::MAX and negative clocks both survive the trip.
         assert_eq!(st.files().unwrap()["a.md"].hash, u64::MAX);
@@ -319,12 +387,10 @@ mod tests {
         st.apply(&meta, &HashMap::new(), &HashSet::from(["a.md".to_string()]),
                  &[(2, section("a.md", 5))]).unwrap();
 
-        let got = st.sections().unwrap();
-        assert_eq!(
-            got.iter().map(|(slot, s)| (*slot, s.path.as_str())).collect::<Vec<_>>(),
-            vec![(1, "b.md"), (2, "a.md")],
-            "slot 0 is dead space and b.md did not move"
-        );
+        let slots = st.slots().unwrap();
+        let paths: Vec<String> = st.hydrate(&slots).unwrap().into_iter().map(|s| s.path).collect();
+        assert_eq!(slots, vec![1, 2], "slot 0 is dead space and b.md did not move");
+        assert_eq!(paths, vec!["b.md".to_string(), "a.md".to_string()]);
         assert_eq!(st.high_water().unwrap(), 3);
     }
 
@@ -339,14 +405,17 @@ mod tests {
         st.start_compacting().unwrap();
         assert!(st.compacting().unwrap());
 
-        let kept: Vec<usize> = st.sections().unwrap().iter().map(|(s, _)| *s).collect();
+        let kept = st.slots().unwrap();
+        assert_eq!(kept, vec![1, 4, 9]);
         st.renumber(&kept).unwrap();
 
-        let got = st.sections().unwrap();
+        let slots = st.slots().unwrap();
+        let paths: Vec<String> = st.hydrate(&slots).unwrap().into_iter().map(|s| s.path).collect();
+        assert_eq!(slots, vec![0, 1, 2], "survivors take the rows from the front");
         assert_eq!(
-            got.iter().map(|(slot, s)| (*slot, s.path.as_str())).collect::<Vec<_>>(),
-            vec![(0, "b.md"), (1, "c.md"), (2, "d.md")],
-            "survivors keep their order and take the rows from the front"
+            paths,
+            vec!["b.md".to_string(), "c.md".to_string(), "d.md".to_string()],
+            "and keep their order"
         );
         assert!(!st.compacting().unwrap(), "the flag is cleared with the renumbering");
     }
