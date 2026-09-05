@@ -63,6 +63,10 @@ folio config                # the endpoint and model a new index would use
 folio doctor                # ask the endpoint what ranking depends on
 ```
 
+Do not raise `--max-chars` to explore. The server allocates for the largest
+input it is asked to embed and keeps that allocation until it restarts, so a
+probe larger than the budget you index with leaves it holding memory for nothing.
+
 Run `folio doctor` when results look wrong rather than absent. It reports
 whether the endpoint answers, whether your longest section fits its batch, and
 whether a paraphrase still ranks above an unrelated sentence. It exits 1 when

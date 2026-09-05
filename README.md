@@ -81,11 +81,15 @@ folio unit --hf Qwen/Qwen3-Embedding-0.6B-GGUF \
 
 The service runs from login until you stop it. `llama-server` binds its own
 socket rather than accepting one, so neither launchd nor systemd can start it on
-demand, and it is not free while it waits. Idle on the machine in
-`docs/measurements.md`, it held a 2.25 GB physical footprint and the first query
-after several idle hours cost 231 ms against 9-10 ms warm. `ps` reports a
-fraction of that, because most of the model is swapped out until something asks
-for it.
+demand, and it is not free while it waits.
+
+What it holds is set by the longest section folio sends it, not by the model
+file. Measured on the machine in `docs/measurements.md`: 69 MB once loaded,
+330 MB after a section at the default 8,000-character budget, and 1,899 MB after
+one of 8,000 tokens. It does not give any of that back until it restarts, so a
+corpus of shorter sections is a smaller server as well as a more precise index.
+The first query after several idle hours costs 231 ms against 9-10 ms warm,
+because macOS has swapped most of it out by then.
 
 If you already run an embeddings endpoint, ignore all of this and name it:
 `folio config set endpoint http://your-host:port/v1/embeddings`.
@@ -174,6 +178,11 @@ collapsed, not one that is merely mediocre.
 
 `folio doctor` exits 1 when a question fails, and prints the server's own
 sentence with it.
+
+Leave `--max-chars` alone unless you are testing a budget you mean to index
+with. The server allocates for the largest input it is asked to embed and keeps
+that allocation, so a probe larger than your budget makes it hold memory that
+indexing would never have needed.
 
 ### Filtering on frontmatter
 
@@ -285,6 +294,10 @@ round trip and reading the list of rows that are still live.
 Three quarters of a query is therefore the exhaustive arithmetic — which is the
 part an approximate index replaces, and it would replace 102 ms with a graph to
 build, a recall parameter to defend, and more bytes to load beside the matrix.
+
+Headings buy two things, and the second one is memory: a corpus of shorter
+sections asks the server for smaller batches, and the server sizes itself to the
+largest batch it is asked for.
 
 Pointer precision is set by your headings, not by the model. A file whose long
 sections carry `###` subheadings returns 12-line ranges; the same content under

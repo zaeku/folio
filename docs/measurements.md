@@ -48,25 +48,38 @@ large to process. increase the physical batch size (current batch size: 8192)`.
 trip measured below. Its similarity probe — a paraphrase pair against an
 unrelated sentence — gives 0.900 and 0.352.
 
-**Running the server costs 2.25 GB, and `ps` will not say so.** Measured
-2026-09-06 on a server up 23 hours, idle:
+**The server grows to the largest input it has been asked to embed, and keeps
+it.** Measured 2026-09-06 with a second server on port 8090, same model and
+flags (`--pooling cls -c 8192 -b 8192 -ub 8192`), one input at a time:
 
-| Figure | Value |
+| Largest input served so far | `phys_footprint` |
 |---|---|
-| `phys_footprint` | 2,305 MB, peak 2,308 MB |
-| Resident size (`ps` RSS) | 315 MB |
-| Writable regions | 2.0 GB written, 5% resident, 80% swapped out |
-| CPU | 0.1-0.3% |
+| None; just loaded | 69 MB |
+| A short sentence | 55 MB |
+| 8,000 characters, about 2,000 tokens | 330 MB |
+| 44,000 characters, about 8,000 tokens | 1,899 MB |
 
-RSS counts resident pages only. An idle llama-server has most of the model
-compressed or swapped out, so RSS falls away while the memory is still the
-process's to hold; `phys_footprint`, which is what Activity Monitor shows, is
-the figure that does not move with memory pressure. On a 32 GB machine it was
-the largest process running.
+A short input after the 8,000-token one leaves it at 1,899 MB, and ten seconds
+of idling does not lower it. So `-ub 8192` sets a ceiling and costs nothing by
+itself; what is paid is decided by the longest thing folio actually sends. The
+model file is 153 MB, and the growth is faster than linear — four times the
+tokens for 5.75 times the memory — which is the shape of an attention buffer.
 
-Two earlier RSS samples, 488 MB on 2026-09-05 and 315 MB on 2026-09-06, were
-read as the cost of running the server and are not that. They measured how much
-of it had not been paged out yet.
+**A reading of 2,305 MB, taken the same day from the server this project runs
+against, was self-inflicted.** That server had been sent an 18,007-token probe
+by `folio doctor --max-chars 120000`. The request failed with a 500 and the
+reservation stayed. For folio's default 8,000-character budget on English prose,
+which is about 2,200 tokens, the figure to expect is the 330 MB row.
+
+An earlier entry read 488 MB and 315 MB from `ps` RSS on that same server and
+called them the cost of running it. RSS counts resident pages, so it reports how
+much has not been paged out rather than what the process holds; `phys_footprint`
+is the figure that does not move with memory pressure, and it is what Activity
+Monitor shows.
+
+That also means a `folio doctor` run with a `--max-chars` larger than the budget
+you index with inflates the server past anything indexing would ask of it, until
+the server is restarted.
 
 **Waking it costs 231 ms.** The first `folio doctor` probe after several idle
 hours took 231 ms for one input against 9-10 ms warm. That is the swapped-out
