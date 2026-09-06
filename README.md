@@ -189,6 +189,22 @@ with. The server allocates for the largest input it is asked to embed and keeps
 that allocation, so a probe larger than your budget makes it hold memory that
 indexing would never have needed.
 
+### Finding what was cut
+
+`folio status` counts the sections that hit the character budget before they
+were embedded. `folio status --truncated` names them:
+
+```
+$ folio status --truncated
+1 of 43 sections were cut at --max-chars 8000, and ranked on what was left:
+  docs/measurements.md:166-325
+        Measurements > 2026-09-05 — public corpora
+```
+
+A cut section was ranked on its first 8,000 characters, so the rest of it cannot
+be found by asking. The fix is usually a heading rather than a larger budget: a
+160-line section is coarse as a pointer whether or not it fits.
+
 ### Filtering on frontmatter
 
 Frontmatter is flattened to dotted keys and stored as written — no field is

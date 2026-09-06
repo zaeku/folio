@@ -243,6 +243,10 @@ enum Cmd {
     Status {
         #[arg(default_value = ".")]
         root: PathBuf,
+        /// List the sections that were cut to the budget, rather than counting
+        /// them. Each was ranked on part of its text.
+        #[arg(long)]
+        truncated: bool,
     },
 }
 
@@ -318,7 +322,7 @@ fn main() -> Result<()> {
         Cmd::Unit { root, launchd, systemd, hf, hf_file, pooling, context } => cmd_unit(
             &root, launchd, systemd, &hf, &hf_file, &pooling, context,
         ),
-        Cmd::Status { root } => cmd_status(&root),
+        Cmd::Status { root, truncated } => cmd_status(&root, truncated),
     }
 }
 
@@ -1075,12 +1079,17 @@ fn cmd_query(
             // caller to discover by reading the wrong lines.
             let mark = if stale.contains(&s.path) { "  (stale)" } else { "" };
             println!("#{}  {score:.3}  {}:{}-{}{mark}", i + 1, s.path, s.start, s.end);
-            let mut trail = s.breadcrumb.clone();
-            trail.push(s.heading.clone().unwrap_or_else(|| "(preamble)".to_string()));
-            println!("        {}", trail.join(" > "));
+            println!("        {}", trail_of(s));
         }
         return Ok(());
     }
+}
+
+/// The heading trail under a result, as it is printed beneath the reference.
+fn trail_of(s: &Section) -> String {
+    let mut trail = s.breadcrumb.clone();
+    trail.push(s.heading.clone().unwrap_or_else(|| "(preamble)".to_string()));
+    trail.join(" > ")
 }
 
 fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
@@ -1402,7 +1411,7 @@ fn cmd_doctor(
     Ok(())
 }
 
-fn cmd_status(root: &Path) -> Result<()> {
+fn cmd_status(root: &Path, list_truncated: bool) -> Result<()> {
     let root = root.canonicalize()?;
     let Some((st, meta)) = open_index(&root)? else {
         println!("no index under {}", root.display());
@@ -1413,6 +1422,28 @@ fn cmd_status(root: &Path) -> Result<()> {
         println!("no index under {}", root.display());
         return Ok(());
     }
+
+    // Listing answers a different question from the report, and reads only the
+    // rows it names rather than every record.
+    if list_truncated {
+        let cut = st.truncated()?;
+        if cut.is_empty() {
+            println!("no section was cut at --max-chars {}", meta.max_chars);
+            return Ok(());
+        }
+        println!(
+            "{} of {} sections were cut at --max-chars {}, and ranked on what was left:",
+            cut.len(),
+            counts.sections,
+            meta.max_chars
+        );
+        for sec in &cut {
+            println!("  {}:{}-{}", sec.path, sec.start, sec.end);
+            println!("        {}", trail_of(sec));
+        }
+        return Ok(());
+    }
+
     // The one place that reads every record whole: reporting which frontmatter
     // keys the corpus carries is a question about all of them.
     let rows = st.slots_with_fm()?;

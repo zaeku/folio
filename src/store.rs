@@ -233,6 +233,23 @@ impl Store {
         Ok(out)
     }
 
+    /// The sections that were cut to the budget before they were embedded.
+    ///
+    /// `counts()` reports how many there are, which is enough to notice them
+    /// and not enough to act. A truncated section was ranked on part of its
+    /// text, so its slot is where recall was quietly lost.
+    pub fn truncated(&self) -> Result<Vec<Section>> {
+        let mut q = self.conn.prepare(
+            "SELECT slot FROM sections WHERE truncated != 0 ORDER BY path, start",
+        )?;
+        let mut slots = Vec::new();
+        let mut rows = q.query([])?;
+        while let Some(r) = rows.next()? {
+            slots.push(r.get::<_, i64>(0)? as usize);
+        }
+        self.hydrate(&slots)
+    }
+
     /// What the index recorded about one file, for asking whether it has moved
     /// since. One row, so that checking the handful of files behind a result
     /// does not read the stamps of every file in the corpus.
@@ -437,6 +454,22 @@ mod tests {
         assert_eq!(st.files().unwrap()["a.md"].hash, u64::MAX);
         assert_eq!(st.files().unwrap()["a.md"].mtime, -1);
         assert_eq!(st.meta().unwrap(), meta);
+    }
+
+    #[test]
+    fn the_cut_sections_can_be_named_and_not_only_counted() {
+        let dir = tempdir();
+        let st = Store::open(&dir).unwrap();
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
+        let mut whole = section("b.md", 5);
+        whole.truncated = false;
+        st.apply(&meta, &HashMap::new(), &HashSet::new(), &[(0, section("a.md", 1)), (1, whole)])
+            .unwrap();
+
+        let cut = st.truncated().unwrap();
+        assert_eq!(cut.len(), 1, "only the section that was cut");
+        assert_eq!((cut[0].path.as_str(), cut[0].start), ("a.md", 1));
+        assert_eq!(st.counts().unwrap().truncated, 1, "and the count agrees");
     }
 
     #[test]

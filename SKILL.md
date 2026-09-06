@@ -59,6 +59,7 @@ empty corpus.
 folio index                 # every .md under the working directory
 folio query "does unfinished work count as a failure"
 folio status                # files, sections, model, frontmatter keys carried
+folio status --truncated    # the sections that were cut before embedding
 folio config                # the endpoint and model a new index would use
 folio doctor                # ask the endpoint what ranking depends on
 ```
