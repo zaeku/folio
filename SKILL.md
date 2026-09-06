@@ -60,6 +60,11 @@ Without a reachable endpoint, `index` and `query` fail. Nothing else does. If a
 command reports it cannot reach the endpoint, say so — do not read that as an
 empty corpus.
 
+A query also fails when the endpoint answers with different weights than the
+index was built on, naming a fingerprint below the threshold. The server was
+restarted on another model. Report it and let the user decide; `folio index
+--rebuild` is what fixes it, and it re-embeds the whole corpus.
+
 ## The commands
 
 ```sh

@@ -15,6 +15,42 @@ estimate. They are kept because they are what the model choice was made on, and
 they are labelled so nobody quotes them as a result. `benchmarks/` is where a
 reproducible number will come from.
 
+## 2026-09-06 — how far apart two sets of weights are, and how close one is to itself
+
+The numbers the vector-space fingerprint rests on (`D-01M1PP6HKHF97G`). Vectors
+are normalized, so every figure is a dot product.
+
+**One endpoint against itself.** `gte-modernbert-base-Q8_0` under llama.cpp on
+port 8080, one probe sentence:
+
+| | |
+|---|---|
+| Same input, sent twice in the same request | 1.0000000000 |
+| Same input at position 15 of a 32-input batch | 0.9999998908 |
+| Same input at position 31 of a 32-input batch | 0.9999998908 |
+
+Batch position moves the last bits and nothing else — a deviation of 1.1e-7.
+
+**Two sets of weights against each other.** Measured with a stub
+`/v1/embeddings` that returns deterministic vectors chosen by a named weight
+set, because a second 768-dimension model was not on the machine and the
+question does not need one: 0.013 for the same input under two weight sets.
+
+So the same weights and different weights are seven orders of magnitude apart,
+and the 0.999 threshold sits in an empty band four orders above the noise.
+
+**What the old rule let through.** With identity recorded as the model and
+endpoint strings, the stub was restarted on other weights at the same URL and
+under the same `--model`. One file was edited and re-indexed. The result: slot 0
+from the first weights, slot 2 from the second, in one matrix, ranked against
+each other, with `folio status` reporting a single identity and no command
+saying anything. Dimension was checked and matched, which is why nothing fired.
+
+**What it costs to ask.** One request of 17 ms, and only when a run is about to
+embed. A no-op re-index of `mdn/content` is 0.29 s against the 0.27 s it was.
+A query pays nothing: folio batches 32 inputs and a query sends one, so the
+fingerprint rides in the request the query was making anyway.
+
 ## 2026-09-06 — what a rename cost before and after it kept its vectors
 
 `mdn/content` at its pinned commit, 14,616 files and 119,565 sections,

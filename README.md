@@ -172,15 +172,26 @@ that corpus embeds it the same way. It is deliberately not inside `.folio/`: the
 index there is derived and disposable, while which model a corpus needs is
 neither.
 
-Changing the model or the endpoint discards the index rather than mixing vector
-spaces, and `folio index` says so before it re-embeds:
+An index holds vectors from one model, and folio decides which model that is by
+asking rather than by reading a name. It embeds a fixed text when it builds an
+index and keeps the vector as a fingerprint; a run about to embed asks again and
+compares. Weights that answer differently discard the index, and `folio index`
+says so with the number that decided it:
 
 ```
-$ FOLIO_MODEL=other-model folio index
-the index was built by bge-m3 at http://127.0.0.1:8081/v1/embeddings, and this
-run uses other-model at http://127.0.0.1:8081/v1/embeddings — re-embedding
-every section
+$ folio index
+the endpoint at http://127.0.0.1:8081/v1/embeddings no longer returns what this
+index was built with (fingerprint 0.016570 against the one it carries, and
+0.999 is where the same weights sit) — re-embedding every section
 ```
+
+A server restarted on another model keeps its URL and whatever `--model` you
+pass, so a name cannot catch that; the fingerprint can. It works the other way
+too — moving the same weights to another port or calling them something else
+keeps the index, where a name would have thrown away every vector in it.
+
+A query never discards. It says the same thing and stops, because it was asked
+to read the index, not to rebuild it.
 
 Output names sections, with the heading trail beneath each:
 
