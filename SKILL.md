@@ -88,6 +88,11 @@ trail beneath it:
         Does an incomplete session count as a failure?
 ```
 
+A row can cover several sections, and says so as `(N sections)`. Sections that
+touch and rank alike are returned as the one range that covers them, because
+that is the read they describe. A section beside a neighbour that ranks much
+lower keeps its own narrower range.
+
 Read those line ranges. A score is a ranking, not a verdict — the answer may be
 in the third row, and it may be in none of them.
 

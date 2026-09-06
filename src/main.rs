@@ -13,7 +13,7 @@ use sections::Section;
 use serde::{Deserialize, Serialize};
 use store::{Meta, Stamp, Store};
 use serde_json::{Map, Value};
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::hash::{DefaultHasher, Hasher};
 use std::io::{BufWriter, Write};
@@ -1122,13 +1122,25 @@ fn cmd_query(
             exclude_pointed_by,
             identity,
         )?;
-        let top: Vec<usize> = hits.iter().take(limit).map(|(_, slot)| *slot).collect();
+        // Hydrated wider than the limit, because merging joins pieces that both
+        // rank and the limit counts merged rows rather than sections.
+        // Never below the limit: a caller asking for every record must be able
+        // to receive every record, which D-01M1PP6HGWJMQC's fence checks.
+        let window = (limit * MERGE_WINDOW).max(32);
+        let top: Vec<usize> = hits.iter().take(window).map(|(_, slot)| *slot).collect();
         let rows = st.hydrate(&top)?;
+        let scores: Vec<f32> = hits.iter().take(rows.len()).map(|(s, _)| *s).collect();
+        let mut merged = merge_adjacent(&rows, &scores);
+        merged.truncate(limit);
+        let returned: Vec<Section> = merged
+            .iter()
+            .flat_map(|h| h.pieces.iter().map(|&i| rows[i].clone()))
+            .collect();
 
         // Always asked, whatever `refresh` says: one stat per returned row is
         // free, and a caller told to answer from the index as it stands is the
         // one who most needs to know where it does not.
-        let stale = moved_since_indexed(&st, &root, &rows)?;
+        let stale = moved_since_indexed(&st, &root, &returned)?;
         if refresh && !refreshed && !stale.is_empty() {
             drop(map);
             drop(st);
@@ -1162,7 +1174,7 @@ fn cmd_query(
             );
             if paths_only { eprintln!("{notice}") } else { println!("{notice}") }
         }
-        if hits.is_empty() {
+        if merged.is_empty() {
             if paths_only {
                 eprintln!("no section passed the filter");
             } else {
@@ -1170,24 +1182,143 @@ fn cmd_query(
             }
             return Ok(());
         }
-        for (i, (s, (score, _))) in rows.iter().zip(&hits).enumerate() {
+        for (i, h) in merged.iter().enumerate() {
             // A row still stale here is one the refresh could not take, so the
             // line range may have moved. Said out loud rather than left to the
             // caller to discover by reading the wrong lines.
-            let is_stale = stale.contains(&s.path);
+            let is_stale = stale.contains(&h.path);
             if paths_only {
                 if is_stale {
-                    eprintln!("{}:{}-{} has moved since it was indexed", s.path, s.start, s.end);
+                    eprintln!("{}:{}-{} has moved since it was indexed", h.path, h.start, h.end);
                 }
-                println!("{}:{}-{}", s.path, s.start, s.end);
+                println!("{}:{}-{}", h.path, h.start, h.end);
                 continue;
             }
             let mark = if is_stale { "  (stale)" } else { "" };
-            println!("#{}  {score:.3}  {}:{}-{}{mark}", i + 1, s.path, s.start, s.end);
-            println!("        {}", trail_of(s));
+            let joined = match h.pieces.len() {
+                1 => String::new(),
+                n => format!("  ({n} sections)"),
+            };
+            println!("#{}  {:.3}  {}:{}-{}{mark}", i + 1, h.score, h.path, h.start, h.end);
+            println!("        {}{joined}", h.trail);
         }
         return Ok(());
     }
+}
+
+/// How many ranked sections are hydrated before merging.
+///
+/// Merging joins pieces that both rank, so a piece below this window joins
+/// nothing and a run stops there. Hydrating every record instead would restore
+/// the read D-01M1QWB73G6WNZ removed, which was 180 ms of a 267 ms query.
+const MERGE_WINDOW: usize = 8;
+
+/// One range to read, and the ranked sections it was assembled from.
+struct Hit {
+    path: String,
+    start: usize,
+    end: usize,
+    score: f32,
+    trail: String,
+    pieces: Vec<usize>,
+}
+
+/// Join ranked sections that touch, so that a result names one range to read.
+///
+/// Five rows covering lines 3-6, 7-10, 11-14, 15-18 and 19-22 of one file
+/// describe one read of lines 3-22 and leave the caller to work that out.
+///
+/// The merged score is the mean weighted by lines, so it reads as relevance per
+/// line read: a tight pointer outranks a broad one that contains it. Lines
+/// rather than characters because a query knows line ranges and never reads the
+/// text.
+///
+/// Only pieces that touch are joined. If two sections rank and the ones between
+/// them do not, the covering range would be mostly text that nothing matched.
+///
+/// Touching is not enough on its own. A section that answers the question sits
+/// next to one that merely surrounds it, and joining those two replaces a tight
+/// pointer with a loose one: measured on a fixture, a three-line answer at 0.766
+/// became a seven-line range at 0.618. So a piece joins a run only while it is
+/// comparably relevant to it, and a background neighbour is left out.
+fn merge_adjacent(rows: &[Section], scores: &[f32]) -> Vec<Hit> {
+    let mut by_path: BTreeMap<&str, Vec<usize>> = BTreeMap::new();
+    for (i, s) in rows.iter().enumerate() {
+        by_path.entry(&s.path).or_default().push(i);
+    }
+
+    let mut out: Vec<Hit> = Vec::new();
+    for (path, mut idx) in by_path {
+        idx.sort_by_key(|&i| rows[i].start);
+        let mut run: Vec<usize> = Vec::new();
+        let mut best = 0.0f32;
+        for i in idx {
+            let touches = run
+                .last()
+                .is_some_and(|&last| rows[last].end + 1 == rows[i].start);
+            // ponytail: one ratio, read off a fixture where 0.741 against 0.780
+            // is one answer in five pieces and 0.507 against 0.766 is background
+            // beside an answer. A corpus should set it, and cosine scales differ
+            // by model, so this is a starting point rather than a constant.
+            let alike = {
+                let (lo, hi) = if scores[i] < best { (scores[i], best) } else { (best, scores[i]) };
+                lo >= 0.9 * hi
+            };
+            if !run.is_empty() && !(touches && alike) {
+                out.push(assemble(path, rows, scores, &run));
+                run.clear();
+                best = 0.0;
+            }
+            best = best.max(scores[i]);
+            run.push(i);
+        }
+        if !run.is_empty() {
+            out.push(assemble(path, rows, scores, &run));
+        }
+    }
+    out.sort_by(|a, b| b.score.total_cmp(&a.score));
+    out
+}
+
+fn assemble(path: &str, rows: &[Section], scores: &[f32], run: &[usize]) -> Hit {
+    let start = rows[run[0]].start;
+    let end = rows[run[run.len() - 1]].end;
+    let lines = |i: usize| (rows[i].end + 1 - rows[i].start) as f32;
+    let total: f32 = run.iter().map(|&i| lines(i)).sum();
+    let score = run.iter().map(|&i| scores[i] * lines(i)).sum::<f32>() / total;
+    Hit {
+        path: path.to_string(),
+        start,
+        end,
+        score,
+        trail: shared_trail(rows, run),
+        pieces: run.to_vec(),
+    }
+}
+
+/// The trail a merged range is filed under: what its pieces have in common.
+///
+/// Four notes under one heading are that heading. When the pieces share
+/// nothing, the first one's trail is printed, because a reader following a
+/// range reads from its start.
+fn shared_trail(rows: &[Section], run: &[usize]) -> String {
+    let trails: Vec<Vec<String>> = run
+        .iter()
+        .map(|&i| {
+            let mut t = rows[i].breadcrumb.clone();
+            t.push(rows[i].heading.clone().unwrap_or_else(|| "(preamble)".to_string()));
+            t
+        })
+        .collect();
+    let mut common: Vec<String> = trails[0].clone();
+    for t in &trails[1..] {
+        let keep = common.iter().zip(t).take_while(|(a, b)| a == b).count();
+        common.truncate(keep);
+    }
+    if common.is_empty() {
+        return trails[0].join(" > ");
+    }
+    common.join(" > ")
 }
 
 /// The heading trail under a result, as it is printed beneath the reference.

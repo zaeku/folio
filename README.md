@@ -219,6 +219,26 @@ A cut section was ranked on its first 8,000 characters, so the rest of it cannot
 be found by asking. The fix is usually a heading rather than a larger budget: a
 160-line section is coarse as a pointer whether or not it fits.
 
+### One range to read, not five
+
+Sections that touch and rank alike come back as one row covering them:
+
+```
+#1  0.763  facilities.md:3-25
+        Facilities  (6 sections)
+```
+
+A result is a range to read, and five rows naming lines 3-6, 7-10, 11-14, 15-18
+and 19-22 of one file describe one read that the caller would have to work out.
+The score is the mean over lines, so it reads as relevance per line: a merged
+range falls as it grows and dilutes, and a tight pointer outranks a broad one
+that contains it.
+
+Touching is not enough on its own. A section that answers a question often sits
+beside one that merely surrounds it, and joining those two would trade a precise
+pointer for a vague one, so a section joins its neighbour only while the two
+rank alike. `--limit` counts rows a reader would open rather than sections.
+
 ### Handing the ranges to something else
 
 ```sh
