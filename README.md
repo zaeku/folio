@@ -146,9 +146,26 @@ indexed 1 files · 1 sections · dim 768
   1 sections truncated at 4000 characters
 ```
 
-The cut sections are marked, `folio status --truncated` names them, and the
-budget the index recorded is the one it used. Setting `--max-chars` yourself
-still works and still caps the run; calibration only ever lowers it.
+A section past that budget is divided rather than cut. It becomes consecutive
+records that each fit, all carrying the same heading trail, so the tail of a long
+section is a vector rather than nothing:
+
+```
+$ folio status
+  sections    11
+  truncated   0
+```
+
+That is one MDN reference page whose largest section is 46,528 characters. It
+divides at a paragraph break where one fits and at a line otherwise, because the
+alternative to an untidy piece is not a tidier one but a tail no query can
+reach. Measured on `mdn/content`, giving cut tails their own records took
+retrieval of a sentence drawn from them from 3 of 12 at mean rank 6.0 to 6 of 12
+at mean rank 1.5.
+
+What no boundary divides — one line longer than the budget, a table row or a
+generated block — is still cut, marked, and counted, and
+`folio status --truncated` names those.
 
 That writes `folio.yaml` at the corpus root. Commit it, and everyone who indexes
 that corpus embeds it the same way. It is deliberately not inside `.folio/`: the

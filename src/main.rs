@@ -791,12 +791,8 @@ fn reindex(
     let mut fresh: Vec<Section> = Vec::new();
     for rel in &changed {
         let source = fs::read_to_string(root.join(rel))?;
-        for mut s in sections::split(rel, &source) {
-            if s.text.chars().count() > max_chars {
-                s.text = s.text.chars().take(max_chars).collect();
-                s.truncated = true;
-            }
-            fresh.push(s);
+        for s in sections::split(rel, &source) {
+            fresh.extend(sections::to_budget(s, max_chars));
         }
     }
 
@@ -811,12 +807,10 @@ fn reindex(
         if fitted < max_chars {
             println!("  budget for this run: {fitted} characters, not {max_chars}");
             max_chars = fitted;
-            for s in &mut fresh {
-                if s.text.chars().count() > max_chars {
-                    s.text = s.text.chars().take(max_chars).collect();
-                    s.truncated = true;
-                }
-            }
+            fresh = fresh
+                .into_iter()
+                .flat_map(|s| sections::to_budget(s, max_chars))
+                .collect();
         }
     }
 

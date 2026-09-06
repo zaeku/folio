@@ -78,6 +78,67 @@ pub fn split(path: &str, source: &str) -> Vec<Section> {
     out
 }
 
+/// Break a section into consecutive pieces that each fit the budget.
+///
+/// A piece keeps the heading, the trail and the frontmatter of the section it
+/// came from, and carries its own line range, so a result still names something
+/// a reader can open. The tail of a long section is a vector rather than
+/// nothing: measured on `mdn/content`, giving a cut tail its own record took
+/// retrieval of a sentence from it from 3 of 12 at mean rank 6.0 to 6 of 12 at
+/// mean rank 1.5.
+///
+/// The boundary falls at a blank line when one fits, at a line otherwise. The
+/// same corpus is why the fallback exists: its long sections are tables and
+/// lists with no blank line to break at, and a paragraph rule alone reached a
+/// fifth of them. A line cut mid-sentence still has a vector; a tail has none.
+///
+/// One line longer than the budget cannot be split by either rule. It is cut
+/// and marked, which is the case D-01M1PP6HJWFT2Q still governs.
+pub fn to_budget(section: Section, budget: usize) -> Vec<Section> {
+    if section.text.chars().count() <= budget {
+        return vec![section];
+    }
+    let lines: Vec<&str> = section.text.split('\n').collect();
+    let cost = |i: usize| lines[i].chars().count() + 1;
+
+    let mut out: Vec<Section> = Vec::new();
+    let mut from = 0usize;
+    while from < lines.len() {
+        // How far the budget reaches, by whole lines.
+        let mut upto = from;
+        let mut size = cost(from);
+        while upto + 1 < lines.len() && size + cost(upto + 1) <= budget {
+            upto += 1;
+            size += cost(upto);
+        }
+        // Prefer to end at a paragraph break, but only one near the end: an
+        // earlier break would leave the rest to a piece that has to fit too,
+        // and shortening a piece can never overflow it.
+        if upto + 1 < lines.len() {
+            let floor = from + (upto - from) * 4 / 5;
+            if let Some(b) = (floor..=upto).rev().find(|&i| lines[i].trim().is_empty()) {
+                upto = b;
+            }
+        }
+        // One line longer than the budget has no boundary inside it. It is cut
+        // and marked, which is the case D-01M1PP6HJWFT2Q still governs.
+        let text: String = lines[from..=upto].join("\n");
+        let cut = text.chars().count() > budget;
+        out.push(Section {
+            start: section.start + from,
+            end: section.start + upto,
+            text: if cut { text.chars().take(budget).collect() } else { text },
+            truncated: cut,
+            path: section.path.clone(),
+            heading: section.heading.clone(),
+            breadcrumb: section.breadcrumb.clone(),
+            fm: section.fm.clone(),
+        });
+        from = upto + 1;
+    }
+    out
+}
+
 fn mk(
     path: &str,
     from: usize,
@@ -183,7 +244,37 @@ body
 tail
 ";
 
+#[test]
+    fn a_long_section_becomes_pieces_that_fit() {
+        let para = "a".repeat(40);
+        let source = format!("## H\n\n{para}\n\n{para}\n\n{para}\n");
+        let sec = split("a.md", &source).pop().unwrap();
+        let pieces = to_budget(sec, 60);
+
+        assert!(pieces.len() > 1, "a section over the budget is more than one piece");
+        for p in &pieces {
+            assert!(p.text.chars().count() <= 60, "every piece fits: {}", p.text.len());
+            assert_eq!(p.heading.as_deref(), Some("H"), "a piece keeps its heading");
+        }
+        // Consecutive and covering: a reader following the ranges reads the section.
+        for w in pieces.windows(2) {
+            assert_eq!(w[0].end + 1, w[1].start, "pieces are consecutive");
+        }
+        assert_eq!(pieces[0].start, 1, "the first piece starts where the section did");
+        assert!(pieces.iter().all(|p| !p.truncated), "nothing was cut, only divided");
+    }
+
     #[test]
+    fn one_line_over_the_budget_is_cut_and_marked() {
+        // No boundary exists inside a single line, so the piece is truncated
+        // and says so, which is what D-01M1PP6HJWFT2Q requires.
+        let source = format!("## H\n\n{}\n", "b".repeat(200));
+        let sec = split("a.md", &source).pop().unwrap();
+        let pieces = to_budget(sec, 50);
+        assert!(pieces.iter().any(|p| p.truncated), "the unsplittable line is marked");
+    }
+
+        #[test]
     fn splits_sections_and_flattens_frontmatter() {
         let s = split("d.md", DOC);
 

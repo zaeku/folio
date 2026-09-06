@@ -24,7 +24,9 @@ The crate is `folio-cli` and the command it installs is `folio`.
 
 `folio index` checks its character budget against the endpoint before it embeds
 anything, and lowers it for that run if the endpoint refuses the longest section.
-It says so when it does, and marks what it cut. So a corpus in a language that
+A section past the budget is divided into consecutive records that each fit, so
+a long section's tail is still reachable; a single line too long to divide is cut
+and marked. So a corpus in a language that
 packs more tokens into a character indexes without being told a number.
 
 `folio index` writes the index to `.folio/` under the root it indexes. Add
