@@ -16,7 +16,7 @@ export FOLIO_ENDPOINT=http://127.0.0.1:8080/v1/embeddings
 `reports/latest.md` and `reports/latest.json` are the output. Neither is
 committed: a report belongs to the machine and the model that produced it, and a
 committed one would go stale without saying so. A run worth keeping goes into
-`../docs/measurements.md` under its own date, with the corpus commit, the model
+`../docs/measurements/` under its own date, with the corpus commit, the model
 and the machine named beside it.
 
 ## The model's context is the limit, and no flag raises it
@@ -38,7 +38,7 @@ estimate rather than truncating it on a character count is the fix folio does
 not have yet; `zvec-grep` solves the same problem with a density heuristic.
 
 Two MDN runs died on this before the budget moved, each with a different
-message. Both are in `../docs/measurements.md`, because a limit discovered by
+message. Both are in `../docs/measurements/`, because a limit discovered by
 hitting it is worth writing down where the next reader will look.
 
 ## Three kinds of measurement, and only two of them are here
@@ -53,7 +53,7 @@ hitting it is worth writing down where the next reader will look.
 Ranking quality is absent on purpose. Measuring it needs a labelled query set,
 and the two ways to get one are both wrong here. Writing questions against a
 corpus you have already watched the tool answer is the leakage every retrieval
-benchmark warns about — `../docs/measurements.md` carries seven such questions
+benchmark warns about — `../docs/measurements/` carries seven such questions
 and labels them as a smoke test rather than a result. Adopting BEIR or MTEB
 instead would measure the embedding model: those are passage collections, while
 folio's unit is a heading section carrying frontmatter, so the score would move
@@ -118,7 +118,7 @@ seeded queries over the same pinned corpus returned 4.0%, 2.5%, 5.75% and 3.0%.
 query about a retired API contributes several deprecated hits at once. The
 interval narrows as 1/sqrt(n), so `QUERY_COUNT` is 400 and the interval is 3.0
 points, which is finally narrower than the thing being measured.
-`../docs/measurements.md` carries the table. The filtered figure was zero in
+`../docs/measurements/` carries the table. The filtered figure was zero in
 every run, and that is the one the filter is judged on.
 
 ## The two corpora, and why both

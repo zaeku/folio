@@ -52,22 +52,35 @@ changes when a rule does, and the board changes hourly.
 
 ## Measurements
 
-`docs/measurements.md` holds every number folio reports about itself, with how it
-was measured and when. The rule on dating a measured fact governs what goes
-there, and a number quoted anywhere else — `README.md` included — should be
-traceable to an entry in it.
+Every number folio reports about itself is one file under `docs/measurements/`,
+named by the date it was taken and the question it answers. `docs/measurements.md`
+is the preamble and says how to read them.
+
+**`ls docs/measurements/` is the index, and no other exists.** An index written
+by hand can disagree with what it indexes, because the two are separate facts; a
+filename cannot disagree with its own file. So a new measurement is a new file,
+never a line added to a list.
+
+**Write a measurement so that it can be read alone.** Each carries its own date
+in its heading as well as in its name, because the hard rule above wants the date
+where the number is used. One measurement that corrects another names it by
+filename — never by position, which was the failure the directory replaced.
+
+A number quoted anywhere else — `README.md` included — should be traceable to one
+of those files.
 
 **A folio number comes from `benchmarks/run.py`.** It fetches two public corpora
 pinned by commit and drives the `folio` command on `PATH`, so anyone can rerun
 it. `benchmarks/README.md` says what those numbers are and, at more length, what
 they are not: contamination is measured and ranking quality deliberately is not.
 `.gitignore` excludes `benchmarks/reports/`, which is scratch. A run worth
-keeping goes into `docs/measurements.md` under its own date.
+keeping becomes a file under `docs/measurements/` on its own date.
 
-The 2026-09-04 entries predate that harness and have no committed artifact. They
-are the record of how the model and the design were chosen, and they say so.
+The 2026-09-04 measurement predates that harness and has no committed artifact.
+It is the record of how the model and the design were chosen, and it says so.
 
-Two things are still unmeasured and named in that file. Do not assume either.
+Two things are still unmeasured, and `docs/measurements/2026-09-04-private-corpora.md`
+names them. Do not assume either.
 
 ## Toolchain
 

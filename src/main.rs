@@ -437,7 +437,7 @@ struct EmbedItem {
 /// The largest budget this endpoint accepts for this corpus's longest section.
 ///
 /// folio budgets characters and the server counts tokens, and the ratio belongs
-/// to the corpus rather than to folio: on the model in docs/measurements.md,
+/// to the corpus rather than to folio: on the model in docs/measurements/,
 /// English prose runs 3.66 characters per token and Korean 0.66. So a budget
 /// that fits one corpus overflows another by a factor of five, and the only
 /// authority on the difference is the server that has to accept the input.
@@ -1572,7 +1572,7 @@ fn host_port(endpoint: &str) -> Result<(String, u16)> {
 ///
 /// folio speaks HTTP and nothing else, so it does not know which model file or
 /// pooling mode the server needs. Those arrive as flags, defaulting to the pair
-/// docs/measurements.md was measured on. What folio does know is the port its
+/// docs/measurements/ was measured on. What folio does know is the port its
 /// own configuration points at, which is the part that is easy to get wrong.
 fn cmd_unit(
     root: &Path,
@@ -1621,7 +1621,7 @@ fn cmd_unit(
 <!-- Serves {endpoint} for folio. It runs from login until you unload it;
      llama-server cannot be started on demand, because it binds its own socket
      rather than accepting one from launchd. It is not free while idle:
-     docs/measurements.md in the folio repository carries what it costs. -->
+     docs/measurements/ in the folio repository carries what it costs. -->
 <plist version="1.0">
 <dict>
   <key>Label</key><string>dev.folio.embeddings</string>
@@ -1642,7 +1642,7 @@ fn cmd_unit(
             "# Serves {endpoint} for folio. It runs from login until you stop it;\n\
              # llama-server cannot be socket-activated, because it binds its own\n\
              # socket rather than accepting one from systemd. It is not free while\n\
-             # idle: docs/measurements.md in the folio repository carries the cost.\n\
+             # idle: docs/measurements/ in the folio repository carries the cost.\n\
              [Unit]\n\
              Description=Embeddings endpoint for folio\n\
              After=network.target\n\
@@ -1797,7 +1797,7 @@ fn cmd_doctor(
             print!("  structure  paraphrase {near:.3}, unrelated {far:.3}");
             // ponytail: two thresholds on one English triple. It catches an
             // inverted or collapsed space, not a merely mediocre one; a real
-            // quality measure is the unmeasured question in docs/measurements.md.
+            // quality measure is the unmeasured question in docs/measurements/.
             let inverted = near <= far;
             let collapsed = far > 0.95;
             if inverted {

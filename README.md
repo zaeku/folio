@@ -92,7 +92,7 @@ that allocation until it restarts. A corpus of shorter sections is therefore a
 smaller server as well as a more precise index. Waking it after idle hours costs
 one slow query, because the machine has paged most of it out by then.
 
-`docs/measurements.md` has the figures, and they belong there rather than here.
+`docs/measurements/` has the figures, and they belong there rather than here.
 They describe llama.cpp's allocation rather than folio's, so they move when it
 changes, and a number on this page would ask for a release every time it did.
 
@@ -212,7 +212,7 @@ $ folio doctor
   endpoint   http://127.0.0.1:8080/v1/embeddings  (user config)
   model      default
   reachable  yes, 768 dimensions, 43 ms for one input
-  long input 8000 characters accepted, the longest section in ./docs/measurements.md, cut to the budget
+  long input 8000 characters accepted, the longest section in ./docs/measurements/2026-09-05-public-corpora.md, cut to the budget
   structure  paraphrase 0.900, unrelated 0.352 — ok
 ```
 
@@ -234,18 +234,22 @@ indexing would never have needed.
 ### Finding what was cut
 
 `folio status` counts the sections that hit the character budget before they
-were embedded. `folio status --truncated` names them:
+were embedded — after dividing, only the ones no boundary could divide.
+`folio status --truncated` names them:
 
 ```
 $ folio status --truncated
-1 of 43 sections were cut at --max-chars 8000, and ranked on what was left:
-  docs/measurements.md:166-325
-        Measurements > 2026-09-05 — public corpora
+1 of 5 sections were cut at 8000 characters, and ranked on what was left:
+  reference.md:7-7
+        Reference > Compatibility table
 ```
 
-A cut section was ranked on its first 8,000 characters, so the rest of it cannot
-be found by asking. The fix is usually a heading rather than a larger budget: a
-160-line section is coarse as a pointer whether or not it fits.
+That is a single generated table row longer than the budget, which is what a cut
+looks like now that a section over the budget divides instead. The row was ranked
+on its first 8,000 characters, so the rest of it cannot be found by asking, and
+no heading will help because there is no boundary inside one line. A larger
+budget would take it, at the cost of every section's memory — the server
+allocates for the largest input it is ever asked to embed.
 
 ### One range to read, not five
 
