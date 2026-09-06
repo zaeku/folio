@@ -178,6 +178,13 @@ enum Cmd {
         identity: String,
         #[arg(long, short, default_value_t = 5)]
         limit: usize,
+        /// Print one `path:start-end` per line and nothing else.
+        ///
+        /// For a caller that feeds the ranges to something that reads files.
+        /// Notices and a stale row's warning go to stderr, so stdout stays one
+        /// reference per line.
+        #[arg(long)]
+        paths_only: bool,
         /// Answer from the index as it stands, without re-indexing first.
         ///
         /// By default a query stats the files behind the rows it is about to
@@ -302,6 +309,7 @@ fn main() -> Result<()> {
             exclude_pointed_by,
             identity,
             limit,
+            paths_only,
             no_refresh,
         } => cmd_query(
             &root,
@@ -310,6 +318,7 @@ fn main() -> Result<()> {
             &exclude_pointed_by,
             &identity,
             limit,
+            paths_only,
             !no_refresh,
         ),
         Cmd::Config { action, root } => cmd_config(action, &root),
@@ -1079,6 +1088,7 @@ fn cmd_query(
     exclude_pointed_by: &[String],
     identity: &str,
     limit: usize,
+    paths_only: bool,
     refresh: bool,
 ) -> Result<()> {
     let root = root.canonicalize()?;
@@ -1132,11 +1142,12 @@ fn cmd_query(
                 false,
                 std::time::Duration::ZERO,
             )? {
-                println!(
+                let notice = format!(
                     "({} of the files behind this result had changed; {} file(s) re-embedded before answering)",
                     stale.len(),
                     r.reembedded
                 );
+                if paths_only { eprintln!("{notice}") } else { println!("{notice}") }
                 refreshed = true;
                 continue;
             }
@@ -1145,20 +1156,33 @@ fn cmd_query(
         // Reported before the empty case, so that "nothing matched" is never the
         // only thing a caller hears when the anti-join is what emptied the result.
         if dropped > 0 {
-            println!(
+            let notice = format!(
                 "({dropped} section(s) dropped as pointed at by {})",
                 exclude_pointed_by.join(", ")
             );
+            if paths_only { eprintln!("{notice}") } else { println!("{notice}") }
         }
         if hits.is_empty() {
-            println!("no section passed the filter");
+            if paths_only {
+                eprintln!("no section passed the filter");
+            } else {
+                println!("no section passed the filter");
+            }
             return Ok(());
         }
         for (i, (s, (score, _))) in rows.iter().zip(&hits).enumerate() {
             // A row still stale here is one the refresh could not take, so the
             // line range may have moved. Said out loud rather than left to the
             // caller to discover by reading the wrong lines.
-            let mark = if stale.contains(&s.path) { "  (stale)" } else { "" };
+            let is_stale = stale.contains(&s.path);
+            if paths_only {
+                if is_stale {
+                    eprintln!("{}:{}-{} has moved since it was indexed", s.path, s.start, s.end);
+                }
+                println!("{}:{}-{}", s.path, s.start, s.end);
+                continue;
+            }
+            let mark = if is_stale { "  (stale)" } else { "" };
             println!("#{}  {score:.3}  {}:{}-{}{mark}", i + 1, s.path, s.start, s.end);
             println!("        {}", trail_of(s));
         }

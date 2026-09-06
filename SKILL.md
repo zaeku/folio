@@ -91,6 +91,11 @@ trail beneath it:
 Read those line ranges. A score is a ranking, not a verdict — the answer may be
 in the third row, and it may be in none of them.
 
+`--paths-only` prints one `path:start-end` per line and nothing else, at about a
+quarter the size. Use it when you are feeding the ranges to a file reader rather
+than judging them. A row whose file has moved is reported on stderr in that
+mode, so read stderr too.
+
 ## Filtering on frontmatter
 
 No key is built in, so the corpus's own schema is what you filter on. If you do

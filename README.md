@@ -219,6 +219,20 @@ A cut section was ranked on its first 8,000 characters, so the rest of it cannot
 be found by asking. The fix is usually a heading rather than a larger budget: a
 160-line section is coarse as a pointer whether or not it fits.
 
+### Handing the ranges to something else
+
+```sh
+$ folio query "when is revenue recognised" --paths-only
+finance/revenue.md:42-57
+finance/policy.md:8-31
+```
+
+One reference per line and nothing else, for a caller that reads files rather
+than prose. The notices and a moved row's warning go to stderr, so a pipe on
+stdout stays parseable. On the three-row query above this is 63 bytes against
+248, which is the whole argument for it: the same references, a quarter of the
+context.
+
 ### Filtering on frontmatter
 
 Frontmatter is flattened to dotted keys and stored as written — no field is
