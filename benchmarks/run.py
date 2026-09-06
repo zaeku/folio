@@ -128,13 +128,13 @@ def records(root):
     db = sqlite3.connect(root / ".folio" / "index.db")
     try:
         rows = db.execute(
-            "SELECT path, start, stop, heading, fm FROM sections ORDER BY slot"
+            "SELECT path, start, stop, heading, fm, truncated FROM sections ORDER BY slot"
         ).fetchall()
     finally:
         db.close()
     return [
-        {"path": p, "start": a, "end": b, "heading": h, "fm": json.loads(fm)}
-        for p, a, b, h, fm in rows
+        {"path": p, "start": a, "end": b, "heading": h, "fm": json.loads(fm), "cut": bool(t)}
+        for p, a, b, h, fm, t in rows
     ]
 
 
@@ -293,6 +293,9 @@ def measure(name, spec, model, keep):
         "incremental_growth_bytes": grew,
         "incremental_growth_rows": grew / (dim * 4),
         "max_chars": MAX_CHARS,
+        # A section over the budget is divided; what is still marked is a single
+        # line no boundary divides, and its tail is in no vector at all.
+        "cut_sections": sum(1 for r in rows if r["cut"]),
         "model": model or "(endpoint default)",
         "endpoint": os.environ.get("FOLIO_ENDPOINT", "(folio default)"),
         **contamination,
@@ -333,6 +336,8 @@ def write_report(reports):
             f"{r['incremental_reembedded']} file re-embedded |",
             f"| Matrix growth from that re-index | {r['incremental_growth_bytes']} bytes, "
             f"{r['incremental_growth_rows']:g} rows |",
+            f"| Sections cut at {r['max_chars']} characters | {r['cut_sections']} "
+            f"(a line with no boundary inside it; the rest are divided) |",
         ]
         if "contamination_pct" in r:
             lines += [
