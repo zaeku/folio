@@ -33,9 +33,10 @@ folio budgets characters because it cannot see the model's tokenizer, and
 | Korean prose | 0.66 |
 
 At 0.66, 8,192 tokens is about 5,400 characters, so the default budget sends a
-Korean section that this server refuses. A corpus in a language that does not
-spell words with spaces wants `--max-chars` near 4,000, and the number to check
-it against is its own longest section rather than a rule of thumb.
+Korean section that this server refuses. Measured on a 8,011-character Korean
+fixture, `folio index` now finds 4,000 by halving: one refusal, one acceptance,
+and the run proceeds with what it cut recorded. That is the number a rule of
+thumb would have had to guess.
 
 That spread is also why `folio doctor` probes with the corpus's own longest
 section. Synthetic filler tokenizes at nearly twice the rate of real prose:

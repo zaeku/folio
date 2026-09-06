@@ -22,6 +22,11 @@ cargo install folio-cli
 
 The crate is `folio-cli` and the command it installs is `folio`.
 
+`folio index` checks its character budget against the endpoint before it embeds
+anything, and lowers it for that run if the endpoint refuses the longest section.
+It says so when it does, and marks what it cut. So a corpus in a language that
+packs more tokens into a character indexes without being told a number.
+
 `folio index` writes the index to `.folio/` under the root it indexes. Add
 `.folio/` to that corpus's ignore file before you index a repository. An index
 is derived from the corpus and belongs to whoever built it, never to history.

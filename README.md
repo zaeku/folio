@@ -129,12 +129,26 @@ folio config set --project model bge-m3
 folio config set --project endpoint http://127.0.0.1:8081/v1/embeddings
 ```
 
-Check the budget too. folio counts characters because it cannot see the model's
+The budget follows. folio counts characters because it cannot see the model's
 tokenizer, and the default 8,000 was set below an 8,192-token context on
 English, which runs about 3.7 characters per token. Korean prose on the same
-tokenizer runs 0.66, so 8,192 tokens is about 5,400 characters and the default
-sends sections the server refuses. `folio doctor` asks that question with your
-own longest section.
+tokenizer runs 0.66, so the same 8,000 characters are about 12,000 tokens.
+
+`folio index` does not guess at that. Before it embeds anything it sends the
+longest section it is about to send, and halves the budget until the endpoint
+accepts it:
+
+```
+$ folio index
+  the endpoint refused the longest section; trying 4000 characters
+  budget for this run: 4000 characters, not 8000
+indexed 1 files · 1 sections · dim 768
+  1 sections truncated at 4000 characters
+```
+
+The cut sections are marked, `folio status --truncated` names them, and the
+budget the index recorded is the one it used. Setting `--max-chars` yourself
+still works and still caps the run; calibration only ever lowers it.
 
 That writes `folio.yaml` at the corpus root. Commit it, and everyone who indexes
 that corpus embeds it the same way. It is deliberately not inside `.folio/`: the
