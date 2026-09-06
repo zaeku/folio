@@ -56,15 +56,11 @@ Every number folio reports about itself is one file under `docs/measurements/`,
 named by the date it was taken and the question it answers. `docs/measurements.md`
 is the preamble and says how to read them.
 
-**`ls docs/measurements/` is the index, and no other exists.** An index written
-by hand can disagree with what it indexes, because the two are separate facts; a
-filename cannot disagree with its own file. So a new measurement is a new file,
-never a line added to a list.
-
-**Write a measurement so that it can be read alone.** Each carries its own date
-in its heading as well as in its name, because the hard rule above wants the date
-where the number is used. One measurement that corrects another names it by
-filename — never by position, which was the failure the directory replaced.
+**`ls docs/measurements/` is the index, and no other exists.** A new measurement
+is a new file, never a line added to a list. Each carries its own date in its
+heading as well as in its name, and one that corrects or relies on another names
+it by filename, never by position. A fence in the decision layer fails on any of
+those, so the reasons live there and what is here is how to write one.
 
 A number quoted anywhere else — `README.md` included — has to be traceable to one
 of those files, and `cargo test` fails when it is not: `tests/numbers.rs` reads
@@ -88,8 +84,9 @@ keeping becomes a file under `docs/measurements/` on its own date, and that
 judgement is a person's — the harness never writes there.
 
 **One table in `README.md` belongs to `run.py`.** It is fenced by HTML comments
-naming its owner, and a full run replaces it. Do not edit it by hand; change
-`run.py` or rerun it. Everything outside those markers is hand-written.
+naming its owner, and a full run replaces it. Do not edit it by hand and do not
+quote its figures in the prose beside it; change `run.py` or rerun it.
+Everything outside those markers is hand-written, and a fence fails on both.
 
 The 2026-09-04 measurement predates that harness and has no committed artifact.
 It is the record of how the model and the design were chosen, and it says so.
