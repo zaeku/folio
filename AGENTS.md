@@ -81,7 +81,8 @@ guess. Measure it and record one.
 **A folio number comes from `benchmarks/run.py`.** It fetches two public corpora
 pinned by commit and drives the `folio` command on `PATH`, so anyone can rerun
 it. `benchmarks/README.md` says what those numbers are and, at more length, what
-they are not: contamination is measured and ranking quality deliberately is not.
+they are not — read it before adding a number to the harness, because what it
+declines to measure is a decision and not an omission.
 `.gitignore` excludes `benchmarks/reports/`, which is scratch. A run worth
 keeping becomes a file under `docs/measurements/` on its own date, and that
 judgement is a person's — the harness never writes there.
