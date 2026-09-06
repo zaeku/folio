@@ -639,9 +639,46 @@ struct Indexed {
     budget: usize,
     dim: usize,
     reembedded: usize,
+    moved: usize,
     retired: usize,
     dead: usize,
     compacted: usize,
+}
+
+/// Pair each path that is gone with a path that arrived carrying the same
+/// content, as `(from, to)`.
+///
+/// A hash still held by a file that is present is a copy and not a move, so
+/// only paths absent from `current` give their records away, and each gives
+/// them to one arrival. Both sides are taken in sorted order, so a rename of
+/// several files with identical content pairs the same way every run.
+fn pair_moves(
+    prev: &HashMap<String, Stamp>,
+    current: &HashMap<String, Stamp>,
+    changed: &HashSet<String>,
+) -> Vec<(String, String)> {
+    let mut gone: HashMap<u64, Vec<&String>> = HashMap::new();
+    for (path, st) in prev {
+        if !current.contains_key(path) {
+            gone.entry(st.hash).or_default().push(path);
+        }
+    }
+    for paths in gone.values_mut() {
+        paths.sort_by(|a, b| b.cmp(a));
+    }
+    let mut arrived: Vec<&String> = changed.iter().filter(|p| !prev.contains_key(*p)).collect();
+    arrived.sort();
+    let mut moves = Vec::new();
+    for to in arrived {
+        let Some(from) = gone
+            .get_mut(&current[to].hash)
+            .and_then(|paths| paths.pop())
+        else {
+            continue;
+        };
+        moves.push((from.clone(), to.clone()));
+    }
+    moves
 }
 
 /// Bring the index under `root` up to date with the files under it.
@@ -788,6 +825,16 @@ fn reindex(
             .cloned(),
     );
 
+    // A file that only moved carries the content its records already describe,
+    // so those records take the new path and nothing is embedded. Identity is
+    // the path, so without this a rename reads as a delete and a create.
+    let moves = pair_moves(&prev_files, &current, &changed);
+    for (from, to) in &moves {
+        retired_paths.remove(from);
+        retired_paths.remove(to);
+        changed.remove(to);
+    }
+
     let mut fresh: Vec<Section> = Vec::new();
     for rel in &changed {
         let source = fs::read_to_string(root.join(rel))?;
@@ -842,6 +889,7 @@ fn reindex(
         },
         &current,
         &retired_paths,
+        &moves,
         &placed,
     )?;
 
@@ -876,6 +924,7 @@ fn reindex(
         budget: max_chars,
         dim,
         reembedded: changed.len(),
+        moved: moves.len(),
         retired,
         dead,
         compacted,
@@ -923,6 +972,9 @@ fn cmd_index(
         "  {} re-embedded, {} replaced or removed, {} dead row(s)",
         r.reembedded, r.retired, r.dead
     );
+    if r.moved > 0 {
+        println!("  {} moved, keeping the vectors they had", r.moved);
+    }
     if r.truncated > 0 {
         println!(
             "  {} sections truncated at {} characters",
@@ -1792,5 +1844,43 @@ mod tests {
             pointed_at(&rows, &["supersedes".to_string()]).is_empty(),
             "an empty value must not drop every record that has no identity"
         );
+    }
+
+    fn stamped(hash: u64) -> Stamp {
+        Stamp { hash, len: 1, mtime: 0 }
+    }
+
+    #[test]
+    fn a_renamed_file_hands_its_records_to_the_new_path() {
+        let prev = HashMap::from([("a.md".to_string(), stamped(7))]);
+        let current = HashMap::from([("b.md".to_string(), stamped(7))]);
+        let changed = HashSet::from(["b.md".to_string()]);
+        assert_eq!(
+            pair_moves(&prev, &current, &changed),
+            vec![("a.md".to_string(), "b.md".to_string())]
+        );
+    }
+
+    #[test]
+    fn a_copy_takes_no_records_from_the_file_it_copied() {
+        let prev = HashMap::from([("a.md".to_string(), stamped(7))]);
+        let current = HashMap::from([
+            ("a.md".to_string(), stamped(7)),
+            ("b.md".to_string(), stamped(7)),
+        ]);
+        let changed = HashSet::from(["b.md".to_string()]);
+        assert!(pair_moves(&prev, &current, &changed).is_empty());
+    }
+
+    #[test]
+    fn one_departure_supplies_only_one_of_two_arrivals() {
+        let prev = HashMap::from([("a.md".to_string(), stamped(7))]);
+        let current = HashMap::from([
+            ("b.md".to_string(), stamped(7)),
+            ("c.md".to_string(), stamped(7)),
+        ]);
+        let changed = HashSet::from(["b.md".to_string(), "c.md".to_string()]);
+        let moves = pair_moves(&prev, &current, &changed);
+        assert_eq!(moves, vec![("a.md".to_string(), "b.md".to_string())]);
     }
 }

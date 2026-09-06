@@ -318,6 +318,22 @@ changed. Listing is what makes it cheap — a file whose length and modification
 time are what the index recorded is never opened — so on 14,616 files a re-index
 with nothing changed is 0.27 s, and one changed file is 0.47 s.
 
+A file that only moved is embedded again by neither. Its content hash arrives
+under a name the index has not seen while the name it had is gone, so its
+records take the new path and keep their vectors:
+
+```
+$ folio index
+indexed 14616 files · 119565 sections · dim 768
+  0 re-embedded, 0 replaced or removed, 0 dead row(s)
+  1 moved, keeping the vectors they had
+```
+
+Renaming one seven-section file of 14,616 costs 0.33 s and writes no vector at
+all, against 1.11 s and seven dead rows when the same rename was a delete and a
+create. A copy is not a move: the file it copied is still there and still
+answers, so the copy is embedded.
+
 There is no watcher and no daemon. A query checks itself instead. Before
 returning a row it stats the file behind it, and if that file has moved since it
 was indexed, folio brings the index up to date and answers again:

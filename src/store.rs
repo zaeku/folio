@@ -327,16 +327,24 @@ impl Store {
     /// A dropped record's row is not moved and not reused. Moving it would make
     /// the write proportional to the index rather than to the change, which is
     /// the whole reason the rows are appended.
+    ///
+    /// `moves` are `(from, to)` paths whose records keep their slot and take a
+    /// new path, for a file whose content the index already describes.
     pub fn apply(
         &self,
         meta: &Meta,
         files: &HashMap<String, Stamp>,
         dropped: &HashSet<String>,
+        moves: &[(String, String)],
         fresh: &[(usize, Section)],
     ) -> Result<usize> {
         let mut retired = 0;
         let tx = &self.conn;
         {
+            let mut mv = tx.prepare("UPDATE sections SET path = ?2 WHERE path = ?1")?;
+            for (from, to) in moves {
+                mv.execute(params![from, to])?;
+            }
             let mut del = tx.prepare("DELETE FROM sections WHERE path = ?1")?;
             for path in dropped {
                 retired += del.execute(params![path])?;
@@ -427,7 +435,7 @@ mod tests {
             "a.md".to_string(),
             Stamp { hash: u64::MAX, len: 12, mtime: -1 },
         )]);
-        st.apply(&meta, &files, &HashSet::new(), &[(0, section("a.md", 1)), (7, section("a.md", 9))])
+        st.apply(&meta, &files, &HashSet::new(), &[], &[(0, section("a.md", 1)), (7, section("a.md", 9))])
             .unwrap();
 
         assert_eq!(st.slots().unwrap(), vec![0, 7], "the slot names the matrix row");
@@ -463,7 +471,7 @@ mod tests {
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         let mut whole = section("b.md", 5);
         whole.truncated = false;
-        st.apply(&meta, &HashMap::new(), &HashSet::new(), &[(0, section("a.md", 1)), (1, whole)])
+        st.apply(&meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1)), (1, whole)])
             .unwrap();
 
         let cut = st.truncated().unwrap();
@@ -478,10 +486,10 @@ mod tests {
         let st = Store::open(&dir).unwrap();
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
         let none = HashSet::new();
-        st.apply(&meta, &HashMap::new(), &none,
+        st.apply(&meta, &HashMap::new(), &none, &[],
                  &[(0, section("a.md", 1)), (1, section("b.md", 1))]).unwrap();
         // a.md is re-indexed: its old row is not reused and not moved.
-        st.apply(&meta, &HashMap::new(), &HashSet::from(["a.md".to_string()]),
+        st.apply(&meta, &HashMap::new(), &HashSet::from(["a.md".to_string()]), &[],
                  &[(2, section("a.md", 5))]).unwrap();
 
         let slots = st.slots().unwrap();
@@ -507,7 +515,7 @@ mod tests {
         assert_eq!(b.high_water().unwrap(), 0);
 
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
-        a.apply(&meta, &HashMap::new(), &HashSet::new(), &[(0, section("a.md", 1))])
+        a.apply(&meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1))])
             .unwrap();
         assert_eq!(b.slots().unwrap(), Vec::<usize>::new(), "and does not see it yet");
 
@@ -522,7 +530,7 @@ mod tests {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
-        st.apply(&meta, &HashMap::new(), &HashSet::new(),
+        st.apply(&meta, &HashMap::new(), &HashSet::new(), &[],
                  &[(1, section("b.md", 1)), (4, section("c.md", 1)), (9, section("d.md", 1))])
             .unwrap();
         st.start_compacting().unwrap();
