@@ -334,7 +334,7 @@ not a candidate; it is an instruction to read lines 40 to 55, and once two lines
 are inserted above that section, following the instruction reads the wrong
 lines.
 
-It costs one stat per returned row, which is nothing: over 119,359 sections a
+It costs one stat per returned row, which is nothing: over 119,565 sections a
 query with nothing changed is 0.12 s either way. It checks the rows it returns
 and not the corpus — a file that changed without surfacing still costs you a
 candidate, which is the trade this index makes everywhere else too. Walking the
@@ -373,8 +373,8 @@ or copy it into wherever that agent keeps skills.
 ## Sizing
 
 One `f32` matrix, mapped and scanned end to end. No approximate index and no
-recall parameter: a query over 548 sections is 15 ms and one over 119,359 is
-132 ms, of which about 102 ms is the scan itself. The rest is one embedding
+recall parameter: a query over 555 sections is 25 ms and one over 119,565 is
+135 ms, of which about 100 ms is the scan itself. The rest is one embedding
 round trip and reading the list of rows that are still live.
 
 Three quarters of a query is therefore the exhaustive arithmetic — which is the
