@@ -7,7 +7,7 @@
 mod sections;
 mod store;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, anyhow, bail};
 use clap::{Parser, Subcommand};
 use sections::Section;
 use serde::{Deserialize, Serialize};
@@ -574,22 +574,58 @@ fn same_space(now: &[f32], then: &[f32]) -> f32 {
 
 // -------------------------------------------------------------------- filters
 
+#[derive(Debug)]
 enum Pred {
     Eq(String, String),
     Ne(String, String),
     Has(String),
+    Lacks(String),
 }
 
-fn parse_preds(raw: &[String]) -> Vec<Pred> {
+/// The whole grammar, for the error that names it.
+const WHERE_GRAMMAR: &str = "`key`, `!key`, `key=value`, `key!=value`";
+
+/// Characters a comparison would use, and folio compares text only. A key
+/// carrying one is a predicate somebody meant and folio cannot express.
+///
+/// Only the key is read this way. A value is literal text — `status=live|draft`
+/// matches a value spelled exactly that — because a value is data and refusing
+/// characters in it would deny somebody a value they legitimately wrote.
+const NOT_A_KEY: &[char] = &['<', '>', '|', '!', '=', '~', '&'];
+
+/// Parse `--where`, refusing what folio cannot express.
+///
+/// A predicate that is neither understood nor refused is worse than either: it
+/// silently becomes a key nobody would name. `--where version>=7` looked for a
+/// key called `version>` and `--where '!status'` for one called `!status`, and
+/// both answered with the same sentence a filter that legitimately matched
+/// nothing answers with.
+fn parse_preds(raw: &[String]) -> Result<Vec<Pred>> {
+    let reject = |what: &str, why: &str| -> anyhow::Error {
+        anyhow!("--where {what}: {why}. folio compares text, and the whole grammar is {WHERE_GRAMMAR}")
+    };
     raw.iter()
         .map(|s| {
-            if let Some((k, v)) = s.split_once("!=") {
-                Pred::Ne(k.trim().to_string(), v.trim().to_string())
+            let s = s.trim();
+            let (pred, key) = if let Some((k, v)) = s.split_once("!=") {
+                (Pred::Ne(k.trim().to_string(), v.trim().to_string()), k.trim())
             } else if let Some((k, v)) = s.split_once('=') {
-                Pred::Eq(k.trim().to_string(), v.trim().to_string())
+                (Pred::Eq(k.trim().to_string(), v.trim().to_string()), k.trim())
+            } else if let Some(k) = s.strip_prefix('!') {
+                (Pred::Lacks(k.trim().to_string()), k.trim())
             } else {
-                Pred::Has(s.trim().to_string())
+                (Pred::Has(s.to_string()), s)
+            };
+            if key.is_empty() {
+                return Err(reject(s, "names no key"));
             }
+            if let Some(c) = key.chars().find(|c| NOT_A_KEY.contains(c)) {
+                return Err(reject(
+                    s,
+                    &format!("reads `{key}` as the key, and `{c}` in a key is not something you meant"),
+                ));
+            }
+            Ok(pred)
         })
         .collect()
 }
@@ -597,6 +633,7 @@ fn parse_preds(raw: &[String]) -> Vec<Pred> {
 fn keeps(fm: &Map<String, Value>, preds: &[Pred]) -> bool {
     preds.iter().all(|p| match p {
         Pred::Has(k) => fm.contains_key(k),
+        Pred::Lacks(k) => !fm.contains_key(k),
         Pred::Eq(k, v) => fm.get(k).is_some_and(|got| holds(got, v)),
         Pred::Ne(k, v) => !fm.get(k).is_some_and(|got| holds(got, v)),
     })
@@ -1241,7 +1278,7 @@ fn cmd_query(
     refresh: bool,
 ) -> Result<()> {
     let root = root.canonicalize()?;
-    let preds = parse_preds(wheres);
+    let preds = parse_preds(wheres)?;
     let mut q: Option<Vec<f32>> = None;
     // At most one refresh. A result still stale after re-indexing means the
     // files are moving while folio reads them, and saying so beats looping.
@@ -2020,5 +2057,58 @@ mod tests {
         assert_eq!(same_space(&[1.0, 0.0, 0.0], &then), 1.0);
         assert_eq!(same_space(&[1.0, 0.0], &then), 0.0, "a shorter vector must not score on the dimensions it shares");
         assert_eq!(same_space(&[1.0, 0.0, 0.0], &[]), 0.0, "an index with no fingerprint is not a match");
+    }
+
+    fn preds(raw: &[&str]) -> Vec<Pred> {
+        parse_preds(&raw.iter().map(|s| s.to_string()).collect::<Vec<_>>()).unwrap()
+    }
+
+    fn fm(json: Value) -> Map<String, Value> {
+        json.as_object().unwrap().clone()
+    }
+
+    #[test]
+    fn presence_and_absence_are_both_reachable() {
+        let annotated = fm(json!({"status": "live"}));
+        let bare = fm(json!({"title": "Beta"}));
+        assert!(keeps(&annotated, &preds(&["status"])));
+        assert!(!keeps(&bare, &preds(&["status"])));
+        assert!(keeps(&bare, &preds(&["!status"])));
+        assert!(!keeps(&annotated, &preds(&["!status"])));
+    }
+
+    #[test]
+    fn a_comparison_is_refused_rather_than_read_as_a_key() {
+        for attempt in ["version>=7", "version<2", "a|b=c", "a&b"] {
+            let err = parse_preds(&[attempt.to_string()])
+                .expect_err(&format!("`{attempt}` has to be refused, not reinterpreted"));
+            assert!(
+                err.to_string().contains("the whole grammar is"),
+                "the refusal must name what folio does support: {err}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_value_is_literal_text_and_never_syntax() {
+        // Syntax lives in the key, data in the value. `status=live|draft` is a
+        // well-formed predicate for a value spelled exactly that, not a
+        // misparse, because the grammar offers no other reading of it.
+        let pred = preds(&["status=live|draft"]);
+        assert!(keeps(&fm(json!({"status": "live|draft"})), &pred));
+        assert!(!keeps(&fm(json!({"status": "live"})), &pred));
+    }
+
+    #[test]
+    fn a_predicate_naming_no_key_is_refused() {
+        assert!(parse_preds(&["=live".to_string()]).is_err());
+        assert!(parse_preds(&["!".to_string()]).is_err());
+    }
+
+    #[test]
+    fn key_not_equal_still_passes_when_the_key_is_absent() {
+        // The documented behaviour, kept: a filter must not silently drop the
+        // documents nobody has annotated yet.
+        assert!(keeps(&fm(json!({"title": "Beta"})), &preds(&["status!=deprecated"])));
     }
 }

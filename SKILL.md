@@ -120,8 +120,14 @@ folio query "current guidance"             --where type!=deprecated
 ```
 
 `key=value` matches and reads as membership on a list. Bare `key` tests
-presence. `key!=value` also passes when the key is absent, so a filter never
-silently drops what nobody annotated.
+presence and `!key` tests absence. `key!=value` also passes when the key is
+absent, so a filter never silently drops what nobody annotated; `!key` asks for
+those on purpose.
+
+That is the whole grammar — no comparisons, no `or`, and predicates are ANDed.
+folio refuses anything else instead of guessing, so a filter that returns
+nothing means nothing matched. A value is literal text: `--where status=a|b`
+looks for a value spelled exactly that.
 
 When the pointer sits on the successor rather than on the record to drop, a
 predicate cannot reach it and an anti-join can:

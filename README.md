@@ -297,9 +297,24 @@ folio query "current guidance"             --where type!=deprecated
 ```
 
 `key=value` matches, and reads as membership when the value is a list, so
-`--where tags=alpha` works. `key` alone tests presence. `key!=value` also passes
-when the key is absent, so a filter never silently drops the documents nobody has
-annotated yet.
+`--where tags=alpha` works. `key` tests presence and `!key` tests absence.
+`key!=value` also passes when the key is absent, so a filter never silently drops
+the documents nobody has annotated yet — `!key` is how you ask for those on
+purpose.
+
+That is the whole grammar, and folio refuses the rest rather than guessing:
+
+```
+$ folio query "current guidance" --where "version>=7"
+--where version>=7: reads `version>` as the key, and `>` in a key is not
+something you meant. folio compares text, and the whole grammar is `key`,
+`!key`, `key=value`, `key!=value`
+```
+
+There are no comparisons and no `or`. Predicates are ANDed. Syntax lives in the
+key, so a value is always literal text: `--where status=live|draft` looks for a
+value spelled exactly that, because a value is data and folio will not read
+somebody's data as an operator.
 
 ### Dropping what something else replaced
 
