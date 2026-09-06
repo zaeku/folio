@@ -39,6 +39,17 @@ A rule a check can reach belongs there rather than in this file. What stays here
 is what no check reaches: the hard rule above stays for good, because nothing
 executable can test whether a number was written down honestly.
 
+## Board
+
+`kanban/` is a third repository, ignored here, holding what is next rather than
+what is true. Run `kanban-md board` from the repository root. It is local: it
+orders one person's work and records what blocks what, and nothing in it is an
+agreement with anyone else. Work that has to be coordinated with someone on
+another machine belongs on the forge, not here.
+
+Three layers, three rhythms. This one changes per work item, `decisions/`
+changes when a rule does, and the board changes hourly.
+
 ## Measurements
 
 `docs/measurements.md` holds every number folio reports about itself, with how it
