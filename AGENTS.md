@@ -125,7 +125,8 @@ it. The rules that cost something here:
   working copy. Signing the working copy is what to avoid: `behavior = "keep"`
   preserves a signature through a rewrite, and every jj command rewrites `@`, so
   a signed `@` asks 1Password on `jj status`. `jj unsign -r @` undoes it, with
-  `--ignore-working-copy` when the repository will no longer open. Signing
+  `--ignore-working-copy` when the repository will no longer open; that flag
+  skips the snapshot and not the revset, so it prevents nothing here. Signing
   rewrites commits, so it happens before the push and never after: GitHub
   requires signed commits on `main` and rejects the push otherwise, which is
   the reminder rather than a rule someone has to remember.
