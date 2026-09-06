@@ -23,6 +23,17 @@ use std::time::UNIX_EPOCH;
 
 const BATCH: usize = 32;
 
+/// The text whose embedding says which weights answered. Its value does not
+/// matter; that every run sends the same one does. An index stores the text it
+/// was built with, so changing this affects indexes built after it and no other.
+const FINGERPRINT: &str = "folio probes the endpoint to learn which weights answered.";
+
+/// Where the same weights sit. Measured 2026-09-06 on gte-modernbert-base-Q8_0
+/// under llama.cpp: one input embedded twice in a request is bit-identical, and
+/// at a different position of a 32-input batch it differs by 1.1e-7. Different
+/// weights differ by 0.99. Nothing observed sits between.
+const SAME_SPACE: f32 = 0.999;
+
 /// The default character budget per section. Set below the 8192-token context
 /// of the models folio is measured on rather than at a round number.
 const MAX_CHARS: usize = 8_000;
@@ -550,6 +561,17 @@ fn dot(a: &[f32], b: &[f32]) -> f32 {
     a.iter().zip(b).map(|(x, y)| x * y).sum()
 }
 
+/// How close the endpoint answering now is to the one that built the index.
+///
+/// A different length is a different space and not a near miss, so it scores 0
+/// rather than comparing the dimensions they happen to share.
+fn same_space(now: &[f32], then: &[f32]) -> f32 {
+    if now.len() != then.len() || then.is_empty() {
+        return 0.0;
+    }
+    dot(now, then)
+}
+
 // -------------------------------------------------------------------- filters
 
 enum Pred {
@@ -713,17 +735,35 @@ fn reindex(
         return Ok(None);
     }
     let prev = st.meta()?;
-    // A vector space belongs to one model at one endpoint; mixing them would
-    // rank incomparable numbers against each other.
-    let reuse = !rebuild && prev.dim > 0 && prev.model == model && prev.endpoint == endpoint;
-    if !reuse && !rebuild && prev.dim > 0 {
-        // Discarding is the decision working. Saying so is the difference
-        // between that and a re-index someone cannot account for, and the
-        // usual cause is an exported variable from another corpus.
+    // A vector space is what the endpoint returns, not what it is called: a
+    // server restarted on other weights keeps the URL and the model string it
+    // had. So the index is kept or discarded on what answers now, and the probe
+    // sent is the one this index was built with rather than today's default.
+    let fingerprint_text = if prev.fingerprint.is_empty() { FINGERPRINT } else { prev.fingerprint.as_str() }.to_string();
+    let mut fingerprint: Vec<f32> = Vec::new();
+    let mut drifted: Option<f32> = None;
+    if !rebuild && prev.dim > 0 {
+        fingerprint = embed(endpoint, model, &[fingerprint_text.clone()])?
+            .pop()
+            .expect("one input yields one vector");
+        if !prev.fingerprint_vec.is_empty() {
+            let near = same_space(&fingerprint, &prev.fingerprint_vec);
+            if near < SAME_SPACE {
+                drifted = Some(near);
+            }
+        }
+    }
+    let reuse = !rebuild && prev.dim > 0 && drifted.is_none();
+    if let Some(near) = drifted {
+        // Discarding is the decision working. Saying so, with the number that
+        // caused it, is the difference between that and a re-index someone
+        // cannot account for — and it separates a model someone swapped from a
+        // runtime someone upgraded.
         println!(
-            "the index was built by {} at {}, and this run uses {model} at {endpoint} — \
-             re-embedding every section",
-            prev.model, prev.endpoint
+            "the endpoint at {endpoint} no longer returns what this index was built with \
+             (fingerprint {near:.6} against the one it carries, and {SAME_SPACE} is where the \
+             same weights sit) — \
+             re-embedding every section"
         );
     }
     let prev_files = if reuse { st.files()? } else { HashMap::new() };
@@ -849,8 +889,8 @@ fn reindex(
     // says here.
     let mut max_chars = max_chars;
     if let Some(longest) = fresh.iter().max_by_key(|s| s.text.chars().count()) {
-        let probe = longest.text.clone();
-        let fitted = calibrate(endpoint, model, &probe, max_chars)?;
+        let longest = longest.text.clone();
+        let fitted = calibrate(endpoint, model, &longest, max_chars)?;
         if fitted < max_chars {
             println!("  budget for this run: {fitted} characters, not {max_chars}");
             max_chars = fitted;
@@ -880,12 +920,30 @@ fn reindex(
         placed = (base..).zip(fresh).collect();
     }
 
+    // What this run leaves behind to be checked against later: the probe it
+    // kept, or today's when the index is being built rather than continued. An
+    // index with no vectors identifies no space and stores none.
+    let (fingerprint_text, fingerprint) = if reuse {
+        (fingerprint_text, fingerprint)
+    } else if dim == 0 {
+        (String::new(), Vec::new())
+    } else if fingerprint_text == FINGERPRINT && !fingerprint.is_empty() {
+        (fingerprint_text, fingerprint)
+    } else {
+        let v = embed(endpoint, model, &[FINGERPRINT.to_string()])?
+            .pop()
+            .expect("one input yields one vector");
+        (FINGERPRINT.to_string(), v)
+    };
+
     let retired = st.apply(
         &Meta {
             model: model.to_string(),
             endpoint: endpoint.to_string(),
             dim,
             max_chars,
+            fingerprint: fingerprint_text,
+            fingerprint_vec: fingerprint,
         },
         &current,
         &retired_paths,
@@ -1151,11 +1209,33 @@ fn cmd_query(
         let map = map_vectors(&root)?.context("the index has records but no vectors")?;
         let floats = as_floats(&map)?;
         if q.is_none() {
-            q = Some(
-                embed(&meta.endpoint, &meta.model, &[text.to_string()])?
-                    .pop()
-                    .expect("one input yields one vector"),
-            );
+            // The fingerprint rides in the query's own request: folio batches 32
+            // and a query sends one, so asking which weights answered is free.
+            let mut inputs = Vec::new();
+            if !meta.fingerprint.is_empty() {
+                inputs.push(meta.fingerprint.clone());
+            }
+            inputs.push(text.to_string());
+            let mut vectors = embed(&meta.endpoint, &meta.model, &inputs)?;
+            let asked = vectors.pop().expect("one input yields one vector");
+            // A query does not discard an index it was asked to read. Its own
+            // vector comes from the weights answering now and every row comes
+            // from the weights that built the index, so it cannot rank them
+            // against each other, and re-indexing is the caller's decision.
+            if let Some(now) = vectors.pop() {
+                let near = same_space(&now, &meta.fingerprint_vec);
+                if near < SAME_SPACE {
+                    bail!(
+                        "the endpoint at {} no longer returns what this index was built with \
+                         (fingerprint {near:.6} against the one it carries, and {SAME_SPACE} is where the same weights \
+                         sit), so these rows cannot be ranked against your question — \
+                         run `folio index --rebuild`, or point folio back at the endpoint that \
+                         built it",
+                        meta.endpoint
+                    );
+                }
+            }
+            q = Some(asked);
         }
         let q = q.as_deref().expect("embedded above");
 
@@ -1882,5 +1962,13 @@ mod tests {
         let changed = HashSet::from(["b.md".to_string(), "c.md".to_string()]);
         let moves = pair_moves(&prev, &current, &changed);
         assert_eq!(moves, vec![("a.md".to_string(), "b.md".to_string())]);
+    }
+
+    #[test]
+    fn a_different_dimension_is_a_different_space_and_not_a_near_miss() {
+        let then = vec![1.0, 0.0, 0.0];
+        assert_eq!(same_space(&[1.0, 0.0, 0.0], &then), 1.0);
+        assert_eq!(same_space(&[1.0, 0.0], &then), 0.0, "a shorter vector must not score on the dimensions it shares");
+        assert_eq!(same_space(&[1.0, 0.0, 0.0], &[]), 0.0, "an index with no fingerprint is not a match");
     }
 }

@@ -28,11 +28,16 @@ pub struct Stamp {
 }
 
 /// The vector space the records belong to.
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Meta {
     pub model: String,
     pub endpoint: String,
     pub dim: usize,
+    /// The text whose embedding identifies this vector space, and the vector
+    /// the endpoint returned for it. The text is stored so that a later folio
+    /// may choose a different one without invalidating what came before.
+    pub fingerprint: String,
+    pub fingerprint_vec: Vec<f32>,
     /// The character budget the index was built with, kept so that a re-index
     /// folio starts on its own uses the one the user chose rather than a
     /// default they never saw.
@@ -148,6 +153,8 @@ impl Store {
                 "endpoint" => m.endpoint = v,
                 "dim" => m.dim = v.parse().unwrap_or(0),
                 "max_chars" => m.max_chars = v.parse().unwrap_or(0),
+                "fingerprint" => m.fingerprint = v,
+                "fingerprint_vec" => m.fingerprint_vec = serde_json::from_str(&v).unwrap_or_default(),
                 _ => {}
             }
         }
@@ -376,6 +383,8 @@ impl Store {
             ins.execute(params!["endpoint", meta.endpoint])?;
             ins.execute(params!["dim", meta.dim.to_string()])?;
             ins.execute(params!["max_chars", meta.max_chars.to_string()])?;
+            ins.execute(params!["fingerprint", meta.fingerprint])?;
+            ins.execute(params!["fingerprint_vec", serde_json::to_string(&meta.fingerprint_vec)?])?;
         }
         Ok(retired)
     }
@@ -430,7 +439,7 @@ mod tests {
     fn a_record_round_trips_without_its_prose() {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
         let files = HashMap::from([(
             "a.md".to_string(),
             Stamp { hash: u64::MAX, len: 12, mtime: -1 },
@@ -468,7 +477,7 @@ mod tests {
     fn the_cut_sections_can_be_named_and_not_only_counted() {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
         let mut whole = section("b.md", 5);
         whole.truncated = false;
         st.apply(&meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1)), (1, whole)])
@@ -484,7 +493,7 @@ mod tests {
     fn a_retired_record_leaves_its_row_behind() {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
         let none = HashSet::new();
         st.apply(&meta, &HashMap::new(), &none, &[],
                  &[(0, section("a.md", 1)), (1, section("b.md", 1))]).unwrap();
@@ -514,7 +523,7 @@ mod tests {
         // A reader is not shut out while a writer works.
         assert_eq!(b.high_water().unwrap(), 0);
 
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
         a.apply(&meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1))])
             .unwrap();
         assert_eq!(b.slots().unwrap(), Vec::<usize>::new(), "and does not see it yet");
@@ -529,7 +538,7 @@ mod tests {
     fn compaction_renumbers_the_survivors_and_clears_its_flag() {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99 };
+        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
         st.apply(&meta, &HashMap::new(), &HashSet::new(), &[],
                  &[(1, section("b.md", 1)), (4, section("c.md", 1)), (9, section("d.md", 1))])
             .unwrap();
