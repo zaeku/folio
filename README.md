@@ -302,19 +302,48 @@ folio query "current guidance"             --where type!=deprecated
 the documents nobody has annotated yet — `!key` is how you ask for those on
 purpose.
 
-That is the whole grammar, and folio refuses the rest rather than guessing:
+`|` joins alternatives. `=` is a comparison, not an assignment, so it binds
+tighter the way it does anywhere else — and the two levels never need
+parentheses, because `|` inside one argument is the or and the boundary between
+arguments is the and:
+
+```sh
+# status is live or draft, and the type is guide
+folio query "current guidance" --where "status=live | status=draft" --where type=guide
+```
+
+That is the whole grammar. There are no comparisons of magnitude, and folio
+refuses what it cannot express rather than guessing:
 
 ```
 $ folio query "current guidance" --where "version>=7"
 --where version>=7: reads `version>` as the key, and `>` in a key is not
 something you meant. folio compares text, and the whole grammar is `key`,
-`!key`, `key=value`, `key!=value`
+`!key`, `key=value`, `key!=value`, joined by `|`
 ```
 
-There are no comparisons and no `or`. Predicates are ANDed. Syntax lives in the
-key, so a value is always literal text: `--where status=live|draft` looks for a
-value spelled exactly that, because a value is data and folio will not read
-somebody's data as an operator.
+Precedence brings one trap with it, the same one `if (x == 1 | 2)` has in C:
+`--where "status=live|draft"` is `status=live` or *the presence of a key named
+`draft`*. folio says so and still does it, because a presence test beside an or
+is a real thing to ask for:
+
+```
+$ folio query "current guidance" --where "status=live|draft"
+--where status=live|draft: `draft` beside `|` is a presence test for the key
+`draft`. A value needs its key, as in `<key>=draft`
+```
+
+A value is literal text otherwise, so it cannot contain a bare `|` — the cost
+every grammar pays before it has quoting.
+
+When a filter keeps nothing, folio names the predicate that emptied it rather
+than leaving you to bisect:
+
+```
+$ folio query "current guidance" --where "status=live | status=draft" --where '!version'
+no section passed the filter
+  !version matched none on its own
+```
 
 ### Dropping what something else replaced
 

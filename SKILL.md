@@ -124,10 +124,18 @@ presence and `!key` tests absence. `key!=value` also passes when the key is
 absent, so a filter never silently drops what nobody annotated; `!key` asks for
 those on purpose.
 
-That is the whole grammar — no comparisons, no `or`, and predicates are ANDed.
-folio refuses anything else instead of guessing, so a filter that returns
-nothing means nothing matched. A value is literal text: `--where status=a|b`
-looks for a value spelled exactly that.
+`|` joins alternatives, and `=` binds tighter than it: `--where "status=live |
+status=draft"` is an or of two comparisons. Separate `--where` flags are still
+ANDed, so `|` inside one argument is the or and the argument boundary is the and.
+
+That is the whole grammar. There are no comparisons of magnitude, and folio
+refuses what it cannot express instead of guessing, so a filter that returns
+nothing means nothing matched. When nothing does, folio names the predicate that
+emptied the result.
+
+One trap, and folio warns on it: `--where "status=live|draft"` is `status=live`
+or the presence of a key named `draft`, because that is what the precedence
+says. Write the key on both sides.
 
 When the pointer sits on the successor rather than on the record to drop, a
 predicate cannot reach it and an anti-join can:
