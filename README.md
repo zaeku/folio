@@ -327,7 +327,13 @@ that reading to you.
 `folio index` lists every file and re-embeds only the ones whose contents
 changed. Listing is what makes it cheap — a file whose length and modification
 time are what the index recorded is never opened — so on 14,616 files a re-index
-with nothing changed is 0.27 s, and one changed file is 0.47 s.
+with nothing changed is 0.30 s, and one changed file is 0.44 s.
+
+An index commits in batches of whole files, so a run that is interrupted keeps
+what it embedded. Killed partway through a 300-file corpus, `folio index` left
+86 files in the index and the next run embedded the remaining 214 and nothing
+else. The batch is whole files because a file's record of being current is
+written only once every section of it is in.
 
 A file that only moved is embedded again by neither. Its content hash arrives
 under a name the index has not seen while the name it had is gone, so its

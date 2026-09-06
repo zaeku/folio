@@ -335,58 +335,89 @@ impl Store {
     /// the write proportional to the index rather than to the change, which is
     /// the whole reason the rows are appended.
     ///
-    /// `moves` are `(from, to)` paths whose records keep their slot and take a
-    /// new path, for a file whose content the index already describes.
-    pub fn apply(
-        &self,
-        meta: &Meta,
-        files: &HashMap<String, Stamp>,
-        dropped: &HashSet<String>,
-        moves: &[(String, String)],
-        fresh: &[(usize, Section)],
-    ) -> Result<usize> {
-        let mut retired = 0;
-        let tx = &self.conn;
-        {
-            let mut mv = tx.prepare("UPDATE sections SET path = ?2 WHERE path = ?1")?;
-            for (from, to) in moves {
-                mv.execute(params![from, to])?;
-            }
-            let mut del = tx.prepare("DELETE FROM sections WHERE path = ?1")?;
-            for path in dropped {
-                retired += del.execute(params![path])?;
-            }
-            let mut ins = tx.prepare(
-                "INSERT INTO sections(slot, path, start, stop, heading, crumbs, fm, truncated)
-                 VALUES (?1,?2,?3,?4,?5,?6,?7,?8)",
-            )?;
-            for (slot, s) in fresh {
-                ins.execute(params![
-                    *slot as i64,
-                    s.path,
-                    s.start as i64,
-                    s.end as i64,
-                    s.heading,
-                    serde_json::to_string(&s.breadcrumb)?,
-                    serde_json::to_string(&s.fm)?,
-                    i64::from(s.truncated),
-                ])?;
-            }
-            tx.execute("DELETE FROM files", [])?;
-            let mut ins =
-                tx.prepare("INSERT INTO files(path, hash, len, mtime) VALUES (?1,?2,?3,?4)")?;
-            for (path, st) in files {
-                ins.execute(params![path, st.hash as i64, st.len as i64, st.mtime])?;
-            }
-            let mut ins = tx.prepare("INSERT OR REPLACE INTO meta(k, v) VALUES (?1, ?2)")?;
-            ins.execute(params!["model", meta.model])?;
-            ins.execute(params!["endpoint", meta.endpoint])?;
-            ins.execute(params!["dim", meta.dim.to_string()])?;
-            ins.execute(params!["max_chars", meta.max_chars.to_string()])?;
-            ins.execute(params!["fingerprint", meta.fingerprint])?;
-            ins.execute(params!["fingerprint_vec", serde_json::to_string(&meta.fingerprint_vec)?])?;
+    /// These are the pieces an update is made of. They are separate because an
+    /// index commits in batches: a run that dies keeps the files it finished,
+    /// and only a whole file may be recorded, or the next run would skip one
+    /// whose sections are half in the index.
+    ///
+    /// Every one of them must be called under `lock`.
+
+    /// Drop the records of `paths`, returning how many rows they left behind.
+    pub fn retire(&self, paths: &HashSet<String>) -> Result<usize> {
+        let mut del = self.conn.prepare("DELETE FROM sections WHERE path = ?1")?;
+        let mut n = 0;
+        for path in paths {
+            n += del.execute(params![path])?;
         }
-        Ok(retired)
+        Ok(n)
+    }
+
+    /// Give the records of `from` the path `to`, keeping their rows.
+    pub fn rename(&self, moves: &[(String, String)]) -> Result<()> {
+        let mut mv = self.conn.prepare("UPDATE sections SET path = ?2 WHERE path = ?1")?;
+        for (from, to) in moves {
+            mv.execute(params![from, to])?;
+        }
+        Ok(())
+    }
+
+    /// Record `fresh` at the slots given, which name rows already written.
+    pub fn add(&self, fresh: &[(usize, Section)]) -> Result<()> {
+        let mut ins = self.conn.prepare(
+            "INSERT INTO sections(slot, path, start, stop, heading, crumbs, fm, truncated)
+             VALUES (?1,?2,?3,?4,?5,?6,?7,?8)",
+        )?;
+        for (slot, s) in fresh {
+            ins.execute(params![
+                *slot as i64,
+                s.path,
+                s.start as i64,
+                s.end as i64,
+                s.heading,
+                serde_json::to_string(&s.breadcrumb)?,
+                serde_json::to_string(&s.fm)?,
+                i64::from(s.truncated),
+            ])?;
+        }
+        Ok(())
+    }
+
+    /// Record what these files looked like. A stamp says the index is current
+    /// for its file, so one is written only once every section of that file is.
+    pub fn stamp<'a>(&self, stamps: impl Iterator<Item = (&'a String, &'a Stamp)>) -> Result<()> {
+        let mut ins = self.conn.prepare(
+            "INSERT OR REPLACE INTO files(path, hash, len, mtime) VALUES (?1,?2,?3,?4)",
+        )?;
+        for (path, st) in stamps {
+            ins.execute(params![path, st.hash as i64, st.len as i64, st.mtime])?;
+        }
+        Ok(())
+    }
+
+    /// Forget the stamps of files the corpus no longer has.
+    pub fn forget(&self, paths: &HashSet<String>) -> Result<()> {
+        let mut del = self.conn.prepare("DELETE FROM files WHERE path = ?1")?;
+        for path in paths {
+            del.execute(params![path])?;
+        }
+        Ok(())
+    }
+
+    /// Record the vector space these records belong to.
+    pub fn set_meta(&self, meta: &Meta) -> Result<()> {
+        let mut ins = self
+            .conn
+            .prepare("INSERT OR REPLACE INTO meta(k, v) VALUES (?1, ?2)")?;
+        ins.execute(params!["model", meta.model])?;
+        ins.execute(params!["endpoint", meta.endpoint])?;
+        ins.execute(params!["dim", meta.dim.to_string()])?;
+        ins.execute(params!["max_chars", meta.max_chars.to_string()])?;
+        ins.execute(params!["fingerprint", meta.fingerprint])?;
+        ins.execute(params![
+            "fingerprint_vec",
+            serde_json::to_string(&meta.fingerprint_vec)?
+        ])?;
+        Ok(())
     }
 
     /// Drop every record, for a rebuild or a change of vector space. The
@@ -419,6 +450,24 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    /// The pieces in the order `reindex` calls them, for a test with nothing
+    /// to resume. Retirement comes before the records that replace them.
+    fn commit(
+        st: &Store,
+        meta: &Meta,
+        files: &HashMap<String, Stamp>,
+        dropped: &HashSet<String>,
+        moves: &[(String, String)],
+        fresh: &[(usize, Section)],
+    ) -> Result<usize> {
+        st.rename(moves)?;
+        let retired = st.retire(dropped)?;
+        st.add(fresh)?;
+        st.stamp(files.iter())?;
+        st.set_meta(meta)?;
+        Ok(retired)
+    }
+
     fn section(path: &str, start: usize) -> Section {
         Section {
             path: path.into(),
@@ -444,7 +493,7 @@ mod tests {
             "a.md".to_string(),
             Stamp { hash: u64::MAX, len: 12, mtime: -1 },
         )]);
-        st.apply(&meta, &files, &HashSet::new(), &[], &[(0, section("a.md", 1)), (7, section("a.md", 9))])
+        commit(&st, &meta, &files, &HashSet::new(), &[], &[(0, section("a.md", 1)), (7, section("a.md", 9))])
             .unwrap();
 
         assert_eq!(st.slots().unwrap(), vec![0, 7], "the slot names the matrix row");
@@ -480,7 +529,7 @@ mod tests {
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
         let mut whole = section("b.md", 5);
         whole.truncated = false;
-        st.apply(&meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1)), (1, whole)])
+        commit(&st, &meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1)), (1, whole)])
             .unwrap();
 
         let cut = st.truncated().unwrap();
@@ -495,10 +544,10 @@ mod tests {
         let st = Store::open(&dir).unwrap();
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
         let none = HashSet::new();
-        st.apply(&meta, &HashMap::new(), &none, &[],
+        commit(&st, &meta, &HashMap::new(), &none, &[],
                  &[(0, section("a.md", 1)), (1, section("b.md", 1))]).unwrap();
         // a.md is re-indexed: its old row is not reused and not moved.
-        st.apply(&meta, &HashMap::new(), &HashSet::from(["a.md".to_string()]), &[],
+        commit(&st, &meta, &HashMap::new(), &HashSet::from(["a.md".to_string()]), &[],
                  &[(2, section("a.md", 5))]).unwrap();
 
         let slots = st.slots().unwrap();
@@ -524,7 +573,7 @@ mod tests {
         assert_eq!(b.high_water().unwrap(), 0);
 
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
-        a.apply(&meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1))])
+        commit(&a, &meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1))])
             .unwrap();
         assert_eq!(b.slots().unwrap(), Vec::<usize>::new(), "and does not see it yet");
 
@@ -539,7 +588,7 @@ mod tests {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
         let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
-        st.apply(&meta, &HashMap::new(), &HashSet::new(), &[],
+        commit(&st, &meta, &HashMap::new(), &HashSet::new(), &[],
                  &[(1, section("b.md", 1)), (4, section("c.md", 1)), (9, section("d.md", 1))])
             .unwrap();
         st.start_compacting().unwrap();

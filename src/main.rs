@@ -771,10 +771,6 @@ fn reindex(
         st.clear()?;
         fs::write(store::vectors_path(&root), [])?;
     }
-    // The row the first new vector takes. Read before anything is retired, so
-    // that a crash during the write lands past every row a live record names.
-    let base = st.high_water()?;
-
     // The walk is threaded because it dominated what was left of a re-index:
     // on 14,616 files it ran 449-804 ms in one thread and 172 ms across ten.
     // Results land in whatever order the threads finish, which is fine because
@@ -901,33 +897,14 @@ fn reindex(
         }
     }
 
-    let mut dim = if reuse { prev.dim } else { 0 };
-    let mut placed: Vec<(usize, Section)> = Vec::new();
-    if !fresh.is_empty() {
-        let inputs: Vec<String> = fresh.iter().map(|s| s.text.clone()).collect();
-        let vectors = embed(endpoint, model, &inputs)?;
-        if dim == 0 {
-            dim = vectors[0].len();
-        }
-        if let Some((i, v)) = vectors.iter().enumerate().find(|(_, v)| v.len() != dim) {
-            bail!(
-                "{} came back at dim {} while the index is dim {dim}",
-                fresh[i].path,
-                v.len()
-            );
-        }
-        append(&root, base, dim, &vectors)?;
-        placed = (base..).zip(fresh).collect();
-    }
-
-    // What this run leaves behind to be checked against later: the probe it
-    // kept, or today's when the index is being built rather than continued. An
-    // index with no vectors identifies no space and stores none.
-    let (fingerprint_text, fingerprint) = if reuse {
-        (fingerprint_text, fingerprint)
-    } else if dim == 0 {
-        (String::new(), Vec::new())
-    } else if fingerprint_text == FINGERPRINT && !fingerprint.is_empty() {
+    // The fingerprint this run leaves behind, resolved before anything is
+    // committed. Its length is the dimension, so one request settles both — and
+    // both have to be in the meta from the first batch on. Without them a run
+    // that dies leaves rows belonging to no space, and the next run discards
+    // every one of them instead of continuing.
+    let (fingerprint_text, fingerprint) = if fresh.is_empty() {
+        (prev.fingerprint.clone(), prev.fingerprint_vec.clone())
+    } else if reuse {
         (fingerprint_text, fingerprint)
     } else {
         let v = embed(endpoint, model, &[FINGERPRINT.to_string()])?
@@ -935,21 +912,68 @@ fn reindex(
             .expect("one input yields one vector");
         (FINGERPRINT.to_string(), v)
     };
+    let mut dim = if reuse { prev.dim } else { fingerprint.len() };
 
-    let retired = st.apply(
-        &Meta {
-            model: model.to_string(),
-            endpoint: endpoint.to_string(),
-            dim,
-            max_chars,
-            fingerprint: fingerprint_text,
-            fingerprint_vec: fingerprint,
-        },
-        &current,
-        &retired_paths,
-        &moves,
-        &placed,
-    )?;
+    let mut retired = 0;
+    // A file that vanished loses its records now: there is nothing to embed for
+    // it, so nothing later in this run can conflict with the deletion, and a
+    // run that dies after it has still done the right thing.
+    let vanished: HashSet<String> = retired_paths.difference(&changed).cloned().collect();
+    st.rename(&moves)?;
+    retired += st.retire(&vanished)?;
+    st.forget(&vanished)?;
+    st.stamp(moves.iter().filter_map(|(_, to)| current.get_key_value(to)))?;
+    st.set_meta(&Meta {
+        model: model.to_string(),
+        endpoint: endpoint.to_string(),
+        dim,
+        max_chars,
+        fingerprint: fingerprint_text,
+        fingerprint_vec: fingerprint,
+    })?;
+    st.unlock()?;
+
+    // Committed in batches of whole files. A run that dies keeps the files it
+    // finished, and the unit is the file because a stamp says the index is
+    // current for one: written for a file whose sections are only half in, the
+    // next run would skip the other half forever.
+    for batch in batches(fresh, FLUSH) {
+        let inputs: Vec<String> = batch.iter().map(|s| s.text.clone()).collect();
+        let vectors = embed(endpoint, model, &inputs)?;
+        if dim == 0 {
+            dim = vectors[0].len();
+        }
+        if let Some((i, v)) = vectors.iter().enumerate().find(|(_, v)| v.len() != dim) {
+            bail!(
+                "{} came back at dim {} while the index is dim {dim}",
+                batch[i].path,
+                v.len()
+            );
+        }
+        // The lock spans reading the row the matrix has grown to, appending
+        // there, and recording what was written — the same span it always had,
+        // taken once per batch rather than once per run.
+        if !st.lock(wait.max(std::time::Duration::from_secs(30)))? {
+            bail!("another folio took the index while this one was embedding");
+        }
+        let base = st.high_water()?;
+        append(&root, base, dim, &vectors)?;
+        let touched: HashSet<String> = batch.iter().map(|s| s.path.clone()).collect();
+        retired += st.retire(&touched)?;
+        let placed: Vec<(usize, Section)> = (base..).zip(batch).collect();
+        st.add(&placed)?;
+        st.stamp(touched.iter().filter_map(|p| current.get_key_value(p)))?;
+        st.unlock()?;
+    }
+
+    if !st.lock(wait.max(std::time::Duration::from_secs(30)))? {
+        bail!("another folio took the index before this one could record what it did");
+    }
+
+    // Every stamp, not only the batches': a file someone touched without
+    // changing keeps its content hash and needs its new length and time
+    // recorded, or it is read again on every index from here on.
+    st.stamp(current.iter())?;
 
     // Read inside the lock, so these describe what was just written and not
     // what someone else wrote next.
@@ -1043,6 +1067,27 @@ fn cmd_index(
         println!("  compacted: {} dead row(s) reclaimed", r.compacted);
     }
     Ok(())
+}
+
+/// Split sections into batches of at least `want`, never cutting a file in two.
+///
+/// `fresh` is built one file at a time, so a file's sections are already
+/// together; this only chooses where to end a batch. A single file larger than
+/// `want` becomes a batch of its own rather than being divided.
+fn batches(fresh: Vec<Section>, want: usize) -> Vec<Vec<Section>> {
+    let mut out: Vec<Vec<Section>> = Vec::new();
+    let mut batch: Vec<Section> = Vec::new();
+    for s in fresh {
+        let boundary = batch.last().is_some_and(|last| last.path != s.path);
+        if boundary && batch.len() >= want {
+            out.push(std::mem::take(&mut batch));
+        }
+        batch.push(s);
+    }
+    if !batch.is_empty() {
+        out.push(batch);
+    }
+    out
 }
 
 /// Rows the matrix holds, live and dead.
@@ -1338,6 +1383,11 @@ fn cmd_query(
 /// nothing and a run stops there. Hydrating every record instead would restore
 /// the read D-01M1QWB73G6WNZ removed, which was 180 ms of a 267 ms query.
 const MERGE_WINDOW: usize = 8;
+
+/// How many sections an index commits at a time. A run that dies keeps every
+/// batch before the one it was in, so this is what a kill costs: at the 0.53 s
+/// per 32 inputs measured on 2026-09-06, about eight seconds of embedding.
+const FLUSH: usize = 512;
 
 /// One range to read, and the ranked sections it was assembled from.
 struct Hit {
