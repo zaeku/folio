@@ -48,6 +48,7 @@ hitting it is worth writing down where the next reader will look.
 | **Cost** — index time, query latency, index size, re-index after an edit and what that edit writes | a large corpus pinned by commit | yes |
 | **Contamination** — how much retired material a query surfaces | a corpus that marks its own lifecycle | yes, on MDN |
 | **Ranking quality** — whether the ordering is good | queries with gold answers | **no** |
+| **Retrievability** — whether a section can be found at all | queries drawn from the corpus itself | only to compare folio with folio, see below |
 
 Ranking quality is absent on purpose. Measuring it needs a labelled query set,
 and the two ways to get one are both wrong here. Writing questions against a
@@ -57,6 +58,38 @@ and labels them as a smoke test rather than a result. Adopting BEIR or MTEB
 instead would measure the embedding model: those are passage collections, while
 folio's unit is a heading section carrying frontmatter, so the score would move
 with the model and stand still with folio.
+
+## The one quality-shaped question that is allowed
+
+A change to how folio cuts or splits a section cannot be judged by cost or by
+contamination, and refusing to measure it means choosing between prefix and
+split by argument. So one narrow measurement is admissible, and its boundaries
+are what keep it from becoming the thing refused above.
+
+**It is retrievability, not preference.** Take the text truncation removes — the
+tail of a section past the budget. Draw a query from it. The section it came
+from is the answer by construction, so nothing is annotated by anyone who has
+watched the tool run. Measure the share of those queries whose source section is
+returned in the top k, under one folio and then another.
+
+**It compares folio to folio and nothing else.** One model, one corpus, one
+seed, two configurations. The absolute figure is inflated because a query drawn
+from a passage shares its wording, and that inflation is identical in both arms,
+which is why the difference is readable and the level is not. It may never be
+quoted as folio's ranking quality, and never compared across models: that is the
+number this file refuses, and drawing queries from the corpus does not make it
+available.
+
+**It reports how often the question arises, first.** Measured 2026-09-06 on the
+pinned corpora: 142 of MDN's 119,359 sections are cut, and 6 of the 548 in
+`rust-lang/book`. Within the cut sections 43.5% of the text is past the budget
+and unreachable by any query — 873,797 characters, in pages like
+`web/html/reference/attributes/index.md`, which is a reference list whose tail
+is more entries. A rate of 0.12% is small; a page whose second half cannot be
+found is not, and both halves of that sentence belong in the report.
+
+`folio status` prints the cut count and `folio status --truncated` names them,
+so the harness reports it without measuring anything itself.
 
 ## Contamination is the number that measures folio
 
