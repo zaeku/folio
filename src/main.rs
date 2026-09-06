@@ -270,6 +270,13 @@ fn at_least_one(s: &str) -> Result<usize, String> {
 }
 
 fn main() -> Result<()> {
+    // A command that is piped into `head` has its stdout closed early. Rust
+    // ignores SIGPIPE, so the next `println!` panics and prints a backtrace
+    // notice over the output the reader was already reading. Restoring the
+    // default ends this process the way every other command in a pipeline
+    // ends.
+    unsafe { libc::signal(libc::SIGPIPE, libc::SIG_DFL) };
+
     match Cli::parse().cmd {
         Cmd::Index {
             root,

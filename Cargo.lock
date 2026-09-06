@@ -306,6 +306,7 @@ dependencies = [
  "anyhow",
  "clap",
  "ignore",
+ "libc",
  "memmap2",
  "rusqlite",
  "serde",
