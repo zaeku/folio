@@ -66,8 +66,17 @@ in its heading as well as in its name, because the hard rule above wants the dat
 where the number is used. One measurement that corrects another names it by
 filename — never by position, which was the failure the directory replaced.
 
-A number quoted anywhere else — `README.md` included — should be traceable to one
-of those files.
+A number quoted anywhere else — `README.md` included — has to be traceable to one
+of those files, and `cargo test` fails when it is not: `tests/numbers.rs` reads
+the prose of this file, `README.md` and `SKILL.md`, and asks whether every number
+carrying a unit appears under `docs/measurements/`. It skips fenced blocks,
+because a transcript or a flag's value is an illustration rather than a claim.
+
+**It checks existence, not agreement.** A number used in the wrong sense still
+passes. What it catches is a value changed in one place and not the other, which
+is the failure that happens. Do not answer it by removing the number: an undated
+number is a guess to the next reader, and no number is not an improvement on a
+guess. Measure it and record one.
 
 **A folio number comes from `benchmarks/run.py`.** It fetches two public corpora
 pinned by commit and drives the `folio` command on `PATH`, so anyone can rerun

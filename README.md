@@ -156,7 +156,7 @@ $ folio status
   truncated   0
 ```
 
-That is one MDN reference page whose largest section is 46,528 characters. It
+That is one MDN reference page whose largest section is 46,529 characters. It
 divides at a paragraph break where one fits and at a line otherwise, because the
 alternative to an untidy piece is not a tidier one but a tail no query can
 reach. Measured on `mdn/content`, giving cut tails their own records took
