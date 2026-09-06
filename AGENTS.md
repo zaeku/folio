@@ -118,6 +118,13 @@ it. The rules that cost something here:
   effect of a command that may reset the working copy in the same breath.
 - Do not discard existing changes. Existing changes belong to the user unless a
   task identifies them as agent changes.
+- **Sign before you push: `jj sign`, then push.** Nothing is signed as it is
+  made, because jj signs the working-copy commit on every snapshot and each
+  signature is a prompt. `jj sign` with no arguments takes
+  `reachable(@, mutable())`, which is everything not yet published. Signing
+  rewrites commits, so it happens before the push and never after: GitHub
+  requires signed commits on `main` and rejects the push otherwise, which is
+  the reminder rather than a rule someone has to remember.
 
 ## Language
 
