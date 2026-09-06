@@ -15,29 +15,56 @@ estimate. They are kept because they are what the model choice was made on, and
 they are labelled so nobody quotes them as a result. `benchmarks/` is where a
 reproducible number will come from.
 
-## 2026-09-06 — how far apart two sets of weights are, and how close one is to itself
+## 2026-09-06 — what moves an endpoint's fingerprint, and what does not
 
-The numbers the vector-space fingerprint rests on (`D-01M1PP6HKHF97G`). Vectors
-are normalized, so every figure is a dot product.
+Everything the 0.999 threshold of `D-01M1PP6HKHF97G` was set against. Vectors are
+normalized, so every figure is a dot product. `gte-modernbert-base` under
+llama.cpp `b10809-5266f24da`, one probe sentence unless a row says otherwise.
 
-**One endpoint against itself.** `gte-modernbert-base-Q8_0` under llama.cpp on
-port 8080, one probe sentence:
+| What changed | Fingerprint | Verdict |
+|---|---|---|
+| Nothing — same input twice in one request | 1.0000000000 | kept |
+| Nothing — a second server, identical flags | 1.0000000000 | kept |
+| Position in a 32-input batch | 0.9999998908 | kept |
+| Backend: `-ngl 0` against the default | 0.9998787158 | kept |
+| Quantization: Q8_0 against F16 | 0.999631 – 0.999883 | kept |
+| Quantization: Q8_0 against Q4_k_m | 0.975885 – 0.992211 | **discarded** |
+| Different weights entirely | 0.013 | **discarded** |
 
-| | |
-|---|---|
-| Same input, sent twice in the same request | 1.0000000000 |
-| Same input at position 15 of a 32-input batch | 0.9999998908 |
-| Same input at position 31 of a 32-input batch | 0.9999998908 |
+**The threshold lands where it should, and the margin is thinner than it looks.**
+The nearest thing kept is Q8_0 against F16 at 0.999631, six ten-thousandths
+above the line; the nearest thing discarded is Q4_k_m at 0.992211, seven
+thousandths below. The gap the threshold sits in is about 0.007 wide, not the
+seven orders of magnitude between untouched and unrelated.
 
-Batch position moves the last bits and nothing else — a deviation of 1.1e-7.
+That the line falls between F16 and Q4_k_m is the right place for it. Adjacent
+results in a ranked answer sit about 0.04 apart (see the merging entry below), so
+Q4_k_m's perturbation of up to 0.024 is the same order as the gaps it would have
+to preserve, while F16's 0.00037 is two orders below them. One changes what a
+query returns and the other does not.
 
-**Two sets of weights against each other.** Measured with a stub
-`/v1/embeddings` that returns deterministic vectors chosen by a named weight
-set, because a second 768-dimension model was not on the machine and the
-question does not need one: 0.013 for the same input under two weight sets.
+**A second process changes nothing.** Two servers started with identical flags
+over the same file return bit-identical vectors, so everything above is
+attributable to what the row names and not to running twice.
 
-So the same weights and different weights are seven orders of magnitude apart,
-and the 0.999 threshold sits in an empty band four orders above the noise.
+**The fingerprint's sensitivity depends on its text**, which is the known
+weakness of the number. For one comparison — Q8_0 against Q4_k_m — an English
+sentence reads 0.9913, a line of code 0.9870, and a Korean sentence 0.9759. The
+fingerprint folio ships is English, so on a corpus in another language it reports
+less movement than that corpus's own content would see. It stayed on the correct
+side of the threshold in every case measured here, and it has less room than the
+figures suggest.
+
+**Method.** Two extra `llama-server` processes on ports 8081 and 8082, the same
+model repository at three quantizations, `--pooling cls -c 8192 -b 8192 -ub 8192`.
+`/props` confirmed both servers loaded the same file at the same build for the
+backend row. The unrelated-weights row is the stub endpoint described below.
+
+## 2026-09-06 — how the name-based rule mixed two models in one index
+
+The vectors two weight sets return were compared with a stub `/v1/embeddings`
+that answers deterministically from a named weight set, because a second
+768-dimension model was not on the machine and the question did not need one.
 
 **What the old rule let through.** With identity recorded as the model and
 endpoint strings, the stub was restarted on other weights at the same URL and
