@@ -7,6 +7,12 @@
 # here (§2).
 /decisions/
 
+# The board is a third repository for the same reason, and a louder one: a task
+# is a file, so a morning of moving tasks is a morning of commits that say
+# nothing about folio. Ignored before it exists, so that no command snapshots it
+# into this working copy first.
+/kanban/
+
 /target
 .folio/
 /benchmarks/corpora/
