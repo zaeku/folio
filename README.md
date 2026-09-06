@@ -410,13 +410,24 @@ or copy it into wherever that agent keeps skills.
 ## Sizing
 
 One `f32` matrix, mapped and scanned end to end. No approximate index and no
-recall parameter: a query over 555 sections is 25 ms and one over 119,565 is
-135 ms, of which about 100 ms is the scan itself. The rest is one embedding
-round trip and reading the list of rows that are still live.
+recall parameter, on the two public corpora `benchmarks/run.py` pins:
 
-Three quarters of a query is therefore the exhaustive arithmetic — which is the
-part an approximate index replaces, and it would replace 102 ms with a graph to
-build, a recall parameter to defend, and more bytes to load beside the matrix.
+<!-- run.py owns the table below. Edit run.py, not the table. -->
+
+| Corpus | Sections | Index | Vectors | Query |
+|---|---|---|---|---|
+| [`rust-lang/book`](https://github.com/rust-lang/book) | 555 | 39 s | 1.7 MB | 25 ms median, 40 ms worst |
+| [`mdn/content`](https://github.com/mdn/content) | 119,565 | 1,976 s | 367.3 MB | 135 ms median, 170 ms worst |
+
+Measured 2026-09-06 by `benchmarks/run.py`, model `gte-modernbert`, 400 queries at top 10, corpora pinned by commit.
+
+<!-- end of what run.py owns. -->
+
+About 100 ms of the larger query is the scan itself; the rest is one embedding
+round trip and reading the list of rows that are still live. Three quarters of a
+query is therefore the exhaustive arithmetic — which is the part an approximate
+index replaces, and it would replace 102 ms with a graph to build, a recall
+parameter to defend, and more bytes to load beside the matrix.
 
 Headings buy two things, and the second one is memory: a corpus of shorter
 sections asks the server for smaller batches, and the server sizes itself to the

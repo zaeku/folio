@@ -19,6 +19,18 @@ committed one would go stale without saying so. A run worth keeping goes into
 `../docs/measurements/` under its own date, with the corpus commit, the model
 and the machine named beside it.
 
+**A full run also rewrites one table in `../README.md`.** It sits between two
+HTML comments naming `run.py` as its owner, and everything outside them is
+hand-written. Editing that table by hand is how `README.md` came to claim 0.27 s
+for a re-index the measurements put at 0.29 s; regenerating is the only thing
+that cannot fall behind. A run of fewer than both corpora leaves the table alone
+rather than narrowing it to what it happened to measure, and a `README.md`
+missing the markers is an error rather than a silent no-op.
+
+**Deciding a run is worth keeping is still a person's job.** `run.py` writes the
+report and that one table, and never a file under `../docs/measurements/`: which
+runs become part of the record is a judgement, not an output.
+
 ## The model's context is the limit, and no flag raises it
 
 `run.py` sets `--max-chars 8000`, below the 8192-token context of the model

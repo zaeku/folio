@@ -17,6 +17,7 @@ measured, contamination is measured, and ranking quality is not.
 """
 
 import argparse
+import datetime
 import json
 import os
 import shutil
@@ -352,6 +353,61 @@ def write_report(reports):
     print(f"\nwrote {out / 'latest.md'}")
 
 
+# The README carries these numbers where a reader meets folio for the first
+# time, and they used to be copied there by hand. That is how it came to claim
+# 0.27 s for a re-index the measurements put at 0.29 s. Regenerating is the only
+# thing that cannot fall behind.
+README_BEGIN = "<!-- run.py owns the table below. Edit run.py, not the table. -->"
+README_END = "<!-- end of what run.py owns. -->"
+
+
+def readme_table(reports):
+    rows = [
+        "| Corpus | Sections | Index | Vectors | Query |",
+        "|---|---|---|---|---|",
+    ]
+    for r in sorted(reports, key=lambda r: r["sections"]):
+        rows.append(
+            f"| [`{r['corpus']}`](https://github.com/{r['corpus']}) | {r['sections']:,} "
+            f"| {r['index_seconds']:,.0f} s "
+            f"| {r['vectors_bytes'] / 1e6:.1f} MB | {r['query_median_ms']:.0f} ms median, "
+            f"{r['query_max_ms']:.0f} ms worst |"
+        )
+    when = datetime.date.today().isoformat()
+    model = reports[0]["model"]
+    rows += [
+        "",
+        f"Measured {when} by `benchmarks/run.py`, model `{model}`, "
+        f"{reports[0]['queries']} queries at top {reports[0]['top_k']}, "
+        f"corpora pinned by commit.",
+    ]
+    return "\n".join(rows)
+
+
+def update_readme(reports):
+    """Replace the table the harness owns, and nothing else in the file.
+
+    A partial run must not narrow the table to whatever it happened to measure,
+    so this declines unless every corpus was in the run.
+    """
+    if len(reports) < len(CORPORA):
+        print(f"\nnot touching README.md: it wants all {len(CORPORA)} corpora and this run had "
+              f"{len(reports)}")
+        return
+    path = HERE.parent / "README.md"
+    text = path.read_text()
+    before, sep, rest = text.partition(README_BEGIN)
+    if not sep:
+        die(f"{path} carries no `{README_BEGIN}` marker, so there is nothing to replace")
+    _, sep, after = rest.partition(README_END)
+    if not sep:
+        die(f"{path} opens the harness table and never closes it with `{README_END}`")
+    path.write_text(
+        f"{before}{README_BEGIN}\n\n{readme_table(reports)}\n\n{README_END}{after}"
+    )
+    print(f"wrote the harness table into {path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("corpora", nargs="*", choices=list(CORPORA), default=None)
@@ -363,7 +419,9 @@ def main():
         die("folio is not on PATH; `cargo install --path ..` first")
 
     chosen = args.corpora or list(CORPORA)
-    write_report([measure(n, CORPORA[n], args.model, args.keep) for n in chosen])
+    reports = [measure(n, CORPORA[n], args.model, args.keep) for n in chosen]
+    write_report(reports)
+    update_readme(reports)
 
 
 if __name__ == "__main__":

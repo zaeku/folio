@@ -74,7 +74,12 @@ pinned by commit and drives the `folio` command on `PATH`, so anyone can rerun
 it. `benchmarks/README.md` says what those numbers are and, at more length, what
 they are not: contamination is measured and ranking quality deliberately is not.
 `.gitignore` excludes `benchmarks/reports/`, which is scratch. A run worth
-keeping becomes a file under `docs/measurements/` on its own date.
+keeping becomes a file under `docs/measurements/` on its own date, and that
+judgement is a person's — the harness never writes there.
+
+**One table in `README.md` belongs to `run.py`.** It is fenced by HTML comments
+naming its owner, and a full run replaces it. Do not edit it by hand; change
+`run.py` or rerun it. Everything outside those markers is hand-written.
 
 The 2026-09-04 measurement predates that harness and has no committed artifact.
 It is the record of how the model and the design were chosen, and it says so.
