@@ -73,6 +73,8 @@ server declines to start and says so. Pooling is not passed here because this
 server chose `cls` for this model on its own; one wanting `last` would still
 have to be told.
 
+`folio unit --backend tei` prints a service file for it.
+
 Switching between the two costs no re-index. An index built by either is
 answered from the other with nothing re-embedded, because folio compares what
 the endpoint returns rather than what it is called.
@@ -105,10 +107,13 @@ systemctl --user enable --now folio-embeddings
 `launchctl bootout gui/$UID/dev.folio.embeddings` stops it again. On macOS
 before Ventura, `launchctl load` and `unload` are the pair to use instead.
 
-`folio unit` writes nothing and starts nothing, and it knows one server: it
-prints `llama-server`'s command whichever one you are running. It fills in the
-port your configuration already points at, and the absolute path to
-`llama-server`,
+`folio unit` writes nothing and starts nothing. `--backend tei` prints
+`text-embeddings-router`'s command instead, with `--auto-truncate false` in it
+because folio's own accounting is wrong without it; `--backend llama.cpp` is the
+default, so an invocation written before that flag existed prints what it always
+did. A flag belonging to the other server is refused rather than dropped. It
+fills in the port your configuration already points at, and the absolute path to
+the server,
 because a service manager starts a job with a bare environment and will not find
 an unqualified name. The model and its pooling arrive as flags:
 

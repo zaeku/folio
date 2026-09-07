@@ -243,25 +243,38 @@ enum Cmd {
         /// The corpus whose `folio.yaml` names the endpoint to serve.
         #[arg(long, default_value = ".")]
         root: PathBuf,
+        /// Which server the unit runs. `llama.cpp` prints `llama-server`'s
+        /// command, `tei` prints `text-embeddings-router`'s.
+        ///
+        /// The default is what folio has always printed, so an invocation
+        /// written before this flag existed produces the same file.
+        #[arg(long, value_enum, default_value_t = Backend::LlamaCpp)]
+        backend: Backend,
         /// Write a launchd agent. The default on macOS.
         #[arg(long, conflicts_with = "systemd")]
         launchd: bool,
         /// Write a systemd user service. The default elsewhere.
         #[arg(long)]
         systemd: bool,
-        /// The model repository the server should pull.
-        #[arg(long, default_value = "keisuke-miyako/gte-modernbert-base-gguf")]
-        hf: String,
-        /// The file within that repository.
-        #[arg(long, default_value = "gte-modernbert-base-Q8_0.gguf")]
-        hf_file: String,
+        /// The model repository the server should pull. Defaults to the GGUF
+        /// conversion measured for `llama.cpp`, and to the safetensors the
+        /// same model publishes for `tei`.
+        #[arg(long)]
+        hf: Option<String>,
+        /// The file within that repository. `llama.cpp` only: `tei` reads
+        /// safetensors and picks the file itself.
+        #[arg(long)]
+        hf_file: Option<String>,
         /// The pooling this model wants. `cls` for gte-modernbert, `last` for
         /// the Qwen3-Embedding family. The server's own default is wrong for
         /// both, and a wrong one ranks badly without failing.
-        #[arg(long, default_value = "cls")]
-        pooling: String,
+        ///
+        /// `llama.cpp` only: `tei` reads pooling from the model.
+        #[arg(long)]
+        pooling: Option<String>,
         /// Context, and the physical batch, in tokens. Must exceed your longest
-        /// section: an encoder needs its whole input in one batch.
+        /// section: an encoder needs its whole input in one batch. Reaches
+        /// `--max-batch-tokens` on `tei`, which needs it for the same reason.
         #[arg(long, default_value_t = 8192)]
         context: usize,
     },
@@ -275,6 +288,19 @@ enum Cmd {
         #[arg(long)]
         truncated: bool,
     },
+}
+
+/// A server `folio unit` knows how to start.
+///
+/// folio runs no model and learns nothing about one from this; what it holds
+/// per backend is a recipe, and D-01M1XRDKA9FJ1V says why holding one beats
+/// handing the caller a command to write.
+#[derive(Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+enum Backend {
+    #[value(name = "llama.cpp")]
+    LlamaCpp,
+    #[value(name = "tei")]
+    Tei,
 }
 
 #[derive(Subcommand)]
@@ -348,8 +374,9 @@ fn main() -> Result<()> {
             model.as_deref(),
             max_chars,
         ),
-        Cmd::Unit { root, launchd, systemd, hf, hf_file, pooling, context } => cmd_unit(
-            &root, launchd, systemd, &hf, &hf_file, &pooling, context,
+        Cmd::Unit { root, backend, launchd, systemd, hf, hf_file, pooling, context } => cmd_unit(
+            &root, backend, launchd, systemd, hf.as_deref(), hf_file.as_deref(),
+            pooling.as_deref(), context,
         ),
         Cmd::Status { root, truncated } => cmd_status(&root, truncated),
     }
@@ -1921,15 +1948,78 @@ fn host_port(endpoint: &str) -> Result<(String, u16)> {
 /// pooling mode the server needs. Those arrive as flags, defaulting to the pair
 /// docs/measurements/ was measured on. What folio does know is the port its
 /// own configuration points at, which is the part that is easy to get wrong.
-fn cmd_unit(
-    root: &Path,
-    launchd: bool,
-    systemd: bool,
+/// The command each backend needs, and the flags folio's own accounting rests
+/// on rather than the caller's taste.
+///
+/// `--auto-truncate false` is not a preference. Measured 2026-09-07: with TEI's
+/// default a section past the model's input length comes back as a vector of its
+/// beginning with a 200, so folio's budget calibration — which works by sending
+/// its longest section and watching for a refusal — sees nothing, and the index
+/// records that nothing was cut. So it is printed always, and there is no flag
+/// to turn it off.
+fn backend_args(
+    backend: Backend,
     hf: &str,
     hf_file: &str,
     pooling: &str,
     context: usize,
+    host: String,
+    port: u16,
+) -> Vec<String> {
+    let mut args: Vec<String> = match backend {
+        Backend::LlamaCpp => vec![
+            "--embeddings".into(),
+            "-hf".into(), hf.into(),
+            "--hf-file".into(), hf_file.into(),
+            "--pooling".into(), pooling.into(),
+            "-c".into(), context.to_string(),
+            "-b".into(), context.to_string(),
+            "-ub".into(), context.to_string(),
+        ],
+        Backend::Tei => vec![
+            "--model-id".into(), hf.into(),
+            "--auto-truncate".into(), "false".into(),
+            "--max-batch-tokens".into(), context.to_string(),
+        ],
+    };
+    args.extend(["--host".to_string(), host, "--port".to_string(), port.to_string()]);
+    args
+}
+
+fn cmd_unit(
+    root: &Path,
+    backend: Backend,
+    launchd: bool,
+    systemd: bool,
+    hf: Option<&str>,
+    hf_file: Option<&str>,
+    pooling: Option<&str>,
+    context: usize,
 ) -> Result<()> {
+    // Refused rather than dropped. A unit that quietly ignored a flag would be
+    // the failure this command exists to prevent, one step earlier.
+    if backend == Backend::Tei {
+        for (flag, given) in [("--hf-file", hf_file.is_some()), ("--pooling", pooling.is_some())] {
+            if given {
+                bail!(
+                    "{flag} is llama-server's and means nothing to text-embeddings-router, \
+                     which reads safetensors and takes pooling from the model"
+                );
+            }
+        }
+    }
+    let (server_name, hf) = match backend {
+        Backend::LlamaCpp => (
+            "llama-server",
+            hf.unwrap_or("keisuke-miyako/gte-modernbert-base-gguf"),
+        ),
+        Backend::Tei => (
+            "text-embeddings-router",
+            hf.unwrap_or("Alibaba-NLP/gte-modernbert-base"),
+        ),
+    };
+    let hf_file = hf_file.unwrap_or("gte-modernbert-base-Q8_0.gguf");
+    let pooling = pooling.unwrap_or("cls");
     let proj = read_config_at(&root.join(PROJECT_CONFIG))?;
     let user = read_config_at(&config_path())?;
     let (endpoint, _) = resolve(
@@ -1943,18 +2033,8 @@ fn cmd_unit(
 
     // launchd starts a job with a bare environment, so an unqualified name is
     // not found. The path is resolved here rather than left to the reader.
-    let server = which_llama_server();
-    let args = [
-        "--embeddings".to_string(),
-        "-hf".to_string(), hf.to_string(),
-        "--hf-file".to_string(), hf_file.to_string(),
-        "--pooling".to_string(), pooling.to_string(),
-        "-c".to_string(), context.to_string(),
-        "-b".to_string(), context.to_string(),
-        "-ub".to_string(), context.to_string(),
-        "--host".to_string(), host,
-        "--port".to_string(), port.to_string(),
-    ];
+    let server = which_server(server_name);
+    let args = backend_args(backend, hf, hf_file, pooling, context, host, port);
 
     let use_launchd = if launchd || systemd { launchd } else { cfg!(target_os = "macos") };
     if use_launchd {
@@ -1966,7 +2046,7 @@ fn cmd_unit(
             r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!-- Serves {endpoint} for folio. It runs from login until you unload it;
-     llama-server cannot be started on demand, because it binds its own socket
+     {server_name} cannot be started on demand, because it binds its own socket
      rather than accepting one from launchd. It is not free while idle:
      docs/measurements/ in the folio repository carries what it costs. -->
 <plist version="1.0">
@@ -1987,7 +2067,7 @@ fn cmd_unit(
         let argv = args.join(" ");
         print!(
             "# Serves {endpoint} for folio. It runs from login until you stop it;\n\
-             # llama-server cannot be socket-activated, because it binds its own\n\
+             # {server_name} cannot be socket-activated, because it binds its own\n\
              # socket rather than accepting one from systemd. It is not free while\n\
              # idle: docs/measurements/ in the folio repository carries the cost.\n\
              [Unit]\n\
@@ -2006,8 +2086,7 @@ fn cmd_unit(
 }
 
 /// The server's absolute path, or the bare name with a note when it is absent.
-fn which_llama_server() -> String {
-    let name = "llama-server";
+fn which_server(name: &str) -> String {
     for dir in std::env::var("PATH").unwrap_or_default().split(':') {
         let candidate = Path::new(dir).join(name);
         if candidate.is_file() {
@@ -2258,6 +2337,37 @@ mod tests {
         );
         // A port folio cannot read is a service that would bind the wrong one.
         assert!(host_port("http://example.com/v1/embeddings").is_err());
+    }
+
+    #[test]
+    fn a_tei_unit_carries_the_flag_folio_cannot_check_at_runtime() {
+        let args = backend_args(Backend::Tei, "org/model", "ignored", "ignored", 8192,
+                                "127.0.0.1".into(), 8080);
+        let pairs: Vec<(&str, &str)> = args
+            .windows(2)
+            .map(|w| (w[0].as_str(), w[1].as_str()))
+            .collect();
+        // Without this the endpoint answers 200 with a vector of a section's
+        // beginning and folio's budget calibration has nothing to react to.
+        assert!(pairs.contains(&("--auto-truncate", "false")));
+        assert!(pairs.contains(&("--max-batch-tokens", "8192")));
+        assert!(pairs.contains(&("--model-id", "org/model")));
+        // llama-server's flags mean nothing here and are not printed anyway.
+        for absent in ["--hf-file", "--pooling", "-ub", "--embeddings"] {
+            assert!(!args.iter().any(|a| a == absent), "{absent} reached a TEI unit");
+        }
+    }
+
+    #[test]
+    fn the_default_backend_prints_what_it_always_printed() {
+        let args = backend_args(Backend::LlamaCpp, "repo", "file.gguf", "cls", 8192,
+                                "127.0.0.1".into(), 8080);
+        assert_eq!(
+            args,
+            ["--embeddings", "-hf", "repo", "--hf-file", "file.gguf", "--pooling", "cls",
+             "-c", "8192", "-b", "8192", "-ub", "8192", "--host", "127.0.0.1",
+             "--port", "8080"]
+        );
     }
 
         #[test]
