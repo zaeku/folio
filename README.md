@@ -53,6 +53,37 @@ instead. And `-b`/`-ub` must be at least your longest section: an encoder needs
 its whole input in one physical batch, so at the default 512 a longer section
 comes back as an HTTP 500 rather than a truncated vector.
 
+Another that has been measured is Hugging Face's `text-embeddings-inference`,
+which is Rust on Candle and reads safetensors, so the model loads directly and
+no GGUF conversion has to be trusted:
+
+```sh
+text-embeddings-router --model-id Alibaba-NLP/gte-modernbert-base --port 8080 \
+  --auto-truncate false --max-batch-tokens 8192
+```
+
+Two flags there are not optional either, and one of them fails worse than
+anything llama-server does. `--auto-truncate` defaults to true, and a section
+past the model's input length then comes back as a vector of its beginning with
+a 200 rather than as an error: folio's budget calibration sees nothing to react
+to, and the index records that nothing was cut while the tail of that section is
+in no vector. `false` restores the refusal, and it then wants
+`--max-batch-tokens` to be at least the model's own maximum input length, or the
+server declines to start and says so. Pooling is not passed here because this
+server chose `cls` for this model on its own; one wanting `last` would still
+have to be told.
+
+Switching between the two costs no re-index. An index built by either is
+answered from the other with nothing re-embedded, because folio compares what
+the endpoint returns rather than what it is called.
+
+On Apple Silicon it is the slower and heavier of the two by a wide margin, and
+the reason is worth knowing before you size a corpus: without flash attention
+its Metal backend materializes the attention matrix, so what it holds follows
+the square of the longest section rather than the count of tokens.
+`--max-chars` is the first thing to keep down, ahead of any flag on the server.
+`docs/measurements/` has the figures.
+
 ### Keeping the server up
 
 Preparing a server to run a command-line tool is a strange shape for a CLI, and
@@ -72,8 +103,10 @@ systemctl --user enable --now folio-embeddings
 `launchctl bootout gui/$UID/dev.folio.embeddings` stops it again. On macOS
 before Ventura, `launchctl load` and `unload` are the pair to use instead.
 
-`folio unit` writes nothing and starts nothing. It fills in the port your
-configuration already points at, and the absolute path to `llama-server`,
+`folio unit` writes nothing and starts nothing, and it knows one server: it
+prints `llama-server`'s command whichever one you are running. It fills in the
+port your configuration already points at, and the absolute path to
+`llama-server`,
 because a service manager starts a job with a bare environment and will not find
 an unqualified name. The model and its pooling arrive as flags:
 
