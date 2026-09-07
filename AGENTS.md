@@ -131,13 +131,12 @@ names them. Do not assume either.
 Nix declares the tools on this machine. Do not install a tool globally to make a
 task work. Add it to the flake that needs it, so the next reader gets it.
 
-**The code layer has no flake yet, and `llama-server` sits outside Nix.** It was
-installed with `brew install llama.cpp` on 2026-09-04, and the rebuild of the
-machine's Nix bridge failed and rolled back, so the binary at
-`/opt/homebrew/bin/llama-server` is not in the declarative configuration and may
-not survive the next rebuild. Write the flake when it declares something real:
-`rustc`, `cargo`, a C compiler for the bundled SQLite, and whichever embedding
-server the project settles on.
+**The code layer has no flake yet, and both embedding servers are declared
+outside it.** `llama-server` and `text-embeddings-router` are in the machine's
+Nix configuration by way of its Homebrew bridge, so they survive a rebuild, but
+that is the machine's declaration and not this project's. Write the flake when
+it declares something real: `rustc`, `cargo`, a C compiler for the bundled
+SQLite, and whichever embedding server the project settles on.
 
 **The endpoint is a runtime dependency, not a build one.** folio compiles and its
 tests pass with no server running. Only `index` and `query` need one:
