@@ -50,6 +50,38 @@ another machine belongs on the forge, not here.
 Three layers, three rhythms. This one changes per work item, `decisions/`
 changes when a rule does, and the board changes hourly.
 
+**A card's tag is its kind, and the kind says what has to exist before the card
+is claimed.** The loop this project is built on runs a measurement, then a
+decision, then code, and a card belongs to one of those three.
+
+- A `measurement` card needs nothing to exist first. It produces what the next
+  one reads.
+- A `decision` card carries its decision's id as a second tag before it leaves
+  `backlog`. Having an id means an `intake/` document exists, and that document
+  is the thing someone can argue with. It may be a question rather than a claim:
+  `decisions/SPEC.md` §5 lets a fence be adopted while it exits 2, so a
+  candidate can stand and report where the work is until the code catches up.
+- A card whose work changes a rule stands that rule's fence up first.
+  `cargo run --bin check` in `decisions/` then says where the work stands, and
+  the fence names the surface it cannot find yet.
+
+**A card's kind is learned when someone picks it up, not when it is filed**, so
+this is asked at the claim and never at creation. Two of the cards worked on
+2026-09-07 had the wrong kind on them: one asked for a measurement a live
+decision had already refused, and one proposed a feature whose worth could not
+be judged before two runs that did not exist yet. Correcting the kind was the
+most useful part of both reviews, and a rule enforced at filing would have
+demanded the answer at the moment it was least available.
+
+Not every card touches a rule. Re-running a benchmark or measuring two backends
+wants no decision, and telling those apart is a judgement rather than a
+condition to check.
+
+**Nothing enforces any of this.** No fence reaches the board — a fence tests the
+code layer as a black box, and the board is neither the code layer nor
+published — so it is a rule someone has to remember, which is what this file is
+for.
+
 ## Measurements
 
 Every number folio reports about itself is one file under `docs/measurements/`,
