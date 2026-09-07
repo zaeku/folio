@@ -79,10 +79,52 @@ text-embeddings-router --model-id Alibaba-NLP/gte-modernbert-base --port 8081 \
   --auto-truncate false --max-batch-tokens 8192
 ```
 
+**What it costs on this hardware is the reason not to switch.** The same request
+folio makes while indexing — 32 sections of about 7,500 characters, roughly
+1,900 tokens each — against each server:
+
+| Server | Peak resident | Time |
+|---|---|---|
+| `llama-server`, `-c/-b/-ub 8192` | 0.51 – 0.64 GB | 10.4 s, 12.6 s |
+| TEI, `--max-batch-tokens 16384` | 2.32 GB | 170.9 s |
+| TEI, `--max-batch-tokens 8192` | 1.19 GB | 153.3 s |
+
+Thirteen times the time and three times the memory, at the shape folio actually
+sends.
+
+**And the memory follows the square of the sequence length, not the token
+count.** Two shapes carrying the same ~15,000 tokens through the same
+`--max-batch-tokens 16384`:
+
+| Shape | Sum of squared lengths | Peak resident | Time |
+|---|---|---|---|
+| 8 inputs × ~1,900 tokens | 2.9e7 | 2.02 GB | 39.2 s |
+| 2 inputs × ~7,600 tokens | 1.2e8 | 6.89 GB | 74.6 s |
+
+Four times the sum of squares for 3.4 times the memory, where the token count is
+equal and predicts no difference at all. That is the signature of an attention
+matrix that is materialized rather than fused, which is what a Metal backend
+without flash attention leaves. The time moves with it, 1.9 times for the same
+total tokens.
+
+So the memory knob is the section budget before it is anything else: folio's
+`--max-chars` decides the longest sequence, and the longest sequence is squared.
+`--max-batch-tokens` is the second knob and halving it halved the peak for
+nothing — 2.32 GB to 1.19 GB, and slightly faster. But it cannot go below the
+model's maximum input length while `--auto-truncate` is false, so 8,192 is the
+floor for the recipe above, and there is no flag to lower the model's own limit.
+
+Sizing the fixture found the character-to-token ratio: 40,009 characters is
+12,683 tokens, about 3.15 characters each, and a 31,000-character input is
+refused with HTTP 422 as past the 8,192 the model accepts.
+
 **Method.** `text-embeddings-router` 1.9.3 from Homebrew, which builds with
 `-F metal` on Apple Silicon; the log confirms `Starting ModernBert model on
 Metal`. `llama-server` b10809-5266f24da on port 8080 with the flags
-`README.md` prescribes, TEI on 8081. Fixtures were real `mdn/content` section
+`README.md` prescribes, TEI on 8081 and on 8082 for the cost runs. Peak
+resident size was sampled every 0.3 s with `ps`, with a fresh server for each
+configuration so that no measurement could inherit another's allocation.
+Fixtures were real `mdn/content` section
 text with heading and fence lines removed, so that one file is one section of a
 chosen length. The truncation proof appended a sentence about canaries, which
 appears in neither corpus.
