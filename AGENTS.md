@@ -178,13 +178,16 @@ it. The rules that cost something here:
 - **Sign before you push: `jj sign`, then push.** Nothing is signed as it is
   made, because jj signs the working-copy commit on every snapshot and each
   signature is a prompt. `jj sign` with no arguments takes
-  `reachable(@-, mutable())`, which is everything not yet published except the
-  working copy. Signing the working copy is what to avoid: `behavior = "keep"`
-  preserves a signature through a rewrite, and every jj command rewrites `@`, so
-  a signed `@` asks 1Password on `jj status`. `jj unsign -r @` undoes it, with
-  `--ignore-working-copy` when the repository will no longer open; that flag
-  skips the snapshot and not the revset, so it prevents nothing here. Signing
-  rewrites commits, so it happens before the push and never after: GitHub
+  `reachable(@-, mutable())`, and that includes the working copy: the revset
+  reaches in both directions, so `@` is in it as a descendant of `@-`. Signing
+  is therefore two commands, `jj sign` and then `jj unsign -r @`, the second
+  with `--ignore-working-copy` when the repository will no longer open; that
+  flag skips the snapshot and not the revset, so it prevents nothing here.
+  Leaving `@` signed is what to avoid: `behavior = "keep"` preserves a signature
+  through a rewrite, and every jj command rewrites `@`, so a signed `@` asks
+  1Password on `jj status`. The unsign is local hygiene and not part of the
+  push, since `@` is neither pushed nor a parent of anything. Signing itself
+  rewrites commits, so that half happens before the push and never after: GitHub
   requires signed commits on `main` and rejects the push otherwise, which is
   the reminder rather than a rule someone has to remember.
 
