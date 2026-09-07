@@ -370,6 +370,40 @@ Defaults belong to the query, not the index. The
 reads an absent `status` as `stable`; folio stores what the file says and leaves
 that reading to you.
 
+### Several corpora in one answer
+
+`--root` is repeatable, and a query ranks every index named as one answer:
+
+```sh
+folio query "when is revenue recognised" --root . --root ../decisions
+```
+
+They have to be one vector space — the same weights and the same character
+budget — because scores from two models are not comparable and nothing in a
+ranked list would say so. folio does not take that on the endpoint's word: each
+index carries the text of its own fingerprint, a query embeds all of them in the
+request it was already sending, and each has to match the vector its index
+stored. A root with no index, or one that cannot be shown to belong with the
+others, is refused by name rather than quietly left out of an answer that then
+reads as complete.
+
+Where several are read, each reference names the root it came from, so the paths
+still open. Roots may cover the same files, and a section two indexes hold is
+returned once:
+
+```
+$ folio query "when is revenue recognised" --root . --root ./decisions
+(1 section(s) held by more than one of these indexes, returned once)
+#1  0.712  decisions/live/revenue.md:4-9
+        Revenue
+```
+
+That overlap costs an embedding in each index on every edit of the file, for as
+long as it lasts, and no `folio index` is in a position to warn you: a parent's
+walk skips a child's `.folio/` as a hidden directory and never learns the child
+index exists. An ignore entry in the parent is the fix, and it is yours to
+write.
+
 ### Keeping it current
 
 `folio index` lists every file and re-embeds only the ones whose contents

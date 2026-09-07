@@ -86,7 +86,11 @@ whether a paraphrase still ranks above an unrelated sentence. It exits 1 when
 one of those fails.
 
 `index` takes a positional root and `query` takes `--root`; both default to `.`.
-The index lives in `.folio/` under that root. `query` prints five rows by
+The index lives in `.folio/` under that root. `--root` is repeatable, and several
+are ranked as one answer: they must share the weights and the character budget
+they were built with, a root folio cannot show belongs with the others is refused
+rather than left out, each reference then names the root it came from, and a
+section two indexes hold is returned once. `query` prints five rows by
 default, `-l N` for more, each a score, a `path:start-end`, and the heading
 trail beneath it:
 
