@@ -123,8 +123,13 @@ Everything outside those markers is hand-written, and a fence fails on both.
 The 2026-09-04 measurement predates that harness and has no committed artifact.
 It is the record of how the model and the design were chosen, and it says so.
 
-Two things are still unmeasured, and `docs/measurements/2026-09-04-private-corpora.md`
-names them. Do not assume either.
+`docs/measurements/2026-09-04-private-corpora.md` names two things as unmeasured
+and both have since been answered, in opposite ways: whether a reranker over the
+top k earns its latency was measured on 2026-09-07 and decided, and where
+retrieval quality falls as a corpus grows is refused rather than pending — a
+live decision declines to publish that score and gives its reasons. That file
+still reads as it did, because it records what was true on its own date; this one
+does not, so it says so here.
 
 ## Toolchain
 
