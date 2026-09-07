@@ -79,7 +79,7 @@ text-embeddings-router --model-id Alibaba-NLP/gte-modernbert-base --port 8081 \
   --auto-truncate false --max-batch-tokens 8192
 ```
 
-**What it costs on this hardware is the reason not to switch.** The same request
+**What it costs on this hardware is the reason not to switch here.** The same request
 folio makes while indexing — 32 sections of about 7,500 characters, roughly
 1,900 tokens each — against each server:
 
@@ -106,6 +106,12 @@ equal and predicts no difference at all. That is the signature of an attention
 matrix that is materialized rather than fused, which is what a Metal backend
 without flash attention leaves. The time moves with it, 1.9 times for the same
 total tokens.
+
+**So this is a property of the backend rather than of TEI**, and the figures
+above should not be read as what TEI costs. A CUDA build has flash attention,
+which fuses the matrix rather than writing it, and nothing measured here says
+anything about that build. What a reader on this hardware needs is above; what a
+reader on a GPU needs is a measurement nobody has taken.
 
 So the memory knob is the section budget before it is anything else: folio's
 `--max-chars` decides the longest sequence, and the longest sequence is squared.
