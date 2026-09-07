@@ -118,6 +118,15 @@ Sizing the fixture found the character-to-token ratio: 40,009 characters is
 12,683 tokens, about 3.15 characters each, and a 31,000-character input is
 refused with HTTP 422 as past the 8,192 the model accepts.
 
+**Every figure here is the safetensors path.** The log for both runs says
+`Downloading model.safetensors` and the model's cache holds no
+`pytorch_model.bin`. A repository without safetensors sends TEI down a different
+load path, converting a pickle rather than mapping tensors, and nothing in this
+run touched it — so a peak far above these figures on some other model is not
+evidence against them, and what that path costs wants a measurement of its own
+with a method. What is measured here is what a model with safetensors costs
+while it serves.
+
 **Method.** `text-embeddings-router` 1.9.3 from Homebrew, which builds with
 `-F metal` on Apple Silicon; the log confirms `Starting ModernBert model on
 Metal`. `llama-server` b10809-5266f24da on port 8080 with the flags

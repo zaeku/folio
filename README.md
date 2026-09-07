@@ -82,7 +82,9 @@ the reason is worth knowing before you size a corpus: without flash attention
 its Metal backend materializes the attention matrix, so what it holds follows
 the square of the longest section rather than the count of tokens.
 `--max-chars` is the first thing to keep down, ahead of any flag on the server.
-`docs/measurements/` has the figures.
+Prefer a model whose repository carries safetensors, too: without them the
+server converts a pickle at load instead of mapping tensors, which is a heavier
+path than anything measured here. `docs/measurements/` has the figures.
 
 ### Keeping the server up
 
