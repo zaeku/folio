@@ -278,6 +278,12 @@ enum Cmd {
         #[arg(long, default_value_t = 8192)]
         context: usize,
     },
+    /// Print folio's skill document, the guidance written for an agent using it.
+    ///
+    /// It is the file the crate publishes, embedded at compile time. It is
+    /// printed and not installed: where it belongs is the caller's to decide,
+    /// the way `folio unit` leaves a service file to whoever manages services.
+    Skill,
     /// Report what the index covers.
     Status {
         /// The corpus to report on. Repeatable, one block each.
@@ -378,6 +384,13 @@ fn main() -> Result<()> {
             &root, backend, launchd, systemd, hf.as_deref(), hf_file.as_deref(),
             pooling.as_deref(), context,
         ),
+        Cmd::Skill => {
+            // The same bytes as the published file, because they are the
+            // published file. A copy typed in here could disagree with it and
+            // nothing would notice.
+            print!("{}", include_str!("../SKILL.md"));
+            Ok(())
+        }
         Cmd::Status { root, truncated } => cmd_status(&root, truncated),
     }
 }
