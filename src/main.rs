@@ -49,12 +49,16 @@ const DEFAULT_MODEL: &str = "default";
 /// `folio query` never reads this. An index records the endpoint and model it
 /// was built with, and a vector space belongs to one of each, so the recorded
 /// pair is the only correct answer for a corpus that has one.
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     endpoint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    api_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    allow_insecure: Option<bool>,
 }
 
 /// The per-corpus config, meant to be committed with the corpus.
@@ -114,8 +118,19 @@ fn corpus_root() -> PathBuf {
 /// choose, and vectors from the wrong model are not detectable from a ranking.
 fn read_config_at(path: &Path) -> Result<Config> {
     match fs::read_to_string(path) {
-        Ok(text) => serde_yaml_ng::from_str(&text)
-            .with_context(|| format!("{} is not valid YAML", path.display())),
+        Ok(text) => {
+            let cfg: Config = serde_yaml_ng::from_str(&text)
+                .with_context(|| format!("{} is not valid YAML", path.display()))?;
+            if path.file_name().is_some_and(|n| n == PROJECT_CONFIG) && cfg.api_key.is_some() {
+                bail!(
+                    "{} contains an API key; folio.yaml is committed with the corpus and must not \
+                     contain credentials — use FOLIO_API_KEY in the environment or write to user config \
+                     with `folio config set api_key <val>`",
+                    path.display()
+                );
+            }
+            Ok(cfg)
+        }
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
         Err(e) => Err(e).with_context(|| format!("cannot read {}", path.display())),
     }
@@ -146,6 +161,94 @@ fn resolve(
         return (v.to_string(), "user config");
     }
     (default.to_string(), "default")
+}
+
+fn extract_host(authority: &str) -> &str {
+    if authority.starts_with('[') {
+        if let Some(end) = authority.find(']') {
+            return &authority[..=end];
+        }
+    }
+    authority.split_once(':').map_or(authority, |(h, _)| h)
+}
+
+fn endpoint_host(endpoint: &str) -> &str {
+    let without_scheme = endpoint
+        .strip_prefix("https://")
+        .or_else(|| endpoint.strip_prefix("http://"))
+        .unwrap_or(endpoint);
+    let authority = without_scheme.split(['/', '?']).next().unwrap_or_default();
+    extract_host(authority)
+}
+
+/// Resolve the API key from environment or user config.
+/// An API key never lives in project config. OPENAI_API_KEY is read only
+/// when the endpoint host is api.openai.com.
+fn resolve_api_key(endpoint: &str, user: Option<&str>) -> (Option<String>, &'static str) {
+    if let Some(v) = std::env::var("FOLIO_API_KEY").ok().filter(|v| !v.is_empty()) {
+        return (Some(v), "environment");
+    }
+    if endpoint_host(endpoint).eq_ignore_ascii_case("api.openai.com") {
+        if let Some(v) = std::env::var("OPENAI_API_KEY").ok().filter(|v| !v.is_empty()) {
+            return (Some(v), "environment");
+        }
+    }
+    if let Some(v) = user {
+        return (Some(v.to_string()), "user config");
+    }
+    (None, "none")
+}
+
+fn resolve_allow_insecure(flag: bool, user: Option<bool>) -> bool {
+    if flag {
+        return true;
+    }
+    if let Ok(v) = std::env::var("FOLIO_ALLOW_INSECURE") {
+        let v = v.trim();
+        if v == "1" || v.eq_ignore_ascii_case("true") || v.eq_ignore_ascii_case("yes") {
+            return true;
+        }
+        if v == "0" || v.eq_ignore_ascii_case("false") || v.eq_ignore_ascii_case("no") {
+            return false;
+        }
+    }
+    user.unwrap_or(false)
+}
+
+fn is_loopback(host: &str) -> bool {
+    let host = host.trim_matches('[').trim_matches(']');
+    if host.eq_ignore_ascii_case("localhost") {
+        return true;
+    }
+    if let Ok(ip) = host.parse::<std::net::IpAddr>() {
+        return ip.is_loopback();
+    }
+    false
+}
+
+fn validate_transport(endpoint: &str, has_key: bool, allow_insecure: bool) -> Result<()> {
+    if !has_key || allow_insecure {
+        return Ok(());
+    }
+    if endpoint.starts_with("https://") {
+        return Ok(());
+    }
+    if let Some(rest) = endpoint.strip_prefix("http://") {
+        let authority = rest.split(['/', '?']).next().unwrap_or_default();
+        let host = extract_host(authority);
+        if is_loopback(host) {
+            return Ok(());
+        }
+        bail!(
+            "the endpoint at {endpoint} is unencrypted HTTP off the loopback; \
+             sending credentials over plaintext HTTP is refused — use HTTPS, \
+             or allow plaintext with --allow-insecure or `folio config set allow_insecure true`"
+        );
+    }
+    bail!(
+        "the endpoint at {endpoint} does not use HTTPS; \
+         sending credentials over unencrypted transport is refused"
+    );
 }
 
 /// The budget to re-index with, given what the index recorded.
@@ -201,6 +304,9 @@ enum Cmd {
         /// Discard the existing index instead of updating it.
         #[arg(long)]
         rebuild: bool,
+        /// Allow sending credentials over unencrypted HTTP off the loopback.
+        #[arg(long)]
+        allow_insecure: bool,
     },
     /// Rank sections by meaning, optionally filtered on frontmatter.
     Query {
@@ -263,6 +369,9 @@ enum Cmd {
         /// `(stale)` whether folio was allowed to fix it or not.
         #[arg(long)]
         no_refresh: bool,
+        /// Allow sending credentials over unencrypted HTTP off the loopback.
+        #[arg(long)]
+        allow_insecure: bool,
     },
     /// Show what `folio index` would use, or write it to a config file.
     Config {
@@ -286,6 +395,9 @@ enum Cmd {
         /// The section budget to test the endpoint's batch size against.
         #[arg(long, default_value_t = MAX_CHARS, value_parser = at_least_one)]
         max_chars: usize,
+        /// Allow sending credentials over unencrypted HTTP off the loopback.
+        #[arg(long)]
+        allow_insecure: bool,
     },
     /// Print a service file that runs the embeddings server. Installs nothing.
     Unit {
@@ -363,7 +475,7 @@ enum Backend {
 enum ConfigCmd {
     /// Write one setting to a config file, creating it if it is absent.
     Set {
-        /// `endpoint` or `model`.
+        /// `endpoint`, `model`, `api_key`, or `allow_insecure`.
         key: String,
         value: String,
         /// Write `folio.yaml` beside the corpus instead of the user's config.
@@ -403,12 +515,14 @@ fn main() -> Result<()> {
             root,
             endpoint,
             model,
+            allow_insecure,
             max_chars,
             rebuild,
         } => cmd_index(
             &root,
             endpoint.as_deref(),
             model.as_deref(),
+            allow_insecure,
             max_chars,
             rebuild,
         ),
@@ -421,6 +535,7 @@ fn main() -> Result<()> {
             limit,
             paths_only,
             no_refresh,
+            allow_insecure,
         } => cmd_query(
             &roots_or_enclosing(root),
             &text,
@@ -430,12 +545,14 @@ fn main() -> Result<()> {
             limit,
             paths_only,
             !no_refresh,
+            allow_insecure,
         ),
         Cmd::Config { action, root } => cmd_config(action, &root),
-        Cmd::Doctor { root, endpoint, model, max_chars } => cmd_doctor(
+        Cmd::Doctor { root, endpoint, model, allow_insecure, max_chars } => cmd_doctor(
             &root.unwrap_or_else(corpus_root),
             endpoint.as_deref(),
             model.as_deref(),
+            allow_insecure,
             max_chars,
         ),
         Cmd::Unit { root, backend, launchd, systemd, hf, hf_file, pooling, context } => cmd_unit(
@@ -551,7 +668,14 @@ struct EmbedItem {
 ///
 /// Halving rather than searching: the answer is used to cut text, so landing
 /// under the limit matters and landing exactly on it does not.
-fn calibrate(endpoint: &str, model: &str, longest: &str, budget: usize) -> Result<usize> {
+fn calibrate(
+    endpoint: &str,
+    model: &str,
+    api_key: Option<&str>,
+    allow_insecure: bool,
+    longest: &str,
+    budget: usize,
+) -> Result<usize> {
     /// Below this, a section is too short to carry a section's meaning, and a
     /// server refusing it is refusing for some other reason.
     const FLOOR: usize = 256;
@@ -559,7 +683,7 @@ fn calibrate(endpoint: &str, model: &str, longest: &str, budget: usize) -> Resul
     let mut budget = budget;
     loop {
         let probe: String = longest.chars().take(budget).collect();
-        match embed(endpoint, model, &[probe]) {
+        match embed(endpoint, model, api_key, allow_insecure, &[probe]) {
             Ok(_) => return Ok(budget),
             // Nothing was measured about the input, so there is nothing to shrink.
             Err(EmbedError::NoAnswer(e)) => return Err(e),
@@ -592,14 +716,27 @@ impl From<EmbedError> for anyhow::Error {
 }
 
 /// Vectors come back L2-normalized, so ranking is a plain dot product.
-fn embed(endpoint: &str, model: &str, inputs: &[String]) -> Result<Vec<Vec<f32>>, EmbedError> {
+fn embed(
+    endpoint: &str,
+    model: &str,
+    api_key: Option<&str>,
+    allow_insecure: bool,
+    inputs: &[String],
+) -> Result<Vec<Vec<f32>>, EmbedError> {
+    if let Err(e) = validate_transport(endpoint, api_key.is_some(), allow_insecure) {
+        return Err(EmbedError::NoAnswer(e));
+    }
     let mut out: Vec<Vec<f32>> = vec![Vec::new(); inputs.len()];
     for (bi, batch) in inputs.chunks(BATCH).enumerate() {
         // A server that answered is not a server that is absent, and only one
         // of those is worth retrying. Status is handled here rather than raised
         // as a transport error so that the server's own sentence survives: it
         // is the sentence that says which input was too long for its batch.
-        let mut response = ureq::post(endpoint)
+        let mut req = ureq::post(endpoint);
+        if let Some(key) = api_key {
+            req = req.header("Authorization", &format!("Bearer {key}"));
+        }
+        let mut response = req
             .config()
             .http_status_as_error(false)
             .build()
@@ -915,6 +1052,8 @@ fn reindex(
     root: &Path,
     endpoint: &str,
     model: &str,
+    api_key: Option<&str>,
+    allow_insecure: bool,
     max_chars: usize,
     rebuild: bool,
     wait: std::time::Duration,
@@ -946,7 +1085,7 @@ fn reindex(
     let mut fingerprint: Vec<f32> = Vec::new();
     let mut drifted: Option<f32> = None;
     if !rebuild && prev.dim > 0 {
-        fingerprint = embed(endpoint, model, &[fingerprint_text.clone()])?
+        fingerprint = embed(endpoint, model, api_key, allow_insecure, &[fingerprint_text.clone()])?
             .pop()
             .expect("one input yields one vector");
         if !prev.fingerprint_vec.is_empty() {
@@ -1089,7 +1228,7 @@ fn reindex(
     let mut max_chars = max_chars;
     if let Some(longest) = fresh.iter().max_by_key(|s| s.text.chars().count()) {
         let longest = longest.text.clone();
-        let fitted = calibrate(endpoint, model, &longest, max_chars)?;
+        let fitted = calibrate(endpoint, model, api_key, allow_insecure, &longest, max_chars)?;
         if fitted < max_chars {
             println!("  budget for this run: {fitted} characters, not {max_chars}");
             max_chars = fitted;
@@ -1110,7 +1249,7 @@ fn reindex(
     } else if reuse {
         (fingerprint_text, fingerprint)
     } else {
-        let v = embed(endpoint, model, &[FINGERPRINT.to_string()])?
+        let v = embed(endpoint, model, api_key, allow_insecure, &[FINGERPRINT.to_string()])?
             .pop()
             .expect("one input yields one vector");
         (FINGERPRINT.to_string(), v)
@@ -1142,7 +1281,7 @@ fn reindex(
     // next run would skip the other half forever.
     for batch in batches(fresh, FLUSH) {
         let inputs: Vec<String> = batch.iter().map(|s| s.text.clone()).collect();
-        let vectors = embed(endpoint, model, &inputs)?;
+        let vectors = embed(endpoint, model, api_key, allow_insecure, &inputs)?;
         if dim == 0 {
             dim = vectors[0].len();
         }
@@ -1220,6 +1359,7 @@ fn cmd_index(
     root: &Path,
     endpoint: Option<&str>,
     model: Option<&str>,
+    allow_insecure: bool,
     max_chars: usize,
     rebuild: bool,
 ) -> Result<()> {
@@ -1239,11 +1379,13 @@ fn cmd_index(
         user.model.as_deref(),
         DEFAULT_MODEL,
     );
+    let (api_key, _) = resolve_api_key(&endpoint, user.api_key.as_deref());
+    let allow_insecure = resolve_allow_insecure(allow_insecure, user.allow_insecure);
     let (endpoint, model) = (endpoint.as_str(), model.as_str());
     // An index the user asked for waits a little for one already running, and
     // then says who it is waiting for rather than hanging on it.
     let wait = std::time::Duration::from_secs(10);
-    let Some(r) = reindex(root, endpoint, model, max_chars, rebuild, wait)? else {
+    let Some(r) = reindex(root, endpoint, model, api_key.as_deref(), allow_insecure, max_chars, rebuild, wait)? else {
         bail!(
             "another folio is writing the index under {} — try again once it is done",
             root.display()
@@ -1453,7 +1595,12 @@ fn open_all(roots: &[PathBuf]) -> Result<Vec<Opened>> {
 /// indexes costs no extra round trip. The endpoint asked is the first root's,
 /// and that is enough for all of them — an index in the endpoint's space and a
 /// second index in the endpoint's space are in each other's.
-fn embed_and_prove(opened: &[Opened], text: &str) -> Result<Vec<f32>> {
+fn embed_and_prove(
+    opened: &[Opened],
+    text: &str,
+    api_key: Option<&str>,
+    allow_insecure: bool,
+) -> Result<Vec<f32>> {
     let first = &opened.first().expect("a query names at least one root").meta;
     let mut inputs: Vec<String> = Vec::new();
     for o in opened {
@@ -1462,7 +1609,7 @@ fn embed_and_prove(opened: &[Opened], text: &str) -> Result<Vec<f32>> {
         }
     }
     inputs.push(text.to_string());
-    let mut vectors = embed(&first.endpoint, &first.model, &inputs)?;
+    let mut vectors = embed(&first.endpoint, &first.model, api_key, allow_insecure, &inputs)?;
     let asked = vectors.pop().expect("one input yields one vector");
 
     // A query does not discard an index it was asked to read. Its own vector
@@ -1617,7 +1764,10 @@ fn cmd_query(
     limit: usize,
     paths_only: bool,
     refresh: bool,
+    allow_insecure: bool,
 ) -> Result<()> {
+    let user = read_config_at(&config_path())?;
+    let allow_insecure = resolve_allow_insecure(allow_insecure, user.allow_insecure);
     let (preds, hints) = parse_preds(wheres)?;
     // Said once, before any work: a hint about what was typed does not depend
     // on what the index holds.
@@ -1632,8 +1782,10 @@ fn cmd_query(
     loop {
         let opened = open_all(roots)?;
         let named: Vec<PathBuf> = opened.iter().map(|o| o.root.clone()).collect();
+        let query_endpoint = opened.first().map(|o| o.meta.endpoint.as_str()).unwrap_or(DEFAULT_ENDPOINT);
+        let (api_key, _) = resolve_api_key(query_endpoint, user.api_key.as_deref());
         if q.is_none() {
-            q = Some(embed_and_prove(&opened, text)?);
+            q = Some(embed_and_prove(&opened, text, api_key.as_deref(), allow_insecure)?);
         }
         let q = q.as_deref().expect("embedded above");
 
@@ -1739,6 +1891,8 @@ fn cmd_query(
                     root,
                     endpoint,
                     model,
+                    api_key.as_deref(),
+                    allow_insecure,
                     *budget,
                     false,
                     std::time::Duration::ZERO,
@@ -1958,12 +2112,22 @@ fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
     let proj_path = root.join(PROJECT_CONFIG);
 
     if let Some(ConfigCmd::Set { key, value, project }) = action {
+        if key == "api_key" && project {
+            bail!(
+                "a project config cannot hold an API key because folio.yaml is committed with the corpus; \
+                 write to user config without --project or set FOLIO_API_KEY in the environment"
+            );
+        }
         let path = if project { proj_path.clone() } else { user_path.clone() };
         let mut cfg = read_config_at(&path)?;
         match key.as_str() {
             "endpoint" => cfg.endpoint = Some(value),
             "model" => cfg.model = Some(value),
-            other => bail!("no setting named {other} — folio config holds endpoint and model"),
+            "api_key" => cfg.api_key = Some(value),
+            "allow_insecure" => cfg.allow_insecure = Some(
+                value.parse().context("allow_insecure must be 'true' or 'false'")?
+            ),
+            other => bail!("no setting named {other} — folio config holds endpoint, model, api_key, allow_insecure"),
         }
         if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
             fs::create_dir_all(dir).with_context(|| format!("cannot create {}", dir.display()))?;
@@ -1989,8 +2153,12 @@ fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
         user.model.as_deref(),
         DEFAULT_MODEL,
     );
+    let (_api_key, k_src) = resolve_api_key(&endpoint, user.api_key.as_deref());
     println!("  endpoint  {endpoint}  ({e_src})");
     println!("  model     {model}  ({m_src})");
+    if k_src != "none" {
+        println!("  api_key   [configured]  ({k_src})");
+    }
     for (label, path) in [("corpus", &proj_path), ("user  ", &user_path)] {
         println!(
             "  {label}    {}{}",
@@ -2224,6 +2392,7 @@ fn cmd_doctor(
     root: &Path,
     endpoint: Option<&str>,
     model: Option<&str>,
+    allow_insecure: bool,
     max_chars: usize,
 ) -> Result<()> {
     let proj = read_config_at(&root.join(PROJECT_CONFIG))?;
@@ -2242,14 +2411,19 @@ fn cmd_doctor(
         user.model.as_deref(),
         DEFAULT_MODEL,
     );
+    let (api_key, k_src) = resolve_api_key(&endpoint, user.api_key.as_deref());
+    let allow_insecure = resolve_allow_insecure(allow_insecure, user.allow_insecure);
     println!("  endpoint   {endpoint}  ({e_src})");
     println!("  model      {model}");
+    if k_src != "none" {
+        println!("  api_key    [configured]  ({k_src})");
+    }
 
     let mut failed = false;
 
     // 1. It answers, and with how many dimensions.
     let t = std::time::Instant::now();
-    let probe = match embed(&endpoint, &model, &["a sentence to embed".to_string()]) {
+    let probe = match embed(&endpoint, &model, api_key.as_deref(), allow_insecure, &["a sentence to embed".to_string()]) {
         Ok(v) => v,
         Err(e) => {
             println!("  reachable  no");
@@ -2268,7 +2442,7 @@ fn cmd_doctor(
     //    8,000 characters are about 2,000 tokens of English and several times
     //    that in a language that does not spell words with spaces.
     let (long, from) = longest_section(root, max_chars);
-    match embed(&endpoint, &model, &[long.clone()]) {
+    match embed(&endpoint, &model, api_key.as_deref(), allow_insecure, &[long.clone()]) {
         Ok(_) => println!("  long input {} characters accepted, {from}", long.chars().count()),
         Err(e) => {
             failed = true;
@@ -2288,7 +2462,7 @@ fn cmd_doctor(
         "A cat was sitting on the sunny window ledge.".to_string(),
         "Quarterly revenue is recognised when the goods ship.".to_string(),
     ];
-    match embed(&endpoint, &model, &probes) {
+    match embed(&endpoint, &model, api_key.as_deref(), allow_insecure, &probes) {
         Err(e) => {
             failed = true;
             println!("  structure  could not measure: {}", anyhow::Error::from(e));
@@ -2746,5 +2920,111 @@ mod tests {
         // The documented behaviour, kept: a filter must not silently drop the
         // documents nobody has annotated yet.
         assert!(keeps(&fm(json!({"title": "Beta"})), &preds(&["status!=deprecated"])));
+    }
+
+    #[test]
+    fn project_config_refuses_api_key() {
+        let tmp = std::env::temp_dir().join(format!("folio-key-refuse-{}", std::process::id()));
+        fs::create_dir_all(&tmp).expect("create dir");
+        let proj_cfg = tmp.join(PROJECT_CONFIG);
+        fs::write(&proj_cfg, "api_key: secret-should-refuse\n").expect("write folio.yaml");
+
+        let err = read_config_at(&proj_cfg).unwrap_err();
+        assert!(err.to_string().contains("folio.yaml is committed with the corpus and must not contain credentials"));
+
+        // User config with api_key does not refuse
+        let user_cfg = tmp.join("user_config.yaml");
+        fs::write(&user_cfg, "api_key: secret-in-user\n").expect("write user config");
+        let parsed = read_config_at(&user_cfg).expect("user config allows api_key");
+        assert_eq!(parsed.api_key.as_deref(), Some("secret-in-user"));
+
+        fs::remove_dir_all(&tmp).ok();
+    }
+
+    #[test]
+    fn resolve_api_key_precedence() {
+        unsafe {
+            std::env::remove_var("FOLIO_API_KEY");
+            std::env::remove_var("OPENAI_API_KEY");
+        }
+
+        // None configured
+        let (k, src) = resolve_api_key("https://api.openai.com/v1", None);
+        assert_eq!(k, None);
+        assert_eq!(src, "none");
+
+        // User config
+        let (k, src) = resolve_api_key("https://api.openai.com/v1", Some("user-secret"));
+        assert_eq!(k.as_deref(), Some("user-secret"));
+        assert_eq!(src, "user config");
+
+        // OPENAI_API_KEY beats user config only for api.openai.com
+        unsafe { std::env::set_var("OPENAI_API_KEY", "openai-secret") };
+        let (k, src) = resolve_api_key("https://api.openai.com/v1", Some("user-secret"));
+        assert_eq!(k.as_deref(), Some("openai-secret"));
+        assert_eq!(src, "environment");
+
+        // OPENAI_API_KEY ignored for non-openai endpoints
+        let (k, src) = resolve_api_key("http://127.0.0.1:8080/v1", Some("user-secret"));
+        assert_eq!(k.as_deref(), Some("user-secret"));
+        assert_eq!(src, "user config");
+
+        // FOLIO_API_KEY beats OPENAI_API_KEY everywhere
+        unsafe { std::env::set_var("FOLIO_API_KEY", "folio-secret") };
+        let (k, src) = resolve_api_key("https://api.openai.com/v1", Some("user-secret"));
+        assert_eq!(k.as_deref(), Some("folio-secret"));
+        assert_eq!(src, "environment");
+
+        let (k, src) = resolve_api_key("http://127.0.0.1:8080/v1", Some("user-secret"));
+        assert_eq!(k.as_deref(), Some("folio-secret"));
+        assert_eq!(src, "environment");
+
+        unsafe {
+            std::env::remove_var("FOLIO_API_KEY");
+            std::env::remove_var("OPENAI_API_KEY");
+        }
+    }
+
+    #[test]
+    fn loopback_and_transport_validation() {
+        assert!(is_loopback("127.0.0.1"));
+        assert!(is_loopback("localhost"));
+        assert!(is_loopback("::1"));
+        assert!(is_loopback("[::1]"));
+        assert!(is_loopback("127.0.1.1"));
+        assert!(!is_loopback("192.0.2.1"));
+        assert!(!is_loopback("api.openai.com"));
+        assert!(!is_loopback("192.168.1.1"));
+
+        // Without key: plaintext remote passes
+        assert!(validate_transport("http://192.0.2.1:8080/v1/embeddings", false, false).is_ok());
+
+        // With key: HTTPS passes
+        assert!(validate_transport("https://api.openai.com/v1/embeddings", true, false).is_ok());
+
+        // With key: loopback HTTP passes (IPv4, localhost, IPv6 with or without port)
+        assert!(validate_transport("http://127.0.0.1:8080/v1/embeddings", true, false).is_ok());
+        assert!(validate_transport("http://localhost:8080/v1/embeddings", true, false).is_ok());
+        assert!(validate_transport("http://[::1]/v1/embeddings", true, false).is_ok());
+        assert!(validate_transport("http://[::1]:8080/v1/embeddings", true, false).is_ok());
+
+        // With key: non-loopback plaintext HTTP fails
+        let err = validate_transport("http://192.0.2.1:8080/v1/embeddings", true, false).unwrap_err();
+        assert!(err.to_string().contains("sending credentials over plaintext HTTP is refused"));
+
+        // With key: non-loopback plaintext HTTP passes when allow_insecure is true
+        assert!(validate_transport("http://192.0.2.1:8080/v1/embeddings", true, true).is_ok());
+
+        // Non-http/https scheme is refused when key is present
+        assert!(validate_transport("ftp://example.com/v1/embeddings", true, false).is_err());
+
+        // FOLIO_ALLOW_INSECURE can enable or disable
+        unsafe { std::env::set_var("FOLIO_ALLOW_INSECURE", "1") };
+        assert!(resolve_allow_insecure(false, Some(false)));
+        unsafe { std::env::set_var("FOLIO_ALLOW_INSECURE", "0") };
+        assert!(!resolve_allow_insecure(false, Some(true)));
+        unsafe { std::env::set_var("FOLIO_ALLOW_INSECURE", "false") };
+        assert!(!resolve_allow_insecure(false, Some(true)));
+        unsafe { std::env::remove_var("FOLIO_ALLOW_INSECURE") };
     }
 }

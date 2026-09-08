@@ -33,7 +33,7 @@ cannot tell you at the moment you need it.
 folio index                 # every .md under the working directory
 folio query "does unfinished work count as a failure"
 folio status                # files, sections, model, frontmatter keys carried
-folio config                # the endpoint and model a new index would use
+folio config                # the configuration a new index would use
 folio doctor                # ask the endpoint what ranking depends on
 ```
 
@@ -89,7 +89,10 @@ folio config set endpoint http://127.0.0.1:8080/v1/embeddings
 
 Run `folio config` to see where that answer came from. A corpus needing its own
 model — one in a language the default was not trained for — carries `folio.yaml`
-at its root, committed with it, so everyone indexes it the same way.
+at its root, committed with it, so everyone indexes it the same way. For an
+endpoint that needs an API key, run `folio config set api_key <token>` to store
+it in user config, or export `FOLIO_API_KEY` (or `OPENAI_API_KEY` for
+`api.openai.com`). Credentials never live in `folio.yaml`.
 
 **An unreachable endpoint is not an empty corpus.** Only `index` and `query`
 need one, and both say so plainly when it is missing. Report what folio said

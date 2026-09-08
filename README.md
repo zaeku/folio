@@ -139,7 +139,11 @@ They describe llama.cpp's allocation rather than folio's, so they move when it
 changes, and a number on this page would ask for a release every time it did.
 
 If you already run an embeddings endpoint, ignore all of this and name it:
-`folio config set endpoint http://your-host:port/v1/embeddings`.
+`folio config set endpoint http://your-host:port/v1/embeddings`. For an endpoint
+that needs an API key, set `FOLIO_API_KEY` (or `OPENAI_API_KEY` when pointing at
+`api.openai.com`) in the environment, or run `folio config set api_key <token>`
+to store it in your user config. Credentials never live in `folio.yaml`, and
+travel off the loopback only over TLS unless `--allow-insecure` is passed.
 
 ## Use
 
