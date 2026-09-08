@@ -33,6 +33,7 @@ struct Opened {
     meta: store::Meta,
     map: memmap2::Mmap,
 }
+
 /// Every index a query was pointed at, refusing what cannot be ranked together.
 ///
 /// Dimension and budget are compared before the endpoint is asked anything.
@@ -103,6 +104,7 @@ fn open_all(roots: &[PathBuf]) -> Result<Vec<Opened>> {
     }
     Ok(out)
 }
+
 /// The query's own vector, once every index has shown it is the same space.
 ///
 /// Each index stores the text of its fingerprint beside the vector the endpoint
@@ -155,6 +157,7 @@ fn embed_and_prove(
     }
     Ok(asked)
 }
+
 /// Rank every index the query reads, as one list.
 ///
 /// A slot names a row in one index's matrix, so a hit carries which index it
@@ -234,6 +237,7 @@ fn rank(
     hits.sort_by(|a, b| b.score.total_cmp(&a.score));
     Ok((hits, dropped))
 }
+
 /// Which of `sections`' files no longer look the way the index recorded them.
 ///
 /// Only the files behind the rows about to be returned, because those are the
@@ -260,6 +264,7 @@ fn moved_since_indexed(st: &Store, root: &Path, sections: &[Section]) -> Result<
     }
     Ok(out)
 }
+
 /// How a reference prints.
 ///
 /// One root that is the working directory prints the path the caller already
@@ -281,6 +286,7 @@ fn reference(roots: &[PathBuf], owner: usize, rel: &str) -> String {
     cwd.and_then(|cwd| joined.strip_prefix(cwd).ok().map(|p| p.display().to_string()))
         .unwrap_or_else(|| joined.display().to_string())
 }
+
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn cmd_query(
     roots: &[PathBuf],
@@ -510,6 +516,7 @@ pub(crate) fn cmd_query(
         return Ok(());
     }
 }
+
 /// How many ranked sections are hydrated before merging.
 ///
 /// Merging joins pieces that both rank, so a piece below this window joins
@@ -528,6 +535,7 @@ struct Hit {
     trail: String,
     pieces: Vec<usize>,
 }
+
 /// Join ranked sections that touch, so that a result names one range to read.
 ///
 /// Five rows covering lines 3-6, 7-10, 11-14, 15-18 and 19-22 of one file
@@ -584,6 +592,7 @@ fn merge_adjacent(rows: &[Section], owners: &[usize], scores: &[f32]) -> Vec<Hit
     out.sort_by(|a, b| b.score.total_cmp(&a.score));
     out
 }
+
 fn assemble(owner: usize, path: &str, rows: &[Section], scores: &[f32], run: &[usize]) -> Hit {
     let start = rows[run[0]].start;
     let end = rows[run[run.len() - 1]].end;
@@ -600,6 +609,7 @@ fn assemble(owner: usize, path: &str, rows: &[Section], scores: &[f32], run: &[u
         pieces: run.to_vec(),
     }
 }
+
 /// The trail a merged range is filed under: what its pieces have in common.
 ///
 /// Four notes under one heading are that heading. When the pieces share
@@ -624,6 +634,7 @@ fn shared_trail(rows: &[Section], run: &[usize]) -> String {
     }
     common.join(" > ")
 }
+
 /// The heading trail under a result, as it is printed beneath the reference.
 pub(crate) fn trail_of(s: &Section) -> String {
     let mut trail = s.breadcrumb.clone();

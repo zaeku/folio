@@ -35,6 +35,7 @@ pub(crate) fn hash(bytes: &[u8]) -> u64 {
     h.write(bytes);
     h.finish()
 }
+
 /// What a re-index did, for whoever asked for it to say so.
 pub(crate) struct Indexed {
     pub(crate) files: usize,
@@ -50,6 +51,7 @@ pub(crate) struct Indexed {
     pub(crate) dead: usize,
     pub(crate) compacted: usize,
 }
+
 /// Pair each path that is gone with a path that arrived carrying the same
 /// content, as `(from, to)`.
 ///
@@ -82,6 +84,7 @@ fn pair_moves(
     }
     moves
 }
+
 /// Bring the index under `root` up to date with the files under it.
 ///
 /// `Ok(None)` means another process holds the write lock and this one declined
@@ -452,6 +455,7 @@ pub(crate) fn cmd_index(
     }
     Ok(())
 }
+
 /// Split sections into batches of at least `want`, never cutting a file in two.
 ///
 /// `fresh` is built one file at a time, so a file's sections are already
@@ -472,6 +476,7 @@ fn batches(fresh: Vec<Section>, want: usize) -> Vec<Vec<Section>> {
     }
     out
 }
+
 /// Rows the matrix holds, live and dead.
 fn rows_in_matrix(root: &Path, dim: usize) -> Result<usize> {
     if dim == 0 {
@@ -480,6 +485,7 @@ fn rows_in_matrix(root: &Path, dim: usize) -> Result<usize> {
     let vecs = store::vectors_path(root);
     Ok(if vecs.exists() { fs::metadata(&vecs)?.len() as usize / (dim * 4) } else { 0 })
 }
+
 /// Write `vectors` at row `base`, leaving every row before it untouched. The
 /// file is not truncated: rows past the end of the write are dead, and a write
 /// that fails must not shorten the matrix under the records that name them.
@@ -504,6 +510,7 @@ pub(crate) fn append(root: &Path, base: usize, dim: usize, vectors: &[Vec<f32>])
     file.sync_all()?;
     Ok(())
 }
+
 /// Copy the live rows to the front of a new matrix and renumber the records to
 /// match. The two land in separate steps, so a flag is set across them: an
 /// index found mid-compaction says so rather than ranking against wrong rows.
@@ -533,6 +540,7 @@ fn compact(root: &Path, st: &Store, dim: usize, live: &[usize]) -> Result<usize>
     st.unlock()?;
     Ok(before - live.len())
 }
+
 /// How many sections an index commits at a time. A run that dies keeps every
 /// batch before the one it was in, so this is what a kill costs: at the 0.53 s
 /// per 32 inputs measured on 2026-09-06, about eight seconds of embedding.

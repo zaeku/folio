@@ -25,6 +25,7 @@ pub(crate) enum Backend {
     #[value(name = "tei")]
     Tei,
 }
+
 /// The host and port a service should bind, read from the endpoint folio uses.
 fn host_port(endpoint: &str) -> Result<(String, u16)> {
     let rest = endpoint.split_once("://").map_or(endpoint, |(_, r)| r);
@@ -35,6 +36,7 @@ fn host_port(endpoint: &str) -> Result<(String, u16)> {
     let port: u16 = port.parse().with_context(|| format!("{port} is not a port number"))?;
     Ok((host.to_string(), port))
 }
+
 /// Print a service file. Writing it and loading it stay with the reader.
 ///
 /// folio speaks HTTP and nothing else, so it does not know which model file or
@@ -87,6 +89,7 @@ fn backend_args(
     args.extend(["--host".to_string(), host, "--port".to_string(), port.to_string()]);
     args
 }
+
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn cmd_unit(
     root: &Path,
@@ -183,6 +186,7 @@ pub(crate) fn cmd_unit(
     }
     Ok(())
 }
+
 /// The server's absolute path, or the bare name with a note when it is absent.
 fn which_server(name: &str) -> String {
     for dir in std::env::var("PATH").unwrap_or_default().split(':') {

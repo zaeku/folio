@@ -17,6 +17,7 @@ pub(crate) struct Cli {
     #[command(subcommand)]
     pub(crate) cmd: Cmd,
 }
+
 #[derive(Subcommand)]
 pub(crate) enum Cmd {
     /// Index every markdown file under `root`, re-embedding only changed files.
@@ -225,6 +226,7 @@ pub(crate) enum Cmd {
         truncated: bool,
     },
 }
+
 #[derive(Subcommand)]
 pub(crate) enum ConfigCmd {
     /// Write one setting to a config file, creating it if it is absent.
