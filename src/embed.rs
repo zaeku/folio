@@ -8,7 +8,7 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::validate_transport;
+use crate::config::validate_transport;
 
 const BATCH: usize = 32;
 
