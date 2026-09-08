@@ -136,12 +136,39 @@ does not, so it says so here.
 Nix declares the tools on this machine. Do not install a tool globally to make a
 task work. Add it to the flake that needs it, so the next reader gets it.
 
-**The code layer has no flake yet, and both embedding servers are declared
-outside it.** `llama-server` and `text-embeddings-router` are in the machine's
-Nix configuration by way of its Homebrew bridge, so they survive a rebuild, but
-that is the machine's declaration and not this project's. Write the flake when
-it declares something real: `rustc`, `cargo`, a C compiler for the bundled
-SQLite, and whichever embedding server the project settles on.
+**Work inside this layer's flake.** `flake.nix` declares `rustc`, `cargo`,
+`clippy`, `rustfmt`, `jujutsu` and `git`, and `mkShell`'s stdenv carries the C
+compiler `rusqlite`'s bundled SQLite needs. `.envrc` is `use flake`, so
+`direnv allow` once and the shell arrives with the directory; `nix develop` does
+the same by hand.
+
+All four rust tools come from one nixpkgs on purpose. Two installations answering
+at once is what `E0514: found crate serde compiled by an incompatible version of
+rustc` reports, and outside this shell that is the state of this machine:
+`rustc` and `cargo` resolve to the system's Nix profile while `cargo-clippy` and
+`rustfmt` resolve to an older rustup toolchain, so `cargo clippy` cannot run at
+all. `cargo +stable` is not a way around it either — the `cargo` in front does
+not implement `+toolchain`.
+
+**No embedding server is declared, and both are declared outside this project.**
+`llama-server` and `text-embeddings-router` are in the machine's Nix
+configuration by way of its Homebrew bridge, so they survive a rebuild, but that
+is the machine's declaration and not this project's. Which of the two folio
+settles on is undecided, and the next paragraph is why the shell does not need
+one.
+
+**`cargo test` runs on push and on a pull request**, on Linux and on macOS,
+from `.github/workflows/ci.yml`. It installs nothing and starts no server, for
+the reason in the next paragraph. `cargo fmt --check` runs beside it and is
+advisory: this tree is formatted by hand and rustfmt disagrees with it
+throughout, so the step is marked `continue-on-error` and its diff is a report.
+Do not answer it by reformatting the tree.
+
+The workflow uses whatever `stable` the runner image carries and pins nothing,
+which is why it prints `rustc --version` before it does anything else. The
+fences in `decisions/` are not run there — that repository is unpublished, so a
+workflow cannot reach it, and `cargo run --bin check` stays something a person
+runs.
 
 **The endpoint is a runtime dependency, not a build one.** folio compiles and its
 tests pass with no server running. Only `index` and `query` need one:
@@ -158,7 +185,7 @@ change to folio. That is the whole reason the boundary is HTTP.
 
 ## Version control
 
-**Jujutsu, colocated.** `.jj` and `.git` coexist. Measured on **jj 0.44.0**.
+**Jujutsu, colocated.** `.jj` and `.git` coexist. Measured on **jj 0.45.1**.
 
 Read the [`use-jujutsu-safely`](https://github.com/zaeku/skills/tree/main/plugins/version-control/skills/use-jujutsu-safely)
 skill before an unfamiliar command, or `jj help <command>` if you do not have
@@ -177,6 +204,10 @@ it. The rules that cost something here:
 - **`jj util snapshot` when a session in a workspace ends.** It records the
   working copy and does nothing else; `jj status` also snapshots, but as a side
   effect of a command that may reset the working copy in the same breath.
+  Snapshot before anything rewrites what that workspace has checked out. Once
+  its working copy is stale, `jj util snapshot` refuses as well, and the `jj
+  workspace update-stale` that clears the stale state is what removes its
+  files.
 - Do not discard existing changes. Existing changes belong to the user unless a
   task identifies them as agent changes.
 - **Sign before you push.** GitHub rejects an unsigned push to `main`.

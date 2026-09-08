@@ -14,6 +14,9 @@
 /kanban/
 
 /target
+
+# direnv's materialized nix shell.
+/.direnv/
 .folio/
 /benchmarks/corpora/
 /benchmarks/reports/
