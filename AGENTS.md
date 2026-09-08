@@ -16,7 +16,11 @@ This table decides where new code goes.
 |---|---|---|
 | Heading split, frontmatter flattening | `src/sections.rs` | The only non-trivial logic in the project, so it is where the tests live |
 | Anything issuing SQL | `src/store.rs` | Every statement folio makes is there, so the engine behind it can be replaced without the rest knowing |
-| CLI, ranking, filters, HTTP call | `src/main.rs` | Small enough that splitting it further would buy indirection, not clarity |
+| Where a setting comes from, which corpus a command stands in, what may be sent where | `src/config.rs` | Resolution, the upward walks, and the transport rule are one subject |
+| The request to the endpoint, and the arithmetic on what returns | `src/embed.rs` | folio runs no model; this is the whole of what it says to one |
+| The `--where` grammar | `src/filters.rs` | A predicate reads one record and nothing else, so it needs nothing else |
+| The service file `folio unit` prints | `src/unit.rs` | It starts nothing and reads only configuration |
+| CLI, commands, ranking, merging | `src/main.rs` | What is left is the shape of the tool rather than a subject of its own |
 | Embedding inference | Outside the binary, behind the endpoint | Changing the model must not mean rebuilding folio |
 | Reading a document's body | The caller, after folio names a range | The index holds references only |
 | Exact string or regex matching | `rg`, not folio | Measured: a lexical route drowned the correct vector hit |
