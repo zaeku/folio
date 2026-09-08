@@ -180,6 +180,12 @@ pub(crate) fn dot(a: &[f32], b: &[f32]) -> f32 {
 ///
 /// A different length is a different space and not a near miss, so it scores 0
 /// rather than comparing the dimensions they happen to share.
+/// Where the same weights sit. Measured 2026-09-06 on gte-modernbert-base-Q8_0
+/// under llama.cpp: one input embedded twice in a request is bit-identical, and
+/// at a different position of a 32-input batch it differs by 1.1e-7. Different
+/// weights differ by 0.99. Nothing observed sits between.
+pub(crate) const SAME_SPACE: f32 = 0.999;
+
 pub(crate) fn same_space(now: &[f32], then: &[f32]) -> f32 {
     if now.len() != then.len() || then.is_empty() {
         return 0.0;
