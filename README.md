@@ -155,6 +155,20 @@ Only `folio index` needs to be told where the endpoint is. A query reads the
 endpoint and model the index recorded, because a vector space belongs to one of
 each and the recorded pair is the only correct answer for that corpus.
 
+A question does not have to be asked from the corpus root. Given no `--root`,
+`folio query`, `status` and `doctor` walk upward from the working directory to
+the first `.folio/` or `folio.yaml` and answer from the corpus they find, so
+working inside a subdirectory costs no `cd`. `folio.yaml` ends the walk as well
+as `.folio/`, the way `Cargo.toml` ends cargo's and `target/` does not: the
+index is derived and disposable, while the model a corpus needs is not, so a
+corpus that has declared itself and has not been indexed yet is named in the
+refusal instead of being passed on the way to an unrelated index above it.
+Where the corpus is not the working directory a reference is printed so that it
+opens from where you are.
+
+`folio index` takes the root it is given and does not walk, because indexing a
+tree is not the same request as asking it a question.
+
 `--endpoint` beats `FOLIO_ENDPOINT`, which beats `folio.yaml` beside the corpus,
 which beats the user's `~/.config/folio/config.yaml`, which beats
 `http://127.0.0.1:8080/v1/embeddings`. `folio config` prints what won and where

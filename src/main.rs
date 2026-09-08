@@ -74,6 +74,39 @@ fn config_path() -> PathBuf {
     base.join("folio").join("config.yaml")
 }
 
+/// The corpus a command answers from when none was named.
+///
+/// Upward from `start` to the first directory holding either `.folio/` or
+/// `folio.yaml`, so a question can be asked from anywhere inside a corpus. One
+/// stat per directory between the two, which is not the downward discovery
+/// D-01M1X1GGMV5001 declines: that one walks a corpus to find nested indexes
+/// and costs 172 ms over 14,616 files against a 120 ms query, measured
+/// 2026-09-05.
+///
+/// `folio.yaml` stops it as well as `.folio/`, and stops it for the reason
+/// cargo stops at `Cargo.toml` rather than at `target/`: the index is derived
+/// and disposable while the model a corpus needs is not. A project that
+/// declares a corpus it has not indexed yet therefore ends the walk and is
+/// named in the refusal, instead of being passed on the way to an unrelated
+/// index somewhere above it.
+fn corpus_root_from(start: &Path) -> Option<PathBuf> {
+    start
+        .ancestors()
+        .find(|dir| dir.join(store::DIR).exists() || dir.join(PROJECT_CONFIG).exists())
+        .map(Path::to_path_buf)
+}
+
+/// The same, from the working directory, falling back to it.
+///
+/// A caller standing outside any corpus gets what they always got: the working
+/// directory, and the refusal that names it.
+fn corpus_root() -> PathBuf {
+    std::env::current_dir()
+        .ok()
+        .and_then(|cwd| corpus_root_from(&cwd))
+        .unwrap_or_else(|| PathBuf::from("."))
+}
+
 /// Read the config file, or fail.
 ///
 /// A file that does not parse is not the same as no file. Falling back to the
@@ -137,6 +170,11 @@ struct Cli {
 enum Cmd {
     /// Index every markdown file under `root`, re-embedding only changed files.
     Index {
+        /// The corpus to index: every `.md` file below it, and `.folio/`
+        /// beside it.
+        ///
+        /// Taken as given. A query walks upward to find the corpus it is
+        /// standing in; this does not.
         #[arg(default_value = ".")]
         root: PathBuf,
         /// Any OpenAI-compatible embeddings endpoint.
@@ -166,6 +204,10 @@ enum Cmd {
     },
     /// Rank sections by meaning, optionally filtered on frontmatter.
     Query {
+        /// The question, in whatever words you have.
+        ///
+        /// It is embedded and ranked by meaning, so it carries no operators and
+        /// shares nothing with an `rg` pattern.
         text: String,
         /// The corpus to rank. Repeatable.
         ///
@@ -175,7 +217,12 @@ enum Cmd {
         /// folio cannot show belongs with the others, is refused rather than
         /// left out. They may cover the same files; a section two of them hold
         /// is returned once, and the query says how many it collapsed.
-        #[arg(long, default_value = ".")]
+        ///
+        /// Given none, folio answers from the corpus enclosing the working
+        /// directory: it walks upward to the first `.folio/` or `folio.yaml`
+        /// and uses that, so a question can be asked from anywhere inside a
+        /// corpus.
+        #[arg(long)]
         root: Vec<PathBuf>,
         /// `key=value`, `key!=value`, or bare `key` for presence. Repeatable.
         /// On a list value, `=` reads as membership. `!=` also passes when the
@@ -228,8 +275,10 @@ enum Cmd {
     /// Ask the endpoint three questions folio's ranking depends on.
     Doctor {
         /// The corpus whose `folio.yaml` names the endpoint to test.
-        #[arg(long, default_value = ".")]
-        root: PathBuf,
+        ///
+        /// Given none, the corpus enclosing the working directory.
+        #[arg(long)]
+        root: Option<PathBuf>,
         #[arg(long)]
         endpoint: Option<String>,
         #[arg(long)]
@@ -287,7 +336,8 @@ enum Cmd {
     /// Report what the index covers.
     Status {
         /// The corpus to report on. Repeatable, one block each.
-        #[arg(default_value = ".")]
+        ///
+        /// Given none, the corpus enclosing the working directory.
         root: Vec<PathBuf>,
         /// List the sections that were cut to the budget, rather than counting
         /// them. Each was ranked on part of its text.
@@ -332,6 +382,14 @@ fn at_least_one(s: &str) -> Result<usize, String> {
     }
 }
 
+/// What a repeatable `--root` means when it was not given.
+fn roots_or_enclosing(named: Vec<PathBuf>) -> Vec<PathBuf> {
+    if named.is_empty() {
+        return vec![corpus_root()];
+    }
+    named
+}
+
 fn main() -> Result<()> {
     // A command that is piped into `head` has its stdout closed early. Rust
     // ignores SIGPIPE, so the next `println!` panics and prints a backtrace
@@ -364,7 +422,7 @@ fn main() -> Result<()> {
             paths_only,
             no_refresh,
         } => cmd_query(
-            &root,
+            &roots_or_enclosing(root),
             &text,
             &wheres,
             &exclude_pointed_by,
@@ -375,7 +433,7 @@ fn main() -> Result<()> {
         ),
         Cmd::Config { action, root } => cmd_config(action, &root),
         Cmd::Doctor { root, endpoint, model, max_chars } => cmd_doctor(
-            &root,
+            &root.unwrap_or_else(corpus_root),
             endpoint.as_deref(),
             model.as_deref(),
             max_chars,
@@ -391,7 +449,7 @@ fn main() -> Result<()> {
             print!("{}", include_str!("../skill/SKILL.md"));
             Ok(())
         }
-        Cmd::Status { root, truncated } => cmd_status(&root, truncated),
+        Cmd::Status { root, truncated } => cmd_status(&roots_or_enclosing(root), truncated),
     }
 }
 
@@ -1530,19 +1588,23 @@ fn moved_since_indexed(st: &Store, root: &Path, sections: &[Section]) -> Result<
 
 /// How a reference prints.
 ///
-/// One root prints the path the caller already knows the root of. Several print
-/// which root the section came from, because two indexes may hold the same
-/// relative path and `--paths-only` exists for a caller that opens what it is
-/// handed. Relative to the working directory where it can be, so that the
-/// common case reads like the one-root case.
+/// One root that is the working directory prints the path the caller already
+/// knows the root of. Anything else prints which root the section came from,
+/// because two indexes may hold the same relative path and `--paths-only`
+/// exists for a caller that opens what it is handed. Relative to the working
+/// directory where it can be, so that the common case reads like the one-root
+/// case.
+///
+/// A root above the working directory is where that matters: a query asked
+/// from inside a corpus is answered from the corpus, and a bare relative path
+/// would then name a file from a directory the caller is not in.
 fn reference(roots: &[PathBuf], owner: usize, rel: &str) -> String {
-    if roots.len() == 1 {
+    let cwd = std::env::current_dir().ok();
+    if roots.len() == 1 && cwd.as_deref() == Some(roots[0].as_path()) {
         return rel.to_string();
     }
     let joined = roots[owner].join(rel);
-    std::env::current_dir()
-        .ok()
-        .and_then(|cwd| joined.strip_prefix(cwd).ok().map(|p| p.display().to_string()))
+    cwd.and_then(|cwd| joined.strip_prefix(cwd).ok().map(|p| p.display().to_string()))
         .unwrap_or_else(|| joined.display().to_string())
 }
 
@@ -2609,11 +2671,41 @@ mod tests {
     }
 
     #[test]
-    fn a_reference_names_its_root_only_where_there_are_several() {
-        let one = [PathBuf::from("/corpus")];
+    fn a_reference_is_bare_only_from_the_root_it_names() {
+        let here = std::env::current_dir().expect("a working directory");
+        let one = [here];
         assert_eq!(reference(&one, 0, "docs/a.md"), "docs/a.md");
+
+        // A corpus found by walking upward is not the working directory, and a
+        // bare path would name a file from a directory the caller is not in.
+        let above = [PathBuf::from("/corpus")];
+        assert_eq!(reference(&above, 0, "docs/a.md"), "/corpus/docs/a.md");
+
         let two = [PathBuf::from("/corpus"), PathBuf::from("/other")];
         assert_eq!(reference(&two, 1, "docs/a.md"), "/other/docs/a.md");
+    }
+
+    #[test]
+    fn the_walk_stops_at_the_nearest_index_or_declaration() {
+        let tmp = std::env::temp_dir().join(format!("folio-walk-{}", std::process::id()));
+        let outer = tmp.join("outer");
+        let inner = outer.join("inner");
+        let deep = inner.join("a/b");
+        fs::create_dir_all(&deep).expect("a tree to walk");
+        fs::create_dir_all(outer.join(store::DIR)).expect("an index above");
+
+        assert_eq!(corpus_root_from(&deep).as_deref(), Some(outer.as_path()));
+
+        // A corpus that declares itself and has not been indexed yet still
+        // ends the walk, so the refusal names it rather than an index above it.
+        fs::write(inner.join(PROJECT_CONFIG), "").expect("a declaration between");
+        assert_eq!(corpus_root_from(&deep).as_deref(), Some(inner.as_path()));
+
+        // Outside any corpus there is nothing to find, and the caller keeps the
+        // working directory they had.
+        assert_eq!(corpus_root_from(&tmp), None);
+
+        fs::remove_dir_all(&tmp).ok();
     }
 
     #[test]
