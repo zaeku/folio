@@ -100,6 +100,33 @@ fn corpus_root_from(start: &Path) -> Option<PathBuf> {
         .map(Path::to_path_buf)
 }
 
+/// The `folio.yaml` that governs `dir`: the nearest one at or above it.
+///
+/// A declaration belongs to the corpus rather than to the directory a command
+/// was run in, so a subtree of a corpus embeds with the model that corpus
+/// chose. Only `folio.yaml` ends this walk. An index is not inherited: what one
+/// holds is settled by the fingerprint it recorded, never by a name in a file
+/// above it.
+fn nearest_declaration(dir: &Path) -> Option<PathBuf> {
+    // Absolute first: `.` has no ancestors but itself, and a root is usually
+    // given as `.`, so a relative path would end this walk before it started.
+    let dir = dir.canonicalize().unwrap_or_else(|_| dir.to_path_buf());
+    dir.ancestors()
+        .map(|d| d.join(PROJECT_CONFIG))
+        .find(|p| p.exists())
+}
+
+/// The index above `root`, when `root` is indexed inside another corpus.
+///
+/// Strictly above: an index at `root` is the one about to be updated.
+fn enclosing_index(root: &Path) -> Option<PathBuf> {
+    let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+    root.ancestors()
+        .skip(1)
+        .find(|d| d.join(store::DIR).is_dir())
+        .map(Path::to_path_buf)
+}
+
 /// The same, from the working directory, falling back to it.
 ///
 /// A caller standing outside any corpus gets what they always got: the working
@@ -1363,8 +1390,18 @@ fn cmd_index(
     max_chars: usize,
     rebuild: bool,
 ) -> Result<()> {
-    let proj = read_config_at(&root.join(PROJECT_CONFIG))?;
+    let declared = nearest_declaration(root).unwrap_or_else(|| root.join(PROJECT_CONFIG));
+    let proj = read_config_at(&declared)?;
     let user = read_config_at(&config_path())?;
+    // An overlap costs an embedding in each index on every edit of a file both
+    // hold, and this is the only moment it is visible: a parent's walk skips a
+    // child's `.folio/` as a hidden directory, so no later run learns of it.
+    if let Some(above) = enclosing_index(root) {
+        eprintln!(
+            "  this is inside the index at {}, which also holds these files",
+            above.display()
+        );
+    }
     let (endpoint, _) = resolve(
         endpoint,
         "FOLIO_ENDPOINT",
@@ -2263,7 +2300,8 @@ fn cmd_unit(
     };
     let hf_file = hf_file.unwrap_or("gte-modernbert-base-Q8_0.gguf");
     let pooling = pooling.unwrap_or("cls");
-    let proj = read_config_at(&root.join(PROJECT_CONFIG))?;
+    let declared = nearest_declaration(root).unwrap_or_else(|| root.join(PROJECT_CONFIG));
+    let proj = read_config_at(&declared)?;
     let user = read_config_at(&config_path())?;
     let (endpoint, _) = resolve(
         None,
@@ -2395,7 +2433,8 @@ fn cmd_doctor(
     allow_insecure: bool,
     max_chars: usize,
 ) -> Result<()> {
-    let proj = read_config_at(&root.join(PROJECT_CONFIG))?;
+    let declared = nearest_declaration(root).unwrap_or_else(|| root.join(PROJECT_CONFIG));
+    let proj = read_config_at(&declared)?;
     let user = read_config_at(&config_path())?;
     let (endpoint, e_src) = resolve(
         endpoint,
@@ -2553,6 +2592,22 @@ fn status_of(root: &Path, list_truncated: bool) -> Result<()> {
     println!("  sections    {}", counts.sections);
     println!("  truncated   {}", counts.truncated);
     println!("  model       {} @ {}", meta.model, meta.endpoint);
+    // A corpus that arrived from another machine carries an index built in one
+    // space and a declaration naming another. `folio index` is where the two
+    // meet, and it meets them by re-embedding everything.
+    if let Some(path) = nearest_declaration(&root) {
+        let decl = read_config_at(&path)?;
+        let differs = decl.model.as_deref().is_some_and(|m| m != meta.model)
+            || decl.endpoint.as_deref().is_some_and(|e| e != meta.endpoint);
+        if differs {
+            println!(
+                "  declared    {} @ {}  ({})",
+                decl.model.as_deref().unwrap_or(&meta.model),
+                decl.endpoint.as_deref().unwrap_or(&meta.endpoint),
+                path.display()
+            );
+        }
+    }
     println!("  dim         {}", meta.dim);
     println!(
         "  frontmatter {}",
@@ -2894,6 +2949,38 @@ mod tests {
     /// The invocations beneath it are the surface folio's own sentences name.
     /// An error message that tells a caller to rerun `folio index --rebuild` is
     /// a promise that the flag exists, and this is where that promise is kept.
+    #[test]
+    fn a_declaration_is_found_above_and_an_index_is_not() {
+        let tmp = std::env::temp_dir().join(format!("folio-declaration-{}", std::process::id()));
+        let sub = tmp.join("corpus/sub/deep");
+        fs::create_dir_all(&sub).expect("a tree");
+        // The walk canonicalizes, and the platform's temporary directory is a
+        // symlink on macOS, so the fixture has to name what the walk will name.
+        let tmp = tmp.canonicalize().expect("a real path");
+        let sub = sub.canonicalize().expect("a real path");
+        assert_eq!(nearest_declaration(&sub), None, "nothing above declares anything");
+
+        let corpus = tmp.join("corpus");
+        fs::write(corpus.join(PROJECT_CONFIG), "model: parent\n").expect("a declaration");
+        assert_eq!(nearest_declaration(&sub), Some(corpus.join(PROJECT_CONFIG)));
+
+        // The nearest one wins, so inheriting is a subtree looking up rather
+        // than a corpus reaching down.
+        let mid = tmp.join("corpus/sub");
+        fs::write(mid.join(PROJECT_CONFIG), "model: child\n").expect("a nearer declaration");
+        assert_eq!(nearest_declaration(&sub), Some(mid.join(PROJECT_CONFIG)));
+
+        // An index above is not a declaration, and is reported as what it is.
+        assert_eq!(enclosing_index(&sub), None);
+        fs::create_dir_all(corpus.join(store::DIR)).expect("an index above");
+        assert_eq!(enclosing_index(&sub).as_deref(), Some(corpus.as_path()));
+        // An index at the root being indexed is the one about to be updated.
+        fs::create_dir_all(sub.join(store::DIR)).expect("an index here");
+        assert_eq!(enclosing_index(&sub).as_deref(), Some(corpus.as_path()));
+
+        fs::remove_dir_all(&tmp).ok();
+    }
+
     #[test]
     fn the_published_command_surface_holds() {
         use clap::CommandFactory;

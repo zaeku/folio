@@ -170,8 +170,10 @@ refusal instead of being passed on the way to an unrelated index above it.
 Where the corpus is not the working directory a reference is printed so that it
 opens from where you are.
 
-`folio index` takes the root it is given and does not walk, because indexing a
-tree is not the same request as asking it a question.
+`folio index` takes the root it is given and does not walk for one, because
+indexing a tree is not the same request as asking it a question. What it does
+look upward for is `folio.yaml`, so a subtree of a corpus embeds with the model
+that corpus chose rather than with whatever the machine is configured for.
 
 `--endpoint` beats `FOLIO_ENDPOINT`, which beats `folio.yaml` beside the corpus,
 which beats the user's `~/.config/folio/config.yaml`, which beats
@@ -231,6 +233,37 @@ That writes `folio.yaml` at the corpus root. Commit it, and everyone who indexes
 that corpus embeds it the same way. It is deliberately not inside `.folio/`: the
 index there is derived and disposable, while which model a corpus needs is
 neither.
+
+It reaches every subtree. `folio index` in a subdirectory reads the nearest
+`folio.yaml` at or above the root it was given, so indexing part of a corpus
+embeds that part the same way as the whole, and the two indexes can be read
+together by one query. A subtree that needs different weights writes its own
+`folio.yaml`, and the nearest one is then its own.
+
+Indexing inside a corpus that is already indexed is allowed and said out loud:
+
+```
+$ cd docs && folio index
+  this is inside the index at /home/you/corpus, which also holds these files
+```
+
+Both indexes then hold those files and both re-embed them on every edit, which
+is a cost worth accepting deliberately rather than by accident. An ignore entry
+in the parent is how you decline it. That line is the only chance folio has to
+mention it — a parent's walk skips a child's `.folio/` as a hidden directory and
+never learns the child exists.
+
+A declaration says where new embeddings are sent. It never describes what an
+index already holds, which is settled by the fingerprint that index recorded. A
+corpus carried from another machine can therefore disagree with the file beside
+it, and `folio status` shows both rather than waiting for a re-index to discover
+it:
+
+```
+$ folio status
+  model       gte-modernbert @ http://127.0.0.1:8080/v1/embeddings
+  declared    bge-m3 @ http://127.0.0.1:8081/v1/embeddings  (./folio.yaml)
+```
 
 An index holds vectors from one model, and folio decides which model that is by
 asking rather than by reading a name. It embeds a fixed text when it builds an

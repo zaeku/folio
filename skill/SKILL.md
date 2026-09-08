@@ -37,11 +37,14 @@ folio config                # the configuration a new index would use
 folio doctor                # ask the endpoint what ranking depends on
 ```
 
-`index` takes a positional root and defaults to `.`. `query`, `status` and
-`doctor` default to the corpus around you: folio walks upward from the working
-directory to the first `.folio/` or `folio.yaml`, so a question can be asked
-from anywhere inside a corpus without moving first. A reference then prints a
-path that opens from where you are.
+`index` takes a positional root and defaults to `.`. It reads the nearest
+`folio.yaml` at or above that root, so a subtree embeds the way its corpus
+declared; it says so when the root is already inside another index, and
+`folio status` prints `declared` beside `model` when the two disagree.
+`query`, `status` and `doctor` default to the corpus around you: folio walks
+upward from the working directory to the first `.folio/` or `folio.yaml`, so a
+question can be asked from anywhere inside a corpus without moving first. A
+reference then prints a path that opens from where you are.
 The index lives in `.folio/` under that root. **Add `.folio/` to that root's
 ignore file before you index a repository.** folio will not do it for you. An
 index is derived from the corpus and belongs to whoever built it, never to
