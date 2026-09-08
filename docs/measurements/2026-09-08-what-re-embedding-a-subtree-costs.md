@@ -37,6 +37,21 @@ divides sections differently, a file the parent ignored has no row to borrow,
 and the guarantee that an interrupted run keeps its finished files has to hold
 throughout. folio embeds again.
 
+**Carrying the same slice instead of computing it took 2.9 s.** Measured later
+the same day, once `folio extract` existed: 300 files and 2,177 sections out of
+`mdn/content` into a directory already holding those files, written in 2.9 s
+with `FOLIO_ENDPOINT` pointed at a closed port, so nothing was embedded and
+nothing could have been. The slice is 7.2 MB. Most of those seconds are the
+verification rather than the copy — every file at the destination is read and
+hashed against what the index recorded for it.
+
+The slice answers the way its source answered rather than equivalently. Asked
+the same question, the slice's first result and the source's third are the same
+section at the same score to three decimals, 0.778, with the path rewritten
+relative to the new root. And `folio index` in the slice reports 0 re-embedded
+in 0.07 s: a copy loses the modification times and keeps the contents, so the
+run falls through the stat prefilter to the hash and finds nothing to do.
+
 **The number that does not fit that conclusion is the endpoint's time.** The 43.8
 s and the 209.7 s are not folio's; they are a server holding the same model for
 the whole run. Extrapolating by share of markdown bytes — 59.6 MB across the

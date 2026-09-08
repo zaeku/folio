@@ -364,6 +364,37 @@ beside one that merely surrounds it, and joining those two would trade a precise
 pointer for a vague one, so a section joins its neighbour only while the two
 rank alike. `--limit` counts rows a reader would open rather than sections.
 
+### Taking part of a corpus with you
+
+An index can be cut. `folio extract` writes the rows under a path prefix into a
+corpus of its own, keeping their vectors:
+
+```sh
+cp -R corpus/web/svg/. ./svg-docs
+cd corpus && folio extract web/svg --into ../svg-docs
+```
+
+```
+extracted 300 files · 2177 sections into ../svg-docs
+  model       gte-modernbert @ http://127.0.0.1:8080/v1/embeddings
+```
+
+It embeds nothing and calls no endpoint. On that slice of `mdn/content` it took
+2.9 s, against 43.8 s to embed the same 2,177 sections again, and the 43.8 s is
+a server holding the model for the length of it. The slice answers the way its
+source answered — the same scores, not equivalent ones — because it carries the
+vectors rather than recomputing them.
+
+folio moves the index and not the text: `--into` names a directory that already
+holds the files, and every row is checked against the hash the index recorded
+for its file, so a slice is refused rather than written half-true. A destination
+that already holds an index is refused too. The source is only read.
+
+The slice carries its source's model, budget and fingerprint, so a query can
+read both at once, and either can be proven against whatever endpoint answers
+where it lands. A copy loses modification times and keeps contents, so the first
+`folio index` in the new corpus reads every file once and embeds none of them.
+
 ### Handing the ranges to something else
 
 ```sh

@@ -55,6 +55,11 @@ reference naming the root it came from. folio returns a section two of them hold
 once. It refuses by name any root it cannot show belongs with the others, so a
 query that answers has answered from all of them.
 
+`folio extract <prefix> --into <dir>` copies the rows under a path prefix into a
+corpus of its own, vectors included, and calls no endpoint. The destination must
+already hold the files — folio moves the index, not the text — and must not hold
+an index. Use it to carry part of a corpus somewhere the model may not run.
+
 Run `folio doctor` when results look wrong rather than absent. It exits 1 when
 the endpoint fails something ranking depends on, and names which.
 

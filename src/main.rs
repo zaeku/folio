@@ -466,6 +466,26 @@ enum Cmd {
         #[arg(long, default_value_t = 8192)]
         context: usize,
     },
+    /// Copy part of an index into a corpus of its own. Embeds nothing.
+    ///
+    /// The destination must already hold the files: folio moves references and
+    /// vectors, and the text is moved by whatever moves text for you. Every
+    /// row's file is checked against the hash the index recorded for it, and a
+    /// slice carries its source's model, budget and fingerprint, so a query can
+    /// read the two together and either can be proven against an endpoint.
+    Extract {
+        /// The path prefix to take, relative to the corpus root.
+        prefix: String,
+        /// The corpus to write the index into. It must hold the files already
+        /// and must not hold an index.
+        #[arg(long)]
+        into: PathBuf,
+        /// The corpus to cut from.
+        ///
+        /// Given none, the corpus enclosing the working directory.
+        #[arg(long)]
+        root: Option<PathBuf>,
+    },
     /// Print folio's skill document, the guidance written for an agent using it.
     ///
     /// It is the file the crate publishes, embedded at compile time. It is
@@ -586,6 +606,9 @@ fn main() -> Result<()> {
             &root, backend, launchd, systemd, hf.as_deref(), hf_file.as_deref(),
             pooling.as_deref(), context,
         ),
+        Cmd::Extract { prefix, into, root } => {
+            cmd_extract(&root.unwrap_or_else(corpus_root), &prefix, &into)
+        }
         Cmd::Skill => {
             // The same bytes as the published file, because they are the
             // published file. A copy typed in here could disagree with it and
@@ -2144,6 +2167,113 @@ fn trail_of(s: &Section) -> String {
     trail.join(" > ")
 }
 
+/// What a prefix means: the subtree it names, and not the names it starts.
+///
+/// `keep` takes `keep/a.md` and leaves `keeper.md`, which is the whole reason
+/// this is a function rather than a `starts_with` at the call site.
+fn subtree(prefix: &str) -> String {
+    format!("{}/", prefix.trim_matches('/'))
+}
+
+/// Copy the rows under `prefix` into an index of their own.
+///
+/// Nothing is embedded and no endpoint is called: the vectors already exist and
+/// the meta they belong to travels with them, fingerprint included, so the
+/// slice is in its source's space by construction rather than by assertion.
+fn cmd_extract(root: &Path, prefix: &str, into: &Path) -> Result<()> {
+    let root = root
+        .canonicalize()
+        .with_context(|| format!("{} not found", root.display()))?;
+    let into = into
+        .canonicalize()
+        .with_context(|| format!("{} not found — a slice is written beside files that are already there", into.display()))?;
+    if root == into {
+        bail!("a corpus cannot be extracted into itself");
+    }
+    if store::db_path(&into).exists() {
+        bail!(
+            "{} already holds an index — a slice is written into a corpus that has none, and merging two is not this command",
+            into.display()
+        );
+    }
+
+    let Some((src, meta)) = open_index(&root)? else {
+        bail!("no index under {} — run `folio index` first", root.display());
+    };
+    let map = map_vectors(&root)?.context("the index has records but no vectors")?;
+    let floats = as_floats(&map)?;
+
+    let under = subtree(prefix);
+    let slots = src.slots()?;
+    let rows = src.hydrate(&slots)?;
+    let taken: Vec<(usize, Section)> = slots
+        .into_iter()
+        .zip(rows)
+        .filter(|(_, s)| s.path.starts_with(&under))
+        .collect();
+    if taken.is_empty() {
+        bail!("no section under {prefix} in {}", root.display());
+    }
+
+    // Every row's file has to be at the destination, and be the file the index
+    // recorded. The hash is already stored per file, so this is exact rather
+    // than a guess from paths, and it runs before anything is written.
+    let stamps = src.files()?;
+    let mut missing: Vec<String> = Vec::new();
+    let mut carried: Vec<(String, Stamp)> = Vec::new();
+    for path in taken.iter().map(|(_, s)| &s.path).collect::<BTreeSet<_>>() {
+        let rel = path.strip_prefix(&under).expect("filtered on this prefix");
+        let Some(was) = stamps.get(path) else {
+            missing.push(format!("{rel} (the index recorded no hash for it)"));
+            continue;
+        };
+        match fs::read(into.join(rel)) {
+            Ok(bytes) if hash(&bytes) == was.hash => carried.push((rel.to_string(), *was)),
+            Ok(_) => missing.push(format!("{rel} (holds different text)")),
+            Err(e) => missing.push(format!("{rel} ({e})")),
+        }
+    }
+    if let Some(first) = missing.first() {
+        bail!(
+            "{} of the files this slice names are not at {} as the index recorded them, starting with {first}",
+            missing.len(),
+            into.display()
+        );
+    }
+
+    let dst = Store::open(&into)?;
+    let mut renumbered: Vec<(usize, Section)> = Vec::new();
+    for (slot, (_, section)) in taken.iter().enumerate() {
+        let mut section = section.clone();
+        section.path = section.path.strip_prefix(&under).expect("filtered").to_string();
+        renumbered.push((slot, section));
+    }
+    dst.add(&renumbered)?;
+    dst.stamp(carried.iter().map(|(p, s)| (p, s)))?;
+    dst.set_meta(&meta)?;
+
+    // Written in the order the records name, and in batches for the same reason
+    // an index is: a slice of a large corpus is a large matrix.
+    let dim = meta.dim;
+    for (batch, chunk) in taken.chunks(FLUSH).enumerate() {
+        let base = batch * FLUSH;
+        let vectors: Vec<Vec<f32>> = chunk
+            .iter()
+            .map(|(slot, _)| floats[slot * dim..(slot + 1) * dim].to_vec())
+            .collect();
+        append(&into, base, dim, &vectors)?;
+    }
+
+    println!(
+        "extracted {} files · {} sections into {}",
+        carried.len(),
+        taken.len(),
+        into.display()
+    );
+    println!("  model       {} @ {}", meta.model, meta.endpoint);
+    Ok(())
+}
+
 fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
     let user_path = config_path();
     let proj_path = root.join(PROJECT_CONFIG);
@@ -2949,6 +3079,18 @@ mod tests {
     /// The invocations beneath it are the surface folio's own sentences name.
     /// An error message that tells a caller to rerun `folio index --rebuild` is
     /// a promise that the flag exists, and this is where that promise is kept.
+    #[test]
+    fn a_prefix_names_a_subtree_and_not_the_names_it_starts() {
+        let under = subtree("keep");
+        assert!("keep/a.md".starts_with(&under));
+        assert!("keep/deep/b.md".starts_with(&under));
+        assert!(!"keeper.md".starts_with(&under));
+        assert!(!"keep.md".starts_with(&under));
+        // A caller who writes the separator means the same subtree.
+        assert_eq!(subtree("keep/"), under);
+        assert_eq!(subtree("/keep/"), under);
+    }
+
     #[test]
     fn a_declaration_is_found_above_and_an_index_is_not() {
         let tmp = std::env::temp_dir().join(format!("folio-declaration-{}", std::process::id()));
