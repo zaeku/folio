@@ -596,7 +596,6 @@ fn status_of(root: &Path, list_truncated: bool) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
 
     /// The parser folio publishes, asked to check itself.
     ///
