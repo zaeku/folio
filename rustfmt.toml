@@ -1,0 +1,8 @@
+# rustfmt's defaults expand a struct literal or a match arm that fits on one
+# line. This tree was written packed, and packed is why a 2,600-line main.rs
+# stays readable enough that AGENTS.md declines to split it. `Max` keeps a
+# construct on one line wherever it fits the width, which is the closest
+# rustfmt comes to the hand that wrote this, and it makes the reformat
+# line-neutral instead of 500 lines longer.
+use_small_heuristics = "Max"
+max_width = 100
