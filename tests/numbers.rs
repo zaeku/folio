@@ -25,7 +25,7 @@ const UNITS: &[&str] = &[
 ];
 
 /// The documents whose prose has to be traceable.
-const GUIDES: &[&str] = &["README.md", "SKILL.md", "AGENTS.md"];
+const GUIDES: &[&str] = &["README.md", "skill/SKILL.md", "AGENTS.md"];
 
 /// Drop fenced blocks, keeping the line count so a failure can name a line.
 fn prose(text: &str) -> Vec<(usize, String)> {

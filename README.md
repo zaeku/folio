@@ -516,9 +516,10 @@ so beats looping.
 
 ### From an agent
 
-`SKILL.md` is the same surface written for an agent to act on: the commands, the
-filters, and when to reach for `rg` instead. `folio skill` prints it, so a
-machine with the binary and no clone has it too:
+`skill/SKILL.md` is the same surface written for an agent to act on: the
+commands, the filters, and when to reach for `rg` instead. It sits in its own
+directory because that is the shape a skill loader expects, and `folio skill`
+prints it, so a machine with the binary and no clone has it too:
 
 ```sh
 folio skill > ~/.claude/skills/folio/SKILL.md

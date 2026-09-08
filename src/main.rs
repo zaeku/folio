@@ -388,7 +388,7 @@ fn main() -> Result<()> {
             // The same bytes as the published file, because they are the
             // published file. A copy typed in here could disagree with it and
             // nothing would notice.
-            print!("{}", include_str!("../SKILL.md"));
+            print!("{}", include_str!("../skill/SKILL.md"));
             Ok(())
         }
         Cmd::Status { root, truncated } => cmd_status(&root, truncated),

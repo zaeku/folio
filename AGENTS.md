@@ -96,8 +96,8 @@ those, so the reasons live there and what is here is how to write one.
 
 A number quoted anywhere else — `README.md` included — has to be traceable to one
 of those files, and `cargo test` fails when it is not: `tests/numbers.rs` reads
-the prose of this file, `README.md` and `SKILL.md`, and asks whether every number
-carrying a unit appears under `docs/measurements/`. It skips fenced blocks,
+the prose of this file, `README.md` and `skill/SKILL.md`, and asks whether
+every number carrying a unit appears under `docs/measurements/`. It skips fenced blocks,
 because a transcript or a flag's value is an illustration rather than a claim.
 
 **It checks existence, not agreement.** A number used in the wrong sense still
