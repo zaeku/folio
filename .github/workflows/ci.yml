@@ -19,7 +19,6 @@ jobs:
         run: |
           rustc --version
           cargo --version
-          cargo clippy --version
 
       - name: Test
         run: cargo test --locked
@@ -27,5 +26,12 @@ jobs:
       - name: Format
         run: cargo fmt --check
 
+      # Pinned where the others are not. `-D warnings` makes clippy's lint set
+      # part of the gate, and that set grows with every release, so an unpinned
+      # clippy fails a branch nobody changed on a day nobody chose. This is the
+      # version `flake.nix` provides, so clippy clean on a machine is clippy
+      # clean here; the two move in the same change or not at all.
       - name: Clippy
-        run: cargo clippy --all-targets --locked -- -D warnings
+        run: |
+          rustup toolchain install 1.97 --profile minimal --component clippy
+          cargo +1.97 clippy --all-targets --locked -- -D warnings

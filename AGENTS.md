@@ -35,6 +35,41 @@ This table decides where new code goes.
 turn over quickly. Record the number, how it was measured, and the date, in the
 same place you use it. An undated number is a guess to the next reader.
 
+## Reading a change you have made
+
+These are three habits rather than three procedures, and they are here rather
+than in `decisions/` because no check reaches them. Two candidates for the first
+were measured against this tree — clippy's missing-documentation lint and a rule
+that every function carries a doc comment — and both report far too much to be a
+gate.
+
+**The space above an item is not empty.** A doc comment and an attribute belong
+to the item beneath them, so nothing is ever inserted *between* two items: it is
+inserted into whatever the lines above it describe. This has happened twice. A
+flag added to a subcommand took the `#[arg(long)]` of the field below it, which
+became a positional and stopped existing on the command line while five error
+messages went on telling people to type it. A struct added above a function took
+that function's documentation. Both compiled and both passed everything. So what
+to look at after adding code is not what you added; it is what your addition
+came between.
+
+**A description is true of the diff or it is false.** Write it from what the
+change does rather than from what it was for. The two part company exactly where
+some piece turned out harder than expected and was left, which is the moment the
+description matters most. A change here said it had given three exemptions their
+rationale and had given none; another the same day said a CI step would report
+as failed when that setting reports success. Whoever reads a description is
+choosing not to read the diff, and that is what makes an untrue one expensive
+rather than untidy.
+
+**A green check says what it checks, and green is where the question starts.**
+`cargo test` does not build the command-line parser, so a subcommand that panics
+on `--help` passes it. `cargo fmt` has no opinion about a blank line between two
+items, so an attribute glued to the function above it is clean. No fence names a
+flag it does not itself use. Every failure above was green everywhere at the
+moment it was reported as done, so the useful question after a passing run is
+which of the things you just claimed nothing actually looked at.
+
 ## Decision layer
 
 `decisions/` is a separate, unpublished repository. It holds every rule of this
@@ -175,8 +210,14 @@ expand a packed struct literal or match arm, and packed is why a 2,600-line
 `use_small_heuristics = "Max"` keeps a construct on one line wherever it fits.
 Run `cargo fmt` before you commit rather than formatting against it by hand.
 
-The workflow uses whatever `stable` the runner image carries and pins nothing,
-which is why it prints `rustc --version` before it does anything else. The
+The workflow uses whatever `stable` the runner image carries for the build, the
+tests and the format check, which is why it prints `rustc --version` before it
+does anything else: those three want to say the crate is fine on the compiler
+that ships today. Clippy is the exception and is pinned to the version
+`flake.nix` provides. `-D warnings` makes its lint set part of the gate, and
+that set grows with every release, so an unpinned clippy would fail a branch
+nobody changed on a day nobody chose. When the flake's toolchain moves, the
+workflow's pin moves with it in the same change. The
 fences in `decisions/` are not run there — that repository is unpublished, so a
 workflow cannot reach it, and `cargo run --bin check` stays something a person
 runs.
