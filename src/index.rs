@@ -90,7 +90,10 @@ fn pair_moves(
 /// `Ok(None)` means another process holds the write lock and this one declined
 /// to wait: a re-index nobody asked for is not worth blocking on, and one the
 /// user asked for says so rather than hanging.
-#[allow(clippy::too_many_arguments)]
+// Eight, and the endpoint, model, key and budget among them are what a run
+// sends rather than what it computes. Grouping them into a struct would name a
+// thing that exists only for the length of one call.
+#[expect(clippy::too_many_arguments)]
 pub(crate) fn reindex(
     root: &Path,
     endpoint: &str,

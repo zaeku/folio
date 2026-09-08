@@ -158,13 +158,10 @@ fn embed_and_prove(
     Ok(asked)
 }
 
-/// Rank every index the query reads, as one list.
+/// A candidate row in an index's matrix, scored against the query.
 ///
-/// A slot names a row in one index's matrix, so a hit carries which index it
-/// came from. Scores are comparable because `open_all` and `embed_and_prove`
-/// have shown the indexes are one space, which is what lets one sort stand and
-/// `--limit` keep its meaning.
-/// A candidate row in an index's matrix, scored by dot product against the query.
+/// The three numbers travelled together as a tuple until they had names: a
+/// score, the index it came from, and the row within that index's matrix.
 #[derive(Clone, Copy)]
 struct ScoredSlot {
     score: f32,
@@ -172,6 +169,12 @@ struct ScoredSlot {
     slot: usize,
 }
 
+/// Rank every index the query reads, as one list.
+///
+/// A slot names a row in one index's matrix, so a hit carries which index it
+/// came from. Scores are comparable because `open_all` and `embed_and_prove`
+/// have shown the indexes are one space, which is what lets one sort stand and
+/// `--limit` keep its meaning.
 fn rank(
     opened: &[Opened],
     q: &[f32],
@@ -287,7 +290,11 @@ fn reference(roots: &[PathBuf], owner: usize, rel: &str) -> String {
         .unwrap_or_else(|| joined.display().to_string())
 }
 
-#[allow(clippy::too_many_arguments)]
+// Nine, because every one of them is a flag a caller typed, threaded to the one
+// place that reads it. A struct to carry them would be a second spelling of the
+// command line, which is what `cli.rs` already is. `expect` rather than `allow`
+// so that this stops being silent if the count ever comes back under the line.
+#[expect(clippy::too_many_arguments)]
 pub(crate) fn cmd_query(
     roots: &[PathBuf],
     text: &str,

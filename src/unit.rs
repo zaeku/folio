@@ -90,7 +90,8 @@ fn backend_args(
     args
 }
 
-#[allow(clippy::too_many_arguments)]
+// Eight flags of a service file, each printed once and read nowhere else.
+#[expect(clippy::too_many_arguments)]
 pub(crate) fn cmd_unit(
     root: &Path,
     backend: Backend,

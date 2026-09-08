@@ -164,10 +164,10 @@ is the machine's declaration and not this project's. Which of the two folio
 settles on is undecided, and the next paragraph is why the shell does not need
 one.
 
-**`cargo test`, `cargo fmt --check` and `cargo clippy` run on push and on a pull request**, on
-Linux and on macOS, from `.github/workflows/ci.yml`. Neither installs anything
-nor starts a server, for the reason in the next paragraph. They block: a branch
-clippy or rustfmt disagrees with does not merge.
+**`cargo test`, `cargo fmt --check` and `cargo clippy` run on push and on a
+pull request**, on Linux and on macOS, from `.github/workflows/ci.yml`. None of
+them installs anything or starts a server, for the reason in the next paragraph.
+All three block: a branch clippy or rustfmt disagrees with does not merge.
 
 `rustfmt.toml` carries the settings that make that bearable. rustfmt's defaults
 expand a packed struct literal or match arm, and packed is why a 2,600-line
