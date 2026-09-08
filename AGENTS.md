@@ -20,7 +20,10 @@ This table decides where new code goes.
 | The request to the endpoint, and the arithmetic on what returns | `src/embed.rs` | folio runs no model; this is the whole of what it says to one |
 | The `--where` grammar | `src/filters.rs` | A predicate reads one record and nothing else, so it needs nothing else |
 | The service file `folio unit` prints | `src/unit.rs` | It starts nothing and reads only configuration |
-| CLI, commands, ranking, merging | `src/main.rs` | What is left is the shape of the tool rather than a subject of its own |
+| The command line: flags, and the sentences `--help` prints | `src/cli.rs` | Declaration and help text, and no work |
+| Keeping an index current | `src/index.rs` | The write path, and the file is its unit |
+| Answering a question: ranking, merging, what a result names | `src/query.rs` | The read path, and it embeds one input rather than a corpus |
+| `main`, the small commands, and the index files under `.folio/` | `src/main.rs` | Dispatch, `doctor`, `status`, `config`, `extract`, and the three functions that open what a command reads |
 | Embedding inference | Outside the binary, behind the endpoint | Changing the model must not mean rebuilding folio |
 | Reading a document's body | The caller, after folio names a range | The index holds references only |
 | Exact string or regex matching | `rg`, not folio | Measured: a lexical route drowned the correct vector hit |
