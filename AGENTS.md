@@ -157,12 +157,16 @@ is the machine's declaration and not this project's. Which of the two folio
 settles on is undecided, and the next paragraph is why the shell does not need
 one.
 
-**`cargo test` runs on push and on a pull request**, on Linux and on macOS,
-from `.github/workflows/ci.yml`. It installs nothing and starts no server, for
-the reason in the next paragraph. `cargo fmt --check` runs beside it and is
-advisory: this tree is formatted by hand and rustfmt disagrees with it
-throughout, so the step is marked `continue-on-error` and its diff is a report.
-Do not answer it by reformatting the tree.
+**`cargo test` and `cargo fmt --check` run on push and on a pull request**, on
+Linux and on macOS, from `.github/workflows/ci.yml`. Neither installs anything
+nor starts a server, for the reason in the next paragraph. Both block: a branch
+rustfmt disagrees with does not merge.
+
+`rustfmt.toml` carries the settings that make that bearable. rustfmt's defaults
+expand a packed struct literal or match arm, and packed is why a 2,600-line
+`main.rs` stays readable enough that the table above declines to split it, so
+`use_small_heuristics = "Max"` keeps a construct on one line wherever it fits.
+Run `cargo fmt` before you commit rather than formatting against it by hand.
 
 The workflow uses whatever `stable` the runner image carries and pins nothing,
 which is why it prints `rustc --version` before it does anything else. The

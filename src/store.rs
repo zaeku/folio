@@ -154,7 +154,9 @@ impl Store {
                 "dim" => m.dim = v.parse().unwrap_or(0),
                 "max_chars" => m.max_chars = v.parse().unwrap_or(0),
                 "fingerprint" => m.fingerprint = v,
-                "fingerprint_vec" => m.fingerprint_vec = serde_json::from_str(&v).unwrap_or_default(),
+                "fingerprint_vec" => {
+                    m.fingerprint_vec = serde_json::from_str(&v).unwrap_or_default()
+                }
                 _ => {}
             }
         }
@@ -169,17 +171,14 @@ impl Store {
     /// so nobody else can start writing between the decision and the rewrite:
     /// every other command refuses an index that carries it.
     pub fn compacting(&self) -> Result<bool> {
-        let n: i64 = self.conn.query_row(
-            "SELECT count(*) FROM meta WHERE k = 'compacting'",
-            [],
-            |r| r.get(0),
-        )?;
+        let n: i64 =
+            self.conn
+                .query_row("SELECT count(*) FROM meta WHERE k = 'compacting'", [], |r| r.get(0))?;
         Ok(n > 0)
     }
 
     pub fn start_compacting(&self) -> Result<()> {
-        self.conn
-            .execute("INSERT OR REPLACE INTO meta(k, v) VALUES ('compacting', '1')", [])?;
+        self.conn.execute("INSERT OR REPLACE INTO meta(k, v) VALUES ('compacting', '1')", [])?;
         Ok(())
     }
 
@@ -204,9 +203,8 @@ impl Store {
     /// without their rows being moved, so this is not the record count: it is
     /// the row the matrix has grown to and the slot the next append takes.
     pub fn high_water(&self) -> Result<usize> {
-        let max: Option<i64> = self
-            .conn
-            .query_row("SELECT max(slot) FROM sections", [], |r| r.get(0))?;
+        let max: Option<i64> =
+            self.conn.query_row("SELECT max(slot) FROM sections", [], |r| r.get(0))?;
         Ok(max.map_or(0, |m| m as usize + 1))
     }
 
@@ -246,9 +244,9 @@ impl Store {
     /// and not enough to act. A truncated section was ranked on part of its
     /// text, so its slot is where recall was quietly lost.
     pub fn truncated(&self) -> Result<Vec<Section>> {
-        let mut q = self.conn.prepare(
-            "SELECT slot FROM sections WHERE truncated != 0 ORDER BY path, start",
-        )?;
+        let mut q = self
+            .conn
+            .prepare("SELECT slot FROM sections WHERE truncated != 0 ORDER BY path, start")?;
         let mut slots = Vec::new();
         let mut rows = q.query([])?;
         while let Some(r) = rows.next()? {
@@ -261,9 +259,7 @@ impl Store {
     /// since. One row, so that checking the handful of files behind a result
     /// does not read the stamps of every file in the corpus.
     pub fn stamp_of(&self, path: &str) -> Result<Option<Stamp>> {
-        let mut q = self
-            .conn
-            .prepare("SELECT hash, len, mtime FROM files WHERE path = ?1")?;
+        let mut q = self.conn.prepare("SELECT hash, len, mtime FROM files WHERE path = ?1")?;
         let mut rows = q.query(params![path])?;
         Ok(match rows.next()? {
             Some(r) => Some(Stamp {
@@ -385,9 +381,9 @@ impl Store {
     /// Record what these files looked like. A stamp says the index is current
     /// for its file, so one is written only once every section of that file is.
     pub fn stamp<'a>(&self, stamps: impl Iterator<Item = (&'a String, &'a Stamp)>) -> Result<()> {
-        let mut ins = self.conn.prepare(
-            "INSERT OR REPLACE INTO files(path, hash, len, mtime) VALUES (?1,?2,?3,?4)",
-        )?;
+        let mut ins = self
+            .conn
+            .prepare("INSERT OR REPLACE INTO files(path, hash, len, mtime) VALUES (?1,?2,?3,?4)")?;
         for (path, st) in stamps {
             ins.execute(params![path, st.hash as i64, st.len as i64, st.mtime])?;
         }
@@ -405,18 +401,13 @@ impl Store {
 
     /// Record the vector space these records belong to.
     pub fn set_meta(&self, meta: &Meta) -> Result<()> {
-        let mut ins = self
-            .conn
-            .prepare("INSERT OR REPLACE INTO meta(k, v) VALUES (?1, ?2)")?;
+        let mut ins = self.conn.prepare("INSERT OR REPLACE INTO meta(k, v) VALUES (?1, ?2)")?;
         ins.execute(params!["model", meta.model])?;
         ins.execute(params!["endpoint", meta.endpoint])?;
         ins.execute(params!["dim", meta.dim.to_string()])?;
         ins.execute(params!["max_chars", meta.max_chars.to_string()])?;
         ins.execute(params!["fingerprint", meta.fingerprint])?;
-        ins.execute(params![
-            "fingerprint_vec",
-            serde_json::to_string(&meta.fingerprint_vec)?
-        ])?;
+        ins.execute(params!["fingerprint_vec", serde_json::to_string(&meta.fingerprint_vec)?])?;
         Ok(())
     }
 
@@ -475,10 +466,7 @@ mod tests {
             end: start + 2,
             heading: Some("H".into()),
             breadcrumb: vec!["Top".into()],
-            fm: json!({"id": "M-1", "tags": ["a", "b"]})
-                .as_object()
-                .unwrap()
-                .clone(),
+            fm: json!({"id": "M-1", "tags": ["a", "b"]}).as_object().unwrap().clone(),
             truncated: true,
             text: "prose that must not survive a round trip".into(),
         }
@@ -488,20 +476,28 @@ mod tests {
     fn a_record_round_trips_without_its_prose() {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
-        let files = HashMap::from([(
-            "a.md".to_string(),
-            Stamp { hash: u64::MAX, len: 12, mtime: -1 },
-        )]);
-        commit(&st, &meta, &files, &HashSet::new(), &[], &[(0, section("a.md", 1)), (7, section("a.md", 9))])
-            .unwrap();
+        let meta = Meta {
+            model: "m".into(),
+            endpoint: "e".into(),
+            dim: 3,
+            max_chars: 99,
+            ..Meta::default()
+        };
+        let files =
+            HashMap::from([("a.md".to_string(), Stamp { hash: u64::MAX, len: 12, mtime: -1 })]);
+        commit(
+            &st,
+            &meta,
+            &files,
+            &HashSet::new(),
+            &[],
+            &[(0, section("a.md", 1)), (7, section("a.md", 9))],
+        )
+        .unwrap();
 
         assert_eq!(st.slots().unwrap(), vec![0, 7], "the slot names the matrix row");
         assert_eq!(st.high_water().unwrap(), 8, "the next append goes past the last row");
-        assert_eq!(
-            st.counts().unwrap(),
-            Counts { files: 1, sections: 2, truncated: 2 }
-        );
+        assert_eq!(st.counts().unwrap(), Counts { files: 1, sections: 2, truncated: 2 });
 
         // Read back in the order asked for, not the order stored.
         let got = st.hydrate(&[7, 0]).unwrap();
@@ -526,11 +522,24 @@ mod tests {
     fn the_cut_sections_can_be_named_and_not_only_counted() {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
+        let meta = Meta {
+            model: "m".into(),
+            endpoint: "e".into(),
+            dim: 3,
+            max_chars: 99,
+            ..Meta::default()
+        };
         let mut whole = section("b.md", 5);
         whole.truncated = false;
-        commit(&st, &meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1)), (1, whole)])
-            .unwrap();
+        commit(
+            &st,
+            &meta,
+            &HashMap::new(),
+            &HashSet::new(),
+            &[],
+            &[(0, section("a.md", 1)), (1, whole)],
+        )
+        .unwrap();
 
         let cut = st.truncated().unwrap();
         assert_eq!(cut.len(), 1, "only the section that was cut");
@@ -542,13 +551,33 @@ mod tests {
     fn a_retired_record_leaves_its_row_behind() {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
+        let meta = Meta {
+            model: "m".into(),
+            endpoint: "e".into(),
+            dim: 3,
+            max_chars: 99,
+            ..Meta::default()
+        };
         let none = HashSet::new();
-        commit(&st, &meta, &HashMap::new(), &none, &[],
-                 &[(0, section("a.md", 1)), (1, section("b.md", 1))]).unwrap();
+        commit(
+            &st,
+            &meta,
+            &HashMap::new(),
+            &none,
+            &[],
+            &[(0, section("a.md", 1)), (1, section("b.md", 1))],
+        )
+        .unwrap();
         // a.md is re-indexed: its old row is not reused and not moved.
-        commit(&st, &meta, &HashMap::new(), &HashSet::from(["a.md".to_string()]), &[],
-                 &[(2, section("a.md", 5))]).unwrap();
+        commit(
+            &st,
+            &meta,
+            &HashMap::new(),
+            &HashSet::from(["a.md".to_string()]),
+            &[],
+            &[(2, section("a.md", 5))],
+        )
+        .unwrap();
 
         let slots = st.slots().unwrap();
         let paths: Vec<String> = st.hydrate(&slots).unwrap().into_iter().map(|s| s.path).collect();
@@ -572,7 +601,13 @@ mod tests {
         // A reader is not shut out while a writer works.
         assert_eq!(b.high_water().unwrap(), 0);
 
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
+        let meta = Meta {
+            model: "m".into(),
+            endpoint: "e".into(),
+            dim: 3,
+            max_chars: 99,
+            ..Meta::default()
+        };
         commit(&a, &meta, &HashMap::new(), &HashSet::new(), &[], &[(0, section("a.md", 1))])
             .unwrap();
         assert_eq!(b.slots().unwrap(), Vec::<usize>::new(), "and does not see it yet");
@@ -587,10 +622,22 @@ mod tests {
     fn compaction_renumbers_the_survivors_and_clears_its_flag() {
         let dir = tempdir();
         let st = Store::open(&dir).unwrap();
-        let meta = Meta { model: "m".into(), endpoint: "e".into(), dim: 3, max_chars: 99, ..Meta::default() };
-        commit(&st, &meta, &HashMap::new(), &HashSet::new(), &[],
-                 &[(1, section("b.md", 1)), (4, section("c.md", 1)), (9, section("d.md", 1))])
-            .unwrap();
+        let meta = Meta {
+            model: "m".into(),
+            endpoint: "e".into(),
+            dim: 3,
+            max_chars: 99,
+            ..Meta::default()
+        };
+        commit(
+            &st,
+            &meta,
+            &HashMap::new(),
+            &HashSet::new(),
+            &[],
+            &[(1, section("b.md", 1)), (4, section("c.md", 1)), (9, section("d.md", 1))],
+        )
+        .unwrap();
         st.start_compacting().unwrap();
         assert!(st.compacting().unwrap());
 

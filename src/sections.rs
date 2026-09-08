@@ -64,15 +64,7 @@ pub fn split(path: &str, source: &str) -> Vec<Section> {
         }
         let breadcrumb: Vec<String> = stack.iter().map(|(_, t)| t.clone()).collect();
         let end = heads.get(k + 1).map_or(lines.len(), |h| h.0);
-        out.push(mk(
-            path,
-            *i,
-            end,
-            Some(title.clone()),
-            &breadcrumb,
-            &fm,
-            &lines,
-        ));
+        out.push(mk(path, *i, end, Some(title.clone()), &breadcrumb, &fm, &lines));
         stack.push((*level, title.clone()));
     }
     out
@@ -193,11 +185,7 @@ fn frontmatter(lines: &[&str]) -> (Map<String, Value>, usize) {
 /// can read it as membership; a list holding maps is indexed per element.
 fn flatten(prefix: &str, v: &Value, out: &mut Map<String, Value>) {
     let key = |k: &str| {
-        if prefix.is_empty() {
-            k.to_string()
-        } else {
-            format!("{prefix}.{k}")
-        }
+        if prefix.is_empty() { k.to_string() } else { format!("{prefix}.{k}") }
     };
     match v {
         Value::Object(m) => {
@@ -244,7 +232,7 @@ body
 tail
 ";
 
-#[test]
+    #[test]
     fn a_long_section_becomes_pieces_that_fit() {
         let para = "a".repeat(40);
         let source = format!("## H\n\n{para}\n\n{para}\n\n{para}\n");
@@ -274,7 +262,7 @@ tail
         assert!(pieces.iter().any(|p| p.truncated), "the unsplittable line is marked");
     }
 
-        #[test]
+    #[test]
     fn splits_sections_and_flattens_frontmatter() {
         let s = split("d.md", DOC);
 

@@ -11,7 +11,6 @@ use anyhow::{Context, Result, anyhow, bail};
 use clap::{Parser, Subcommand};
 use sections::Section;
 use serde::{Deserialize, Serialize};
-use store::{Meta, Stamp, Store};
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs;
@@ -20,6 +19,7 @@ use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::UNIX_EPOCH;
+use store::{Meta, Stamp, Store};
 
 const BATCH: usize = 32;
 
@@ -70,11 +70,9 @@ struct Config {
 const PROJECT_CONFIG: &str = "folio.yaml";
 
 fn config_path() -> PathBuf {
-    let base = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".config")
-        });
+    let base = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from).unwrap_or_else(|| {
+        PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".config")
+    });
     base.join("folio").join("config.yaml")
 }
 
@@ -111,9 +109,7 @@ fn nearest_declaration(dir: &Path) -> Option<PathBuf> {
     // Absolute first: `.` has no ancestors but itself, and a root is usually
     // given as `.`, so a relative path would end this walk before it started.
     let dir = dir.canonicalize().unwrap_or_else(|_| dir.to_path_buf());
-    dir.ancestors()
-        .map(|d| d.join(PROJECT_CONFIG))
-        .find(|p| p.exists())
+    dir.ancestors().map(|d| d.join(PROJECT_CONFIG)).find(|p| p.exists())
 }
 
 /// The index above `root`, when `root` is indexed inside another corpus.
@@ -121,10 +117,7 @@ fn nearest_declaration(dir: &Path) -> Option<PathBuf> {
 /// Strictly above: an index at `root` is the one about to be updated.
 fn enclosing_index(root: &Path) -> Option<PathBuf> {
     let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
-    root.ancestors()
-        .skip(1)
-        .find(|d| d.join(store::DIR).is_dir())
-        .map(Path::to_path_buf)
+    root.ancestors().skip(1).find(|d| d.join(store::DIR).is_dir()).map(Path::to_path_buf)
 }
 
 /// The same, from the working directory, falling back to it.
@@ -558,14 +551,7 @@ fn main() -> Result<()> {
     unsafe { libc::signal(libc::SIGPIPE, libc::SIG_DFL) };
 
     match Cli::parse().cmd {
-        Cmd::Index {
-            root,
-            endpoint,
-            model,
-            allow_insecure,
-            max_chars,
-            rebuild,
-        } => cmd_index(
+        Cmd::Index { root, endpoint, model, allow_insecure, max_chars, rebuild } => cmd_index(
             &root,
             endpoint.as_deref(),
             model.as_deref(),
@@ -603,8 +589,14 @@ fn main() -> Result<()> {
             max_chars,
         ),
         Cmd::Unit { root, backend, launchd, systemd, hf, hf_file, pooling, context } => cmd_unit(
-            &root, backend, launchd, systemd, hf.as_deref(), hf_file.as_deref(),
-            pooling.as_deref(), context,
+            &root,
+            backend,
+            launchd,
+            systemd,
+            hf.as_deref(),
+            hf_file.as_deref(),
+            pooling.as_deref(),
+            context,
         ),
         Cmd::Extract { prefix, into, root } => {
             cmd_extract(&root.unwrap_or_else(corpus_root), &prefix, &into)
@@ -906,7 +898,9 @@ const NOT_A_KEY: &[char] = &['<', '>', '|', '!', '=', '~', '&'];
 
 fn parse_term(raw: &str, whole: &str) -> Result<Term> {
     let reject = |why: String| -> anyhow::Error {
-        anyhow!("--where {whole}: {why}. folio compares text, and the whole grammar is {WHERE_GRAMMAR}")
+        anyhow!(
+            "--where {whole}: {why}. folio compares text, and the whole grammar is {WHERE_GRAMMAR}"
+        )
     };
     let raw = raw.trim();
     let (term, key) = if let Some((k, v)) = raw.split_once("!=") {
@@ -940,10 +934,8 @@ fn parse_preds(raw: &[String]) -> Result<(Vec<Pred>, Vec<String>)> {
     let mut hints = Vec::new();
     for whole in raw {
         let pieces: Vec<&str> = whole.split('|').collect();
-        let any: Vec<Term> = pieces
-            .iter()
-            .map(|piece| parse_term(piece, whole))
-            .collect::<Result<_>>()?;
+        let any: Vec<Term> =
+            pieces.iter().map(|piece| parse_term(piece, whole)).collect::<Result<_>>()?;
         // `tags=alpha|beta` is `tags=alpha` or the presence of a key `beta`,
         // which is what the precedence says and is rarely what someone typing
         // it wants. A hint rather than a refusal, because the presence test is
@@ -974,9 +966,7 @@ fn satisfies(fm: &Map<String, Value>, term: &Term) -> bool {
 }
 
 fn keeps(fm: &Map<String, Value>, preds: &[Pred]) -> bool {
-    preds
-        .iter()
-        .all(|p| p.any.iter().any(|t| satisfies(fm, t)))
+    preds.iter().all(|p| p.any.iter().any(|t| satisfies(fm, t)))
 }
 
 /// Which `--where` kept nothing at all, for a filter that emptied the result.
@@ -1082,10 +1072,7 @@ fn pair_moves(
     arrived.sort();
     let mut moves = Vec::new();
     for to in arrived {
-        let Some(from) = gone
-            .get_mut(&current[to].hash)
-            .and_then(|paths| paths.pop())
-        else {
+        let Some(from) = gone.get_mut(&current[to].hash).and_then(|paths| paths.pop()) else {
             continue;
         };
         moves.push((from.clone(), to.clone()));
@@ -1108,9 +1095,7 @@ fn reindex(
     rebuild: bool,
     wait: std::time::Duration,
 ) -> Result<Option<Indexed>> {
-    let root = root
-        .canonicalize()
-        .with_context(|| format!("{} not found", root.display()))?;
+    let root = root.canonicalize().with_context(|| format!("{} not found", root.display()))?;
     if max_chars == 0 {
         bail!("a section budget of 0 characters would embed nothing");
     }
@@ -1131,7 +1116,9 @@ fn reindex(
     // server restarted on other weights keeps the URL and the model string it
     // had. So the index is kept or discarded on what answers now, and the probe
     // sent is the one this index was built with rather than today's default.
-    let fingerprint_text = if prev.fingerprint.is_empty() { FINGERPRINT } else { prev.fingerprint.as_str() }.to_string();
+    let fingerprint_text =
+        if prev.fingerprint.is_empty() { FINGERPRINT } else { prev.fingerprint.as_str() }
+            .to_string();
     let mut fingerprint: Vec<f32> = Vec::new();
     let mut drifted: Option<f32> = None;
     if !rebuild && prev.dim > 0 {
@@ -1171,63 +1158,60 @@ fn reindex(
     let found: Mutex<Vec<(String, Stamp, bool)>> = Mutex::new(Vec::new());
     let failed: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
-    ignore::WalkBuilder::new(&root)
-        .threads(threads)
-        .build_parallel()
-        .run(|| {
-            Box::new(|entry| {
-                let entry = match entry {
-                    Ok(e) => e,
-                    Err(e) => {
-                        failed.lock().unwrap().push(e.to_string());
-                        return ignore::WalkState::Continue;
-                    }
-                };
-                if !entry.file_type().is_some_and(|t| t.is_file()) {
+    ignore::WalkBuilder::new(&root).threads(threads).build_parallel().run(|| {
+        Box::new(|entry| {
+            let entry = match entry {
+                Ok(e) => e,
+                Err(e) => {
+                    failed.lock().unwrap().push(e.to_string());
                     return ignore::WalkState::Continue;
                 }
-                let path = entry.path();
-                if path.extension().and_then(|e| e.to_str()) != Some("md") {
-                    return ignore::WalkState::Continue;
-                }
-                let Ok(suffix) = path.strip_prefix(&root) else {
-                    return ignore::WalkState::Continue;
-                };
-                let rel = suffix.to_string_lossy().replace('\\', "/");
+            };
+            if !entry.file_type().is_some_and(|t| t.is_file()) {
+                return ignore::WalkState::Continue;
+            }
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("md") {
+                return ignore::WalkState::Continue;
+            }
+            let Ok(suffix) = path.strip_prefix(&root) else {
+                return ignore::WalkState::Continue;
+            };
+            let rel = suffix.to_string_lossy().replace('\\', "/");
 
-                // Listing a file is cheap and reading it is not: stamping all
-                // 14,616 costs 33 ms against 1294 ms to read and hash them. So a
-                // file whose length and modification time are what the index
-                // recorded keeps the hash recorded beside them and is never
-                // opened. Every other file is read, and its content decides.
-                let meta = match entry.metadata() {
-                    Ok(m) => m,
+            // Listing a file is cheap and reading it is not: stamping all
+            // 14,616 costs 33 ms against 1294 ms to read and hash them. So a
+            // file whose length and modification time are what the index
+            // recorded keeps the hash recorded beside them and is never
+            // opened. Every other file is read, and its content decides.
+            let meta = match entry.metadata() {
+                Ok(m) => m,
+                Err(e) => {
+                    failed.lock().unwrap().push(format!("{rel}: {e}"));
+                    return ignore::WalkState::Continue;
+                }
+            };
+            let was = if reuse { prev_files.get(&rel) } else { None };
+            let unmoved = was.is_some_and(|w| {
+                let s = stamp(&meta, w.hash);
+                s.len == w.len && s.mtime == w.mtime
+            });
+            let h = if unmoved {
+                was.expect("unmoved implies a recorded stamp").hash
+            } else {
+                match fs::read(path) {
+                    Ok(bytes) => hash(&bytes),
                     Err(e) => {
                         failed.lock().unwrap().push(format!("{rel}: {e}"));
                         return ignore::WalkState::Continue;
                     }
-                };
-                let was = if reuse { prev_files.get(&rel) } else { None };
-                let unmoved = was.is_some_and(|w| {
-                    let s = stamp(&meta, w.hash);
-                    s.len == w.len && s.mtime == w.mtime
-                });
-                let h = if unmoved {
-                    was.expect("unmoved implies a recorded stamp").hash
-                } else {
-                    match fs::read(path) {
-                        Ok(bytes) => hash(&bytes),
-                        Err(e) => {
-                            failed.lock().unwrap().push(format!("{rel}: {e}"));
-                            return ignore::WalkState::Continue;
-                        }
-                    }
-                };
-                let moved = was.is_none_or(|w| w.hash != h);
-                found.lock().unwrap().push((rel, stamp(&meta, h), moved));
-                ignore::WalkState::Continue
-            })
-        });
+                }
+            };
+            let moved = was.is_none_or(|w| w.hash != h);
+            found.lock().unwrap().push((rel, stamp(&meta, h), moved));
+            ignore::WalkState::Continue
+        })
+    });
 
     let failed = failed.into_inner().unwrap();
     if let Some(first) = failed.first() {
@@ -1246,12 +1230,7 @@ fn reindex(
     // A file that changed and a file that is gone retire their records the
     // same way; only the first also contributes new ones.
     let mut retired_paths: HashSet<String> = changed.clone();
-    retired_paths.extend(
-        prev_files
-            .keys()
-            .filter(|p| !current.contains_key(*p))
-            .cloned(),
-    );
+    retired_paths.extend(prev_files.keys().filter(|p| !current.contains_key(*p)).cloned());
 
     // A file that only moved carries the content its records already describe,
     // so those records take the new path and nothing is embedded. Identity is
@@ -1282,10 +1261,7 @@ fn reindex(
         if fitted < max_chars {
             println!("  budget for this run: {fitted} characters, not {max_chars}");
             max_chars = fitted;
-            fresh = fresh
-                .into_iter()
-                .flat_map(|s| sections::to_budget(s, max_chars))
-                .collect();
+            fresh = fresh.into_iter().flat_map(|s| sections::to_budget(s, max_chars)).collect();
         }
     }
 
@@ -1336,11 +1312,7 @@ fn reindex(
             dim = vectors[0].len();
         }
         if let Some((i, v)) = vectors.iter().enumerate().find(|(_, v)| v.len() != dim) {
-            bail!(
-                "{} came back at dim {} while the index is dim {dim}",
-                batch[i].path,
-                v.len()
-            );
+            bail!("{} came back at dim {} while the index is dim {dim}", batch[i].path, v.len());
         }
         // The lock spans reading the row the matrix has grown to, appending
         // there, and recording what was written — the same span it always had,
@@ -1432,29 +1404,31 @@ fn cmd_index(
         user.endpoint.as_deref(),
         DEFAULT_ENDPOINT,
     );
-    let (model, _) = resolve(
-        model,
-        "FOLIO_MODEL",
-        proj.model.as_deref(),
-        user.model.as_deref(),
-        DEFAULT_MODEL,
-    );
+    let (model, _) =
+        resolve(model, "FOLIO_MODEL", proj.model.as_deref(), user.model.as_deref(), DEFAULT_MODEL);
     let (api_key, _) = resolve_api_key(&endpoint, user.api_key.as_deref());
     let allow_insecure = resolve_allow_insecure(allow_insecure, user.allow_insecure);
     let (endpoint, model) = (endpoint.as_str(), model.as_str());
     // An index the user asked for waits a little for one already running, and
     // then says who it is waiting for rather than hanging on it.
     let wait = std::time::Duration::from_secs(10);
-    let Some(r) = reindex(root, endpoint, model, api_key.as_deref(), allow_insecure, max_chars, rebuild, wait)? else {
+    let Some(r) = reindex(
+        root,
+        endpoint,
+        model,
+        api_key.as_deref(),
+        allow_insecure,
+        max_chars,
+        rebuild,
+        wait,
+    )?
+    else {
         bail!(
             "another folio is writing the index under {} — try again once it is done",
             root.display()
         );
     };
-    println!(
-        "indexed {} files · {} sections · dim {}",
-        r.files, r.sections, r.dim
-    );
+    println!("indexed {} files · {} sections · dim {}", r.files, r.sections, r.dim);
     println!(
         "  {} re-embedded, {} replaced or removed, {} dead row(s)",
         r.reembedded, r.retired, r.dead
@@ -1463,10 +1437,7 @@ fn cmd_index(
         println!("  {} moved, keeping the vectors they had", r.moved);
     }
     if r.truncated > 0 {
-        println!(
-            "  {} sections truncated at {} characters",
-            r.truncated, r.budget
-        );
+        println!("  {} sections truncated at {} characters", r.truncated, r.budget);
     }
     if r.compacted > 0 {
         println!("  compacted: {} dead row(s) reclaimed", r.compacted);
@@ -1501,11 +1472,7 @@ fn rows_in_matrix(root: &Path, dim: usize) -> Result<usize> {
         return Ok(0);
     }
     let vecs = store::vectors_path(root);
-    Ok(if vecs.exists() {
-        fs::metadata(&vecs)?.len() as usize / (dim * 4)
-    } else {
-        0
-    })
+    Ok(if vecs.exists() { fs::metadata(&vecs)?.len() as usize / (dim * 4) } else { 0 })
 }
 
 /// Write `vectors` at row `base`, leaving every row before it untouched. The
@@ -1587,9 +1554,7 @@ fn open_all(roots: &[PathBuf]) -> Result<Vec<Opened>> {
     // collapsing here is the same answer for one fewer scan.
     let mut canon: Vec<PathBuf> = Vec::new();
     for r in roots {
-        let c = r
-            .canonicalize()
-            .with_context(|| format!("{} cannot be read", r.display()))?;
+        let c = r.canonicalize().with_context(|| format!("{} cannot be read", r.display()))?;
         if !canon.contains(&c) {
             canon.push(c);
         }
@@ -1743,9 +1708,7 @@ fn rank(
         }
         let superseded = |fm: &Map<String, Value>| {
             !pointed.is_empty()
-                && fm
-                    .get(identity)
-                    .is_some_and(|v| pointed.contains(&scalar_text(v)))
+                && fm.get(identity).is_some_and(|v| pointed.contains(&scalar_text(v)))
         };
         for (owner, o) in opened.iter().enumerate() {
             let floats = as_floats(&o.map)?;
@@ -1842,7 +1805,8 @@ fn cmd_query(
     loop {
         let opened = open_all(roots)?;
         let named: Vec<PathBuf> = opened.iter().map(|o| o.root.clone()).collect();
-        let query_endpoint = opened.first().map(|o| o.meta.endpoint.as_str()).unwrap_or(DEFAULT_ENDPOINT);
+        let query_endpoint =
+            opened.first().map(|o| o.meta.endpoint.as_str()).unwrap_or(DEFAULT_ENDPOINT);
         let (api_key, _) = resolve_api_key(query_endpoint, user.api_key.as_deref());
         if q.is_none() {
             q = Some(embed_and_prove(&opened, text, api_key.as_deref(), allow_insecure)?);
@@ -1965,7 +1929,11 @@ fn cmd_query(
                 let notice = format!(
                     "({stale_count} of the files behind this result had changed; {reembedded} file(s) re-embedded before answering)"
                 );
-                if paths_only { eprintln!("{notice}") } else { println!("{notice}") }
+                if paths_only {
+                    eprintln!("{notice}")
+                } else {
+                    println!("{notice}")
+                }
                 refreshed = true;
                 continue;
             }
@@ -1985,8 +1953,9 @@ fn cmd_query(
         // covering the file on every edit, and a parent's walk skips a child's
         // `.folio/` as hidden and never learns the child index exists.
         if held > 0 {
-            let notice =
-                format!("({held} section(s) held by more than one of these indexes, returned once)");
+            let notice = format!(
+                "({held} section(s) held by more than one of these indexes, returned once)"
+            );
             if paths_only { eprintln!("{notice}") } else { println!("{notice}") }
         }
         if merged.is_empty() {
@@ -2006,7 +1975,11 @@ fn cmd_query(
                 }
             }
             let said = said.join("\n");
-            if paths_only { eprintln!("{said}") } else { println!("{said}") }
+            if paths_only {
+                eprintln!("{said}")
+            } else {
+                println!("{said}")
+            }
             return Ok(());
         }
         for (i, h) in merged.iter().enumerate() {
@@ -2091,9 +2064,7 @@ fn merge_adjacent(rows: &[Section], owners: &[usize], scores: &[f32]) -> Vec<Hit
         let mut run: Vec<usize> = Vec::new();
         let mut best = 0.0f32;
         for i in idx {
-            let touches = run
-                .last()
-                .is_some_and(|&last| rows[last].end + 1 == rows[i].start);
+            let touches = run.last().is_some_and(|&last| rows[last].end + 1 == rows[i].start);
             // ponytail: one ratio, read off a fixture where 0.741 against 0.780
             // is one answer in five pieces and 0.507 against 0.766 is background
             // beside an answer. A corpus should set it, and cosine scales differ
@@ -2181,12 +2152,13 @@ fn subtree(prefix: &str) -> String {
 /// the meta they belong to travels with them, fingerprint included, so the
 /// slice is in its source's space by construction rather than by assertion.
 fn cmd_extract(root: &Path, prefix: &str, into: &Path) -> Result<()> {
-    let root = root
-        .canonicalize()
-        .with_context(|| format!("{} not found", root.display()))?;
-    let into = into
-        .canonicalize()
-        .with_context(|| format!("{} not found — a slice is written beside files that are already there", into.display()))?;
+    let root = root.canonicalize().with_context(|| format!("{} not found", root.display()))?;
+    let into = into.canonicalize().with_context(|| {
+        format!(
+            "{} not found — a slice is written beside files that are already there",
+            into.display()
+        )
+    })?;
     if root == into {
         bail!("a corpus cannot be extracted into itself");
     }
@@ -2206,11 +2178,8 @@ fn cmd_extract(root: &Path, prefix: &str, into: &Path) -> Result<()> {
     let under = subtree(prefix);
     let slots = src.slots()?;
     let rows = src.hydrate(&slots)?;
-    let taken: Vec<(usize, Section)> = slots
-        .into_iter()
-        .zip(rows)
-        .filter(|(_, s)| s.path.starts_with(&under))
-        .collect();
+    let taken: Vec<(usize, Section)> =
+        slots.into_iter().zip(rows).filter(|(_, s)| s.path.starts_with(&under)).collect();
     if taken.is_empty() {
         bail!("no section under {prefix} in {}", root.display());
     }
@@ -2257,10 +2226,8 @@ fn cmd_extract(root: &Path, prefix: &str, into: &Path) -> Result<()> {
     let dim = meta.dim;
     for (batch, chunk) in taken.chunks(FLUSH).enumerate() {
         let base = batch * FLUSH;
-        let vectors: Vec<Vec<f32>> = chunk
-            .iter()
-            .map(|(slot, _)| floats[slot * dim..(slot + 1) * dim].to_vec())
-            .collect();
+        let vectors: Vec<Vec<f32>> =
+            chunk.iter().map(|(slot, _)| floats[slot * dim..(slot + 1) * dim].to_vec()).collect();
         append(&into, base, dim, &vectors)?;
     }
 
@@ -2291,10 +2258,13 @@ fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
             "endpoint" => cfg.endpoint = Some(value),
             "model" => cfg.model = Some(value),
             "api_key" => cfg.api_key = Some(value),
-            "allow_insecure" => cfg.allow_insecure = Some(
-                value.parse().context("allow_insecure must be 'true' or 'false'")?
+            "allow_insecure" => {
+                cfg.allow_insecure =
+                    Some(value.parse().context("allow_insecure must be 'true' or 'false'")?)
+            }
+            other => bail!(
+                "no setting named {other} — folio config holds endpoint, model, api_key, allow_insecure"
             ),
-            other => bail!("no setting named {other} — folio config holds endpoint, model, api_key, allow_insecure"),
         }
         if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
             fs::create_dir_all(dir).with_context(|| format!("cannot create {}", dir.display()))?;
@@ -2313,13 +2283,8 @@ fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
         user.endpoint.as_deref(),
         DEFAULT_ENDPOINT,
     );
-    let (model, m_src) = resolve(
-        None,
-        "FOLIO_MODEL",
-        proj.model.as_deref(),
-        user.model.as_deref(),
-        DEFAULT_MODEL,
-    );
+    let (model, m_src) =
+        resolve(None, "FOLIO_MODEL", proj.model.as_deref(), user.model.as_deref(), DEFAULT_MODEL);
     let (_api_key, k_src) = resolve_api_key(&endpoint, user.api_key.as_deref());
     println!("  endpoint  {endpoint}  ({e_src})");
     println!("  model     {model}  ({m_src})");
@@ -2346,9 +2311,7 @@ fn host_port(endpoint: &str) -> Result<(String, u16)> {
     let (host, port) = authority
         .rsplit_once(':')
         .with_context(|| format!("{endpoint} names no port, so a service cannot bind it"))?;
-    let port: u16 = port
-        .parse()
-        .with_context(|| format!("{port} is not a port number"))?;
+    let port: u16 = port.parse().with_context(|| format!("{port} is not a port number"))?;
     Ok((host.to_string(), port))
 }
 
@@ -2379,17 +2342,26 @@ fn backend_args(
     let mut args: Vec<String> = match backend {
         Backend::LlamaCpp => vec![
             "--embeddings".into(),
-            "-hf".into(), hf.into(),
-            "--hf-file".into(), hf_file.into(),
-            "--pooling".into(), pooling.into(),
-            "-c".into(), context.to_string(),
-            "-b".into(), context.to_string(),
-            "-ub".into(), context.to_string(),
+            "-hf".into(),
+            hf.into(),
+            "--hf-file".into(),
+            hf_file.into(),
+            "--pooling".into(),
+            pooling.into(),
+            "-c".into(),
+            context.to_string(),
+            "-b".into(),
+            context.to_string(),
+            "-ub".into(),
+            context.to_string(),
         ],
         Backend::Tei => vec![
-            "--model-id".into(), hf.into(),
-            "--auto-truncate".into(), "false".into(),
-            "--max-batch-tokens".into(), context.to_string(),
+            "--model-id".into(),
+            hf.into(),
+            "--auto-truncate".into(),
+            "false".into(),
+            "--max-batch-tokens".into(),
+            context.to_string(),
         ],
     };
     args.extend(["--host".to_string(), host, "--port".to_string(), port.to_string()]);
@@ -2419,14 +2391,10 @@ fn cmd_unit(
         }
     }
     let (server_name, hf) = match backend {
-        Backend::LlamaCpp => (
-            "llama-server",
-            hf.unwrap_or("keisuke-miyako/gte-modernbert-base-gguf"),
-        ),
-        Backend::Tei => (
-            "text-embeddings-router",
-            hf.unwrap_or("Alibaba-NLP/gte-modernbert-base"),
-        ),
+        Backend::LlamaCpp => {
+            ("llama-server", hf.unwrap_or("keisuke-miyako/gte-modernbert-base-gguf"))
+        }
+        Backend::Tei => ("text-embeddings-router", hf.unwrap_or("Alibaba-NLP/gte-modernbert-base")),
     };
     let hf_file = hf_file.unwrap_or("gte-modernbert-base-Q8_0.gguf");
     let pooling = pooling.unwrap_or("cls");
@@ -2504,7 +2472,9 @@ fn which_server(name: &str) -> String {
             return candidate.to_string_lossy().into_owned();
         }
     }
-    eprintln!("{name} is not on PATH; the service file names it unqualified, and a service manager will not find it");
+    eprintln!(
+        "{name} is not on PATH; the service file names it unqualified, and a service manager will not find it"
+    );
     name.to_string()
 }
 
@@ -2573,13 +2543,8 @@ fn cmd_doctor(
         user.endpoint.as_deref(),
         DEFAULT_ENDPOINT,
     );
-    let (model, _) = resolve(
-        model,
-        "FOLIO_MODEL",
-        proj.model.as_deref(),
-        user.model.as_deref(),
-        DEFAULT_MODEL,
-    );
+    let (model, _) =
+        resolve(model, "FOLIO_MODEL", proj.model.as_deref(), user.model.as_deref(), DEFAULT_MODEL);
     let (api_key, k_src) = resolve_api_key(&endpoint, user.api_key.as_deref());
     let allow_insecure = resolve_allow_insecure(allow_insecure, user.allow_insecure);
     println!("  endpoint   {endpoint}  ({e_src})");
@@ -2592,7 +2557,13 @@ fn cmd_doctor(
 
     // 1. It answers, and with how many dimensions.
     let t = std::time::Instant::now();
-    let probe = match embed(&endpoint, &model, api_key.as_deref(), allow_insecure, &["a sentence to embed".to_string()]) {
+    let probe = match embed(
+        &endpoint,
+        &model,
+        api_key.as_deref(),
+        allow_insecure,
+        &["a sentence to embed".to_string()],
+    ) {
         Ok(v) => v,
         Err(e) => {
             println!("  reachable  no");
@@ -2653,8 +2624,10 @@ fn cmd_doctor(
             }
             if inverted || collapsed {
                 failed = true;
-                println!("             check the server's pooling: this model family wants one \
-                          specific mode, and the default is wrong for some of them");
+                println!(
+                    "             check the server's pooling: this model family wants one \
+                          specific mode, and the default is wrong for some of them"
+                );
             }
         }
     }
@@ -2759,7 +2732,7 @@ mod tests {
         (0, fm.as_object().expect("an object").clone())
     }
 
-#[test]
+    #[test]
     fn a_service_binds_what_the_endpoint_names() {
         assert_eq!(
             host_port("http://127.0.0.1:8080/v1/embeddings").unwrap(),
@@ -2775,12 +2748,17 @@ mod tests {
 
     #[test]
     fn a_tei_unit_carries_the_flag_folio_cannot_check_at_runtime() {
-        let args = backend_args(Backend::Tei, "org/model", "ignored", "ignored", 8192,
-                                "127.0.0.1".into(), 8080);
-        let pairs: Vec<(&str, &str)> = args
-            .windows(2)
-            .map(|w| (w[0].as_str(), w[1].as_str()))
-            .collect();
+        let args = backend_args(
+            Backend::Tei,
+            "org/model",
+            "ignored",
+            "ignored",
+            8192,
+            "127.0.0.1".into(),
+            8080,
+        );
+        let pairs: Vec<(&str, &str)> =
+            args.windows(2).map(|w| (w[0].as_str(), w[1].as_str())).collect();
         // Without this the endpoint answers 200 with a vector of a section's
         // beginning and folio's budget calibration has nothing to react to.
         assert!(pairs.contains(&("--auto-truncate", "false")));
@@ -2794,17 +2772,40 @@ mod tests {
 
     #[test]
     fn the_default_backend_prints_what_it_always_printed() {
-        let args = backend_args(Backend::LlamaCpp, "repo", "file.gguf", "cls", 8192,
-                                "127.0.0.1".into(), 8080);
+        let args = backend_args(
+            Backend::LlamaCpp,
+            "repo",
+            "file.gguf",
+            "cls",
+            8192,
+            "127.0.0.1".into(),
+            8080,
+        );
         assert_eq!(
             args,
-            ["--embeddings", "-hf", "repo", "--hf-file", "file.gguf", "--pooling", "cls",
-             "-c", "8192", "-b", "8192", "-ub", "8192", "--host", "127.0.0.1",
-             "--port", "8080"]
+            [
+                "--embeddings",
+                "-hf",
+                "repo",
+                "--hf-file",
+                "file.gguf",
+                "--pooling",
+                "cls",
+                "-c",
+                "8192",
+                "-b",
+                "8192",
+                "-ub",
+                "8192",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8080"
+            ]
         );
     }
 
-        #[test]
+    #[test]
     fn each_scope_beats_the_one_below_it() {
         const K: &str = "FOLIO_TEST_ENDPOINT";
         // SAFETY: single-threaded within this test, and the key is unique to it.
@@ -2895,10 +2896,8 @@ mod tests {
     #[test]
     fn a_copy_takes_no_records_from_the_file_it_copied() {
         let prev = HashMap::from([("a.md".to_string(), stamped(7))]);
-        let current = HashMap::from([
-            ("a.md".to_string(), stamped(7)),
-            ("b.md".to_string(), stamped(7)),
-        ]);
+        let current =
+            HashMap::from([("a.md".to_string(), stamped(7)), ("b.md".to_string(), stamped(7))]);
         let changed = HashSet::from(["b.md".to_string()]);
         assert!(pair_moves(&prev, &current, &changed).is_empty());
     }
@@ -2906,10 +2905,8 @@ mod tests {
     #[test]
     fn one_departure_supplies_only_one_of_two_arrivals() {
         let prev = HashMap::from([("a.md".to_string(), stamped(7))]);
-        let current = HashMap::from([
-            ("b.md".to_string(), stamped(7)),
-            ("c.md".to_string(), stamped(7)),
-        ]);
+        let current =
+            HashMap::from([("b.md".to_string(), stamped(7)), ("c.md".to_string(), stamped(7))]);
         let changed = HashSet::from(["b.md".to_string(), "c.md".to_string()]);
         let moves = pair_moves(&prev, &current, &changed);
         assert_eq!(moves, vec![("a.md".to_string(), "b.md".to_string())]);
@@ -2919,8 +2916,16 @@ mod tests {
     fn a_different_dimension_is_a_different_space_and_not_a_near_miss() {
         let then = vec![1.0, 0.0, 0.0];
         assert_eq!(same_space(&[1.0, 0.0, 0.0], &then), 1.0);
-        assert_eq!(same_space(&[1.0, 0.0], &then), 0.0, "a shorter vector must not score on the dimensions it shares");
-        assert_eq!(same_space(&[1.0, 0.0, 0.0], &[]), 0.0, "an index with no fingerprint is not a match");
+        assert_eq!(
+            same_space(&[1.0, 0.0], &then),
+            0.0,
+            "a shorter vector must not score on the dimensions it shares"
+        );
+        assert_eq!(
+            same_space(&[1.0, 0.0, 0.0], &[]),
+            0.0,
+            "an index with no fingerprint is not a match"
+        );
     }
 
     fn parse(raw: &[&str]) -> (Vec<Pred>, Vec<String>) {
@@ -2979,8 +2984,10 @@ mod tests {
     fn separate_flags_are_anded_and_one_flag_is_ored() {
         let pred = preds(&["status=live | status=draft", "type=guide"]);
         assert!(keeps(&fm(json!({"status": "draft", "type": "guide"})), &pred));
-        assert!(!keeps(&fm(json!({"status": "draft", "type": "note"})), &pred),
-                "the second flag has to still be required");
+        assert!(
+            !keeps(&fm(json!({"status": "draft", "type": "note"})), &pred),
+            "the second flag has to still be required"
+        );
         assert!(!keeps(&fm(json!({"status": "retired", "type": "guide"})), &pred));
     }
 
@@ -2990,20 +2997,24 @@ mod tests {
         // presence of a key `draft`, which is rarely meant and is still a real
         // thing to ask for. So it works, and it says so.
         let (pred, hints) = parse(&["status=live|draft"]);
-        assert!(keeps(&fm(json!({"draft": true})), &pred),
-                "the presence test has to keep working");
+        assert!(keeps(&fm(json!({"draft": true})), &pred), "the presence test has to keep working");
         assert_eq!(hints.len(), 1);
         assert!(hints[0].contains("presence test for the key `draft`"), "{}", hints[0]);
-        assert!(parse(&["status=live | status=draft"]).1.is_empty(),
-                "an or of two comparisons needs no hint");
+        assert!(
+            parse(&["status=live | status=draft"]).1.is_empty(),
+            "an or of two comparisons needs no hint"
+        );
     }
 
     #[test]
     fn the_predicate_that_emptied_a_result_is_named() {
         let rows = vec![(0, fm(json!({"status": "live"}))), (1, fm(json!({"status": "retired"})))];
         let pred = preds(&["status=live | status=draft", "type=guide"]);
-        assert_eq!(blames(&rows, &pred), vec!["type=guide".to_string()],
-                   "only the predicate that kept nothing on its own is named");
+        assert_eq!(
+            blames(&rows, &pred),
+            vec!["type=guide".to_string()],
+            "only the predicate that kept nothing on its own is named"
+        );
         assert!(blames(&rows, &preds(&["status=live"])).is_empty());
     }
 
@@ -3139,8 +3150,9 @@ mod tests {
             vec!["folio", "config", "set", "endpoint", "http://127.0.0.1:8080/v1/embeddings"],
             vec!["folio", "skill"],
         ] {
-            Cli::try_parse_from(&argv)
-                .unwrap_or_else(|e| panic!("{} is documented and did not parse: {e}", argv.join(" ")));
+            Cli::try_parse_from(&argv).unwrap_or_else(|e| {
+                panic!("{} is documented and did not parse: {e}", argv.join(" "))
+            });
         }
     }
 
@@ -3159,7 +3171,11 @@ mod tests {
         fs::write(&proj_cfg, "api_key: secret-should-refuse\n").expect("write folio.yaml");
 
         let err = read_config_at(&proj_cfg).unwrap_err();
-        assert!(err.to_string().contains("folio.yaml is committed with the corpus and must not contain credentials"));
+        assert!(
+            err.to_string().contains(
+                "folio.yaml is committed with the corpus and must not contain credentials"
+            )
+        );
 
         // User config with api_key does not refuse
         let user_cfg = tmp.join("user_config.yaml");
@@ -3238,7 +3254,8 @@ mod tests {
         assert!(validate_transport("http://[::1]:8080/v1/embeddings", true, false).is_ok());
 
         // With key: non-loopback plaintext HTTP fails
-        let err = validate_transport("http://192.0.2.1:8080/v1/embeddings", true, false).unwrap_err();
+        let err =
+            validate_transport("http://192.0.2.1:8080/v1/embeddings", true, false).unwrap_err();
         assert!(err.to_string().contains("sending credentials over plaintext HTTP is refused"));
 
         // With key: non-loopback plaintext HTTP passes when allow_insecure is true

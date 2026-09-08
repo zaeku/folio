@@ -20,7 +20,17 @@ use std::{fs, path::Path};
 /// Units that mark a number as a claim rather than a label. Longest first, so
 /// `sections` is never read as `s`.
 const UNITS: &[&str] = &[
-    "characters", "sections", "seconds", "tokens", "files", "rows", "ms", "MB", "KB", "GB", "%",
+    "characters",
+    "sections",
+    "seconds",
+    "tokens",
+    "files",
+    "rows",
+    "ms",
+    "MB",
+    "KB",
+    "GB",
+    "%",
     "s",
 ];
 
@@ -76,10 +86,7 @@ fn claims(line: &str) -> Vec<String> {
         let rest = rest.trim_start();
         if let Some(unit) = UNITS.iter().find(|u| {
             rest.starts_with(**u)
-                && rest[u.len()..]
-                    .chars()
-                    .next()
-                    .is_none_or(|c| !c.is_alphanumeric())
+                && rest[u.len()..].chars().next().is_none_or(|c| !c.is_alphanumeric())
         }) {
             out.push(format!("{number} {unit}"));
         }
@@ -133,10 +140,15 @@ fn every_number_in_prose_is_traceable_to_a_measurement() {
 
 #[test]
 fn the_scanner_reads_a_claim_and_ignores_a_label() {
-    assert_eq!(claims("a query over 119,565 sections is 135 ms"),
-               vec!["119,565 sections", "135 ms"]);
+    assert_eq!(
+        claims("a query over 119,565 sections is 135 ms"),
+        vec!["119,565 sections", "135 ms"]
+    );
     assert_eq!(claims("no section was cut"), Vec::<String>::new());
     assert!(claims("folio 0.4.0 and jj 0.44.0 are versions").is_empty());
-    assert_eq!(claims("`--max-chars 8000` accepts 8000 characters"), vec!["8000 characters"],
-               "a flag's own value is not a claim; the sentence's is");
+    assert_eq!(
+        claims("`--max-chars 8000` accepts 8000 characters"),
+        vec!["8000 characters"],
+        "a flag's own value is not a claim; the sentence's is"
+    );
 }
