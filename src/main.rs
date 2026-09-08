@@ -2708,6 +2708,39 @@ mod tests {
         fs::remove_dir_all(&tmp).ok();
     }
 
+    /// The parser folio publishes, asked to check itself.
+    ///
+    /// `debug_assert` is clap's own audit of a built `Command`, and it runs
+    /// nowhere else: nothing in this binary constructs the parser except
+    /// `main`, so a `Cli` that clap would reject at startup compiles, passes
+    /// every other test, and passes CI. What it caught when it was written was
+    /// a flag whose `#[arg(long)]` had drifted onto the field below it, which
+    /// left the flag as a positional taking no value.
+    ///
+    /// The invocations beneath it are the surface folio's own sentences name.
+    /// An error message that tells a caller to rerun `folio index --rebuild` is
+    /// a promise that the flag exists, and this is where that promise is kept.
+    #[test]
+    fn the_published_command_surface_holds() {
+        use clap::CommandFactory;
+        Cli::command().debug_assert();
+
+        for argv in [
+            vec!["folio", "index", "--rebuild"],
+            vec!["folio", "index", "--max-chars", "4000"],
+            vec!["folio", "query", "a question", "--paths-only"],
+            vec!["folio", "query", "a question", "--where", "status=live", "--no-refresh"],
+            vec!["folio", "status", "--truncated"],
+            vec!["folio", "doctor"],
+            vec!["folio", "unit", "--systemd"],
+            vec!["folio", "config", "set", "endpoint", "http://127.0.0.1:8080/v1/embeddings"],
+            vec!["folio", "skill"],
+        ] {
+            Cli::try_parse_from(&argv)
+                .unwrap_or_else(|e| panic!("{} is documented and did not parse: {e}", argv.join(" ")));
+        }
+    }
+
     #[test]
     fn key_not_equal_still_passes_when_the_key_is_absent() {
         // The documented behaviour, kept: a filter must not silently drop the
