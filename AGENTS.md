@@ -179,21 +179,22 @@ it. The rules that cost something here:
   effect of a command that may reset the working copy in the same breath.
 - Do not discard existing changes. Existing changes belong to the user unless a
   task identifies them as agent changes.
-- **Sign before you push: `jj sign`, then push.** Nothing is signed as it is
-  made, because jj signs the working-copy commit on every snapshot and each
-  signature is a prompt. `jj sign` with no arguments takes
-  `reachable(@-, mutable())`, and that includes the working copy: the revset
-  reaches in both directions, so `@` is in it as a descendant of `@-`. Signing
-  is therefore two commands, `jj sign` and then `jj unsign -r @`, the second
-  with `--ignore-working-copy` when the repository will no longer open; that
-  flag skips the snapshot and not the revset, so it prevents nothing here.
-  Leaving `@` signed is what to avoid: `behavior = "keep"` preserves a signature
-  through a rewrite, and every jj command rewrites `@`, so a signed `@` asks
-  1Password on `jj status`. The unsign is local hygiene and not part of the
-  push, since `@` is neither pushed nor a parent of anything. Signing itself
-  rewrites commits, so that half happens before the push and never after: GitHub
-  requires signed commits on `main` and rejects the push otherwise, which is
-  the reminder rather than a rule someone has to remember.
+- **Sign before you push.** GitHub rejects an unsigned push to `main`.
+
+  1. Run `jj sign`. It takes the `revsets.sign` revset, set here to
+     `reachable(@-, mutable())`. That revset reaches in both directions, so it
+     includes `@` as a descendant of `@-` whenever anything is signed at all.
+  2. Run `jj unsign -r @`. Add `--ignore-working-copy` when the repository will
+     no longer open; that flag skips the snapshot and not the revset, so it
+     prevents nothing else here.
+  3. Push.
+
+  Do not leave `@` signed. `behavior = "keep"` preserves a signature through a
+  rewrite, every jj command rewrites `@`, and a signed `@` asks 1Password on
+  `jj status`. Nothing is signed as it is made, because jj signs the
+  working-copy commit on every snapshot and each signature is a prompt.
+  Unsigning after the push is safe, since `@` is neither pushed nor a parent of
+  anything.
 
 ## Language
 
