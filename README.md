@@ -517,8 +517,18 @@ so beats looping.
 ### From an agent
 
 `SKILL.md` is the same surface written for an agent to act on: the commands, the
-filters, and when to reach for `rg` instead. Point a skill-loading agent at it,
-or copy it into wherever that agent keeps skills.
+filters, and when to reach for `rg` instead. `folio skill` prints it, so a
+machine with the binary and no clone has it too:
+
+```sh
+folio skill > ~/.claude/skills/folio/SKILL.md
+```
+
+It carries only what folio cannot tell you at the moment you need it. folio
+explains its own refusals — a filter it cannot express, the predicate that
+emptied a result, an index whose weights no longer match — so the document does
+not explain them in advance, and it stays short enough to be worth loading every
+time. Where it belongs is yours to decide, as with `folio unit`.
 
 ## What it does not do
 
