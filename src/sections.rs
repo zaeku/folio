@@ -37,8 +37,8 @@ pub fn split(path: &str, source: &str) -> Vec<Section> {
 
     let mut heads: Vec<(usize, usize, String)> = Vec::new();
     let mut fenced = false;
-    for i in body_start..lines.len() {
-        let trimmed = lines[i].trim_start();
+    for (i, line) in lines.iter().enumerate().skip(body_start) {
+        let trimmed = line.trim_start();
         if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
             fenced = !fenced;
             continue;
@@ -46,7 +46,7 @@ pub fn split(path: &str, source: &str) -> Vec<Section> {
         if fenced {
             continue;
         }
-        if let Some((level, title)) = atx(lines[i]) {
+        if let Some((level, title)) = atx(line) {
             heads.push((i, level, title));
         }
     }

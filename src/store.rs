@@ -319,24 +319,24 @@ impl Store {
         })
     }
 
-    /// Retire the records of `dropped` and record `fresh` at the slots it was
-    /// written to, in one transaction.
-    ///
-    /// The vector file is written by the caller before this is called: a crash
-    /// between the two leaves rows at the end of the matrix that no record
-    /// names, where the other order would leave records naming rows that were
-    /// never written.
-    ///
-    /// A dropped record's row is not moved and not reused. Moving it would make
-    /// the write proportional to the index rather than to the change, which is
-    /// the whole reason the rows are appended.
-    ///
-    /// These are the pieces an update is made of. They are separate because an
-    /// index commits in batches: a run that dies keeps the files it finished,
-    /// and only a whole file may be recorded, or the next run would skip one
-    /// whose sections are half in the index.
-    ///
-    /// Every one of them must be called under `lock`.
+    // Retire the records of `dropped` and record `fresh` at the slots it was
+    // written to, in one transaction.
+    //
+    // The vector file is written by the caller before this is called: a crash
+    // between the two leaves rows at the end of the matrix that no record
+    // names, where the other order would leave records naming rows that were
+    // never written.
+    //
+    // A dropped record's row is not moved and not reused. Moving it would make
+    // the write proportional to the index rather than to the change, which is
+    // the whole reason the rows are appended.
+    //
+    // These are the pieces an update is made of. They are separate because an
+    // index commits in batches: a run that dies keeps the files it finished,
+    // and only a whole file may be recorded, or the next run would skip one
+    // whose sections are half in the index.
+    //
+    // Every one of them must be called under `lock`.
 
     /// Drop the records of `paths`, returning how many rows they left behind.
     pub fn retire(&self, paths: &HashSet<String>) -> Result<usize> {

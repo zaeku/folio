@@ -146,7 +146,7 @@ fn open_index(root: &Path) -> Result<Option<(Store, Meta)>> {
     let vecs = store::vectors_path(root);
     let bytes = fs::metadata(&vecs)?.len() as usize;
     let last = st.high_water()?;
-    if bytes % (meta.dim * 4) != 0 || bytes / (meta.dim * 4) < last {
+    if !bytes.is_multiple_of(meta.dim * 4) || bytes / (meta.dim * 4) < last {
         bail!(
             "index is inconsistent: {} holds {bytes} bytes, which is not {last} whole rows at dim {} — rerun with --rebuild",
             vecs.display(),
@@ -452,7 +452,8 @@ fn cmd_doctor(
     //    8,000 characters are about 2,000 tokens of English and several times
     //    that in a language that does not spell words with spaces.
     let (long, from) = longest_section(root, max_chars);
-    match embed(&endpoint, &model, api_key.as_deref(), allow_insecure, &[long.clone()]) {
+    match embed(&endpoint, &model, api_key.as_deref(), allow_insecure, std::slice::from_ref(&long))
+    {
         Ok(_) => println!("  long input {} characters accepted, {from}", long.chars().count()),
         Err(e) => {
             failed = true;

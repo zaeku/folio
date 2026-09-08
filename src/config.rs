@@ -161,10 +161,10 @@ pub(crate) fn resolve(
 }
 
 fn extract_host(authority: &str) -> &str {
-    if authority.starts_with('[') {
-        if let Some(end) = authority.find(']') {
-            return &authority[..=end];
-        }
+    if authority.starts_with('[')
+        && let Some(end) = authority.find(']')
+    {
+        return &authority[..=end];
     }
     authority.split_once(':').map_or(authority, |(h, _)| h)
 }
@@ -188,10 +188,10 @@ pub(crate) fn resolve_api_key(
     if let Some(v) = std::env::var("FOLIO_API_KEY").ok().filter(|v| !v.is_empty()) {
         return (Some(v), "environment");
     }
-    if endpoint_host(endpoint).eq_ignore_ascii_case("api.openai.com") {
-        if let Some(v) = std::env::var("OPENAI_API_KEY").ok().filter(|v| !v.is_empty()) {
-            return (Some(v), "environment");
-        }
+    if endpoint_host(endpoint).eq_ignore_ascii_case("api.openai.com")
+        && let Some(v) = std::env::var("OPENAI_API_KEY").ok().filter(|v| !v.is_empty())
+    {
+        return (Some(v), "environment");
     }
     if let Some(v) = user {
         return (Some(v.to_string()), "user config");

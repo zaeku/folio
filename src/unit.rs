@@ -87,6 +87,7 @@ fn backend_args(
     args.extend(["--host".to_string(), host, "--port".to_string(), port.to_string()]);
     args
 }
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn cmd_unit(
     root: &Path,
     backend: Backend,

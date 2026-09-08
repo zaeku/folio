@@ -87,6 +87,7 @@ fn pair_moves(
 /// `Ok(None)` means another process holds the write lock and this one declined
 /// to wait: a re-index nobody asked for is not worth blocking on, and one the
 /// user asked for says so rather than hanging.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn reindex(
     root: &Path,
     endpoint: &str,
@@ -124,9 +125,15 @@ pub(crate) fn reindex(
     let mut fingerprint: Vec<f32> = Vec::new();
     let mut drifted: Option<f32> = None;
     if !rebuild && prev.dim > 0 {
-        fingerprint = embed(endpoint, model, api_key, allow_insecure, &[fingerprint_text.clone()])?
-            .pop()
-            .expect("one input yields one vector");
+        fingerprint = embed(
+            endpoint,
+            model,
+            api_key,
+            allow_insecure,
+            std::slice::from_ref(&fingerprint_text),
+        )?
+        .pop()
+        .expect("one input yields one vector");
         if !prev.fingerprint_vec.is_empty() {
             let near = same_space(&fingerprint, &prev.fingerprint_vec);
             if near < SAME_SPACE {
@@ -482,6 +489,7 @@ pub(crate) fn append(root: &Path, base: usize, dim: usize, vectors: &[Vec<f32>])
     let mut file = fs::OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(false)
         .open(&path)
         .with_context(|| format!("{} could not be written", path.display()))?;
     file.seek(SeekFrom::Start((base * dim * 4) as u64))?;

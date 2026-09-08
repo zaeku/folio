@@ -92,14 +92,14 @@ fn open_all(roots: &[PathBuf]) -> Result<Vec<Opened>> {
     // about the caller's own corpus. Where there are several it would join
     // proven indexes in one ordering, which is the failure the fingerprint
     // exists to prevent.
-    if out.len() > 1 {
-        if let Some(o) = out.iter().find(|o| o.meta.fingerprint.is_empty()) {
-            bail!(
-                "the index under {} carries no fingerprint, so folio cannot show it holds the \
-                 same vectors as the others — run `folio index --rebuild` there",
-                o.root.display()
-            );
-        }
+    if out.len() > 1
+        && let Some(o) = out.iter().find(|o| o.meta.fingerprint.is_empty())
+    {
+        bail!(
+            "the index under {} carries no fingerprint, so folio cannot show it holds the \
+             same vectors as the others — run `folio index --rebuild` there",
+            o.root.display()
+        );
     }
     Ok(out)
 }
@@ -161,14 +161,22 @@ fn embed_and_prove(
 /// came from. Scores are comparable because `open_all` and `embed_and_prove`
 /// have shown the indexes are one space, which is what lets one sort stand and
 /// `--limit` keep its meaning.
+/// A candidate row in an index's matrix, scored by dot product against the query.
+#[derive(Clone, Copy)]
+struct ScoredSlot {
+    score: f32,
+    owner: usize,
+    slot: usize,
+}
+
 fn rank(
     opened: &[Opened],
     q: &[f32],
     preds: &[Pred],
     exclude_pointed_by: &[String],
     identity: &str,
-) -> Result<(Vec<(f32, usize, usize)>, usize)> {
-    let mut hits: Vec<(f32, usize, usize)> = Vec::new();
+) -> Result<(Vec<ScoredSlot>, usize)> {
+    let mut hits: Vec<ScoredSlot> = Vec::new();
     let mut dropped = 0usize;
 
     // Frontmatter is read only when something decides on it. Without a filter
@@ -180,7 +188,11 @@ fn rank(
             let floats = as_floats(&o.map)?;
             let dim = o.meta.dim;
             for slot in o.st.slots()? {
-                hits.push((dot(q, &floats[slot * dim..(slot + 1) * dim]), owner, slot));
+                hits.push(ScoredSlot {
+                    score: dot(q, &floats[slot * dim..(slot + 1) * dim]),
+                    owner,
+                    slot,
+                });
             }
         }
     } else {
@@ -211,11 +223,15 @@ fn rank(
                     dropped += 1;
                     continue;
                 }
-                hits.push((dot(q, &floats[slot * dim..(slot + 1) * dim]), owner, *slot));
+                hits.push(ScoredSlot {
+                    score: dot(q, &floats[slot * dim..(slot + 1) * dim]),
+                    owner,
+                    slot: *slot,
+                });
             }
         }
     }
-    hits.sort_by(|a, b| b.0.total_cmp(&a.0));
+    hits.sort_by(|a, b| b.score.total_cmp(&a.score));
     Ok((hits, dropped))
 }
 /// Which of `sections`' files no longer look the way the index recorded them.
@@ -265,6 +281,7 @@ fn reference(roots: &[PathBuf], owner: usize, rel: &str) -> String {
     cwd.and_then(|cwd| joined.strip_prefix(cwd).ok().map(|p| p.display().to_string()))
         .unwrap_or_else(|| joined.display().to_string())
 }
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn cmd_query(
     roots: &[PathBuf],
     text: &str,
@@ -306,24 +323,24 @@ pub(crate) fn cmd_query(
         // Never below the limit: a caller asking for every record must be able
         // to receive every record, which D-01M1PP6HGWJMQC's fence checks.
         let window = (limit * MERGE_WINDOW).max(32);
-        let top: Vec<(f32, usize, usize)> = hits.iter().take(window).copied().collect();
+        let top: Vec<ScoredSlot> = hits.iter().take(window).copied().collect();
 
         // Hydrated one index at a time and put back in the order they ranked,
         // because a slot means a row in one index's matrix.
         let mut hydrated: Vec<Option<Section>> = vec![None; top.len()];
-        for owner in 0..opened.len() {
+        for (owner, o) in opened.iter().enumerate() {
             let mut at: Vec<usize> = Vec::new();
             let mut want: Vec<usize> = Vec::new();
-            for (i, (_, ow, slot)) in top.iter().enumerate() {
-                if *ow == owner {
+            for (i, hit) in top.iter().enumerate() {
+                if hit.owner == owner {
                     at.push(i);
-                    want.push(*slot);
+                    want.push(hit.slot);
                 }
             }
             if want.is_empty() {
                 continue;
             }
-            for (i, sec) in at.into_iter().zip(opened[owner].st.hydrate(&want)?) {
+            for (i, sec) in at.into_iter().zip(o.st.hydrate(&want)?) {
                 hydrated[i] = Some(sec);
             }
         }
@@ -339,16 +356,16 @@ pub(crate) fn cmd_query(
         let mut scores: Vec<f32> = Vec::new();
         let mut seen: HashSet<(PathBuf, usize, usize)> = HashSet::new();
         let mut held = 0usize;
-        for (i, (score, owner, _)) in top.iter().enumerate() {
+        for (i, hit) in top.iter().enumerate() {
             let sec = hydrated[i].take().expect("every ranked slot hydrated");
-            let key = (named[*owner].join(&sec.path), sec.start, sec.end);
+            let key = (named[hit.owner].join(&sec.path), sec.start, sec.end);
             if !seen.insert(key) {
                 held += 1;
                 continue;
             }
             rows.push(sec);
-            owners.push(*owner);
-            scores.push(*score);
+            owners.push(hit.owner);
+            scores.push(hit.score);
         }
 
         let mut merged = merge_adjacent(&rows, &owners, &scores);
