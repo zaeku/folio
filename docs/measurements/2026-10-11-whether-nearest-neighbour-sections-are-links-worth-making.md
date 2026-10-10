@@ -81,6 +81,14 @@ steps of one worked example — the `minigrep` refactors in chapter 12 — which
 
 One corpus, written by authors who already link carefully, which is kinder than a
 wiki. One judge, one pass, no person checking a sample of its scores. Entity
-names were lowercased and not otherwise merged. The scripts and the judge's
-outputs were scratch and are not committed; the numbers above are what they
-printed.
+names were lowercased and not otherwise merged.
+
+## Reproducing it
+
+The harness is `benchmarks/links/`, kept apart from `run.py` because a judged
+score is the kind of number `D-01M1VNK3CJHMPR` refuses; whether this one falls
+under that refusal is the open proposal `D-01M4KE7EN1MV2J`. The model outputs
+behind the tables above are not committed. Replayed through that harness
+against a fresh index of the same commit, every figure above came out the same
+except the heuristic graph's highest in-degree, 17 rather than 18, where two
+neighbours tie.
