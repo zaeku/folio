@@ -1,0 +1,737 @@
+[
+ {
+  "q": "how to unwrap an option or return early using let else",
+  "file": "ch06-03-if-let.md",
+  "line": 65
+ },
+ {
+  "q": "how to create a custom subcommand extension for cargo binary",
+  "file": "ch14-05-extending-cargo.md",
+  "line": 1
+ },
+ {
+  "q": "do hash maps take ownership of inserted keys and values",
+  "file": "ch08-03-hash-maps.md",
+  "line": 84
+ },
+ {
+  "q": "how to suppress unused variable warning by prefixing with underscore",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 370
+ },
+ {
+  "q": "how to read and parse command line arguments in rust",
+  "file": "ch12-01-accepting-command-line-arguments.md",
+  "line": 1
+ },
+ {
+  "q": "how to declare and call functions in rust syntax",
+  "file": "ch03-03-how-functions-work.md",
+  "line": 1
+ },
+ {
+  "q": "how to define shared behavior across types using traits",
+  "file": "ch10-02-traits.md",
+  "line": 5
+ },
+ {
+  "q": "how to re-export modules and items with pub use",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 131
+ },
+ {
+  "q": "how to create custom smart pointer implementing deref operator",
+  "file": "ch15-02-deref.md",
+  "line": 82
+ },
+ {
+  "q": "when to use async tasks versus operating system threads",
+  "file": "ch17-06-futures-tasks-threads.md",
+  "line": 1
+ },
+ {
+  "q": "how to destructure enum variants with data in rust match expressions",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 198
+ },
+ {
+  "q": "writing and running your first basic rust console application",
+  "file": "ch01-02-hello-world.md",
+  "line": 1
+ },
+ {
+  "q": "match single enum pattern concisely using if let and else",
+  "file": "ch06-03-if-let.md",
+  "line": 1
+ },
+ {
+  "q": "why async block executes sequentially instead of concurrently in rust",
+  "file": "ch17-02-concurrency-with-async.md",
+  "line": 282
+ },
+ {
+  "q": "how to repeat user prompts in rust using infinite loop",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 760
+ },
+ {
+  "q": "how to execute specific tests matching a string with cargo test",
+  "file": "ch11-02-running-tests.md",
+  "line": 97
+ },
+ {
+  "q": "what is cargo package manager and how to check cargo version",
+  "file": "ch01-03-hello-cargo.md",
+  "line": 1
+ },
+ {
+  "q": "how rust closures capture variables and references from surrounding scope",
+  "file": "ch13-01-closures.md",
+  "line": 22
+ },
+ {
+  "q": "accepting string slice instead of string reference in rust function signatures",
+  "file": "ch04-03-slices.md",
+  "line": 256
+ },
+ {
+  "q": "official rust programming language book available community translations list",
+  "file": "appendix-06-translation.md",
+  "line": 1
+ },
+ {
+  "q": "how to organize rust cli projects by splitting logic into library",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 40
+ },
+ {
+  "q": "what are methods and self parameter in rust structs",
+  "file": "ch05-03-method-syntax.md",
+  "line": 1
+ },
+ {
+  "q": "defining methods on structs using impl block in rust",
+  "file": "ch05-03-method-syntax.md",
+  "line": 16
+ },
+ {
+  "q": "how to derive Hash trait for hashmap keys in rust",
+  "file": "appendix-03-derivable-traits.md",
+  "line": 150
+ },
+ {
+  "q": "sharing reference counted data between threads Rc Send error rust",
+  "file": "ch16-03-shared-state.md",
+  "line": 138
+ },
+ {
+  "q": "how to see standard output print statements in passing rust tests",
+  "file": "ch11-02-running-tests.md",
+  "line": 53
+ },
+ {
+  "q": "how returning values moves ownership and using references in rust",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 478
+ },
+ {
+  "q": "sharing a channel receiver across multiple worker threads rust threadpool",
+  "file": "ch21-02-multithreaded.md",
+  "line": 479
+ },
+ {
+  "q": "how to write inner doc comments for crate and module level documentation",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 109
+ },
+ {
+  "q": "how to require another trait when defining a trait in rust",
+  "file": "ch20-02-advanced-traits.md",
+  "line": 347
+ },
+ {
+  "q": "how to test non public internal private functions in rust unit tests",
+  "file": "ch11-03-test-organization.md",
+  "line": 56
+ },
+ {
+  "q": "standard workflow to clone build and manage rust projects using cargo",
+  "file": "ch01-03-hello-cargo.md",
+  "line": 222
+ },
+ {
+  "q": "assign result of conditional if else expression to variable in rust",
+  "file": "ch03-05-control-flow.md",
+  "line": 119
+ },
+ {
+  "q": "how to write integration tests for public library api in rust",
+  "file": "ch11-03-test-organization.md",
+  "line": 81
+ },
+ {
+  "q": "manually implementing send and sync marker traits safely in rust concurrency",
+  "file": "ch16-04-extensible-concurrency-sync-and-send.md",
+  "line": 63
+ },
+ {
+  "q": "rust exclamation mark bang never return type diverging functions",
+  "file": "ch20-03-advanced-types.md",
+  "line": 139
+ },
+ {
+  "q": "prevent circular reference memory leak in tree node parent pointer using weak",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 188
+ },
+ {
+  "q": "switch rustup toolchain override per project directory between nightly and stable",
+  "file": "appendix-07-nightly-rust.md",
+  "line": 144
+ },
+ {
+  "q": "using iterator filter with closure capturing local environment variables in rust",
+  "file": "ch13-02-iterators.md",
+  "line": 191
+ },
+ {
+  "q": "how to specify lifetime parameters on struct impl methods in rust",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 539
+ },
+ {
+  "q": "how to rename imported module types using alias in rust",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 111
+ },
+ {
+  "q": "do generic types cause runtime performance cost through monomorphization in rust",
+  "file": "ch10-01-syntax.md",
+  "line": 265
+ },
+ {
+  "q": "how do string collections work with utf8 encoding in rust",
+  "file": "ch08-02-strings.md",
+  "line": 1
+ },
+ {
+  "q": "implementing object oriented design patterns with dynamic dispatch trait objects in rust",
+  "file": "ch18-03-oo-design-patterns.md",
+  "line": 529
+ },
+ {
+  "q": "rust beginner tutorial review summary let match functions external crates",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 924
+ },
+ {
+  "q": "how to hold multiple different types implementing same trait in vector",
+  "file": "ch18-02-trait-objects.md",
+  "line": 5
+ },
+ {
+  "q": "how to store key value pairs using hashmap collection in rust",
+  "file": "ch08-03-hash-maps.md",
+  "line": 1
+ },
+ {
+  "q": "getting started with simple asynchronous programming example using tokio futures in rust",
+  "file": "ch17-01-futures-and-syntax.md",
+  "line": 42
+ },
+ {
+  "q": "difference between static and dynamic dispatch runtime cost with trait objects",
+  "file": "ch18-02-trait-objects.md",
+  "line": 227
+ },
+ {
+  "q": "how to get data out of enum variants using pattern matching",
+  "file": "ch06-02-match.md",
+  "line": 68
+ },
+ {
+  "q": "ignoring parts of a tuple or some value using underscore in pattern",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 323
+ },
+ {
+  "q": "send trait marker for transferring ownership across thread boundaries",
+  "file": "ch16-04-extensible-concurrency-sync-and-send.md",
+  "line": 21
+ },
+ {
+  "q": "steps to upload and publish open source library to crates io registry",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 1
+ },
+ {
+  "q": "building a basic multithreaded http server project from scratch in rust",
+  "file": "ch21-00-final-project-a-web-server.md",
+  "line": 1
+ },
+ {
+  "q": "how rust manages memory using ownership rules on stack and heap",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 1
+ },
+ {
+  "q": "replace tuples with named structs and pass borrowed instances to functions",
+  "file": "ch05-02-example-structs.md",
+  "line": 71
+ },
+ {
+  "q": "storing heterogeneous data types inside a single vector using enum variants",
+  "file": "ch08-01-vectors.md",
+  "line": 197
+ },
+ {
+  "q": "refactoring text search function using iterator filter and collect adapters",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 127
+ },
+ {
+  "q": "how rust handles backwards compatibility and version upgrades without breaking code",
+  "file": "appendix-07-nightly-rust.md",
+  "line": 6
+ },
+ {
+  "q": "overview of standard heap allocated data structures like vectors strings and maps",
+  "file": "ch08-00-common-collections.md",
+  "line": 1
+ },
+ {
+  "q": "pass command line arguments iterator directly into a function in rust",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 43
+ },
+ {
+  "q": "encapsulate input validation logic inside a custom struct constructor in rust",
+  "file": "ch09-03-to-panic-or-not-to-panic.md",
+  "line": 135
+ },
+ {
+  "q": "accept multiple types implementing a trait as function parameters in rust",
+  "file": "ch10-02-traits.md",
+  "line": 201
+ },
+ {
+  "q": "how to append new elements to a mutable vector in rust",
+  "file": "ch08-01-vectors.md",
+  "line": 51
+ },
+ {
+  "q": "implementing the state design pattern using object oriented style in rust",
+  "file": "ch18-03-oo-design-patterns.md",
+  "line": 43
+ },
+ {
+  "q": "why reading fields from a union requires unsafe code in rust",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 491
+ },
+ {
+  "q": "bind a matched pattern value to a variable using at symbol",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 594
+ },
+ {
+  "q": "how to combine generic types lifetime parameters and trait bounds in rust function",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 603
+ },
+ {
+  "q": "rust pattern matching against literal values in match statement",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 6
+ },
+ {
+  "q": "how to add external crates from crates io to cargo toml dependencies",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 169
+ },
+ {
+  "q": "asynchronous stream trait definition and poll next in rust",
+  "file": "ch17-05-traits-for-async.md",
+  "line": 441
+ },
+ {
+  "q": "implementing methods on generic structs with different type parameters rust",
+  "file": "ch10-01-syntax.md",
+  "line": 189
+ },
+ {
+  "q": "how to write anonymous functions and capture environment with closures rust",
+  "file": "ch13-01-closures.md",
+  "line": 6
+ },
+ {
+  "q": "handle result error with unwrap or else and exit program rust",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 293
+ },
+ {
+  "q": "why self referential structs need pin and unpin marker trait rust",
+  "file": "ch17-05-traits-for-async.md",
+  "line": 282
+ },
+ {
+  "q": "how to print custom failure message with assert macro in tests",
+  "file": "ch11-01-writing-tests.md",
+  "line": 366
+ },
+ {
+  "q": "sharing ownership of data across multiple variables using reference counting rc",
+  "file": "ch15-04-rc.md",
+  "line": 36
+ },
+ {
+  "q": "how to store different types implementing a trait in a vector",
+  "file": "ch18-02-trait-objects.md",
+  "line": 42
+ },
+ {
+  "q": "how to create custom data types with multiple possible variants",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 1
+ },
+ {
+  "q": "copy remaining field values from another instance using double dot syntax",
+  "file": "ch05-01-defining-structs.md",
+  "line": 107
+ },
+ {
+  "q": "processing command line arguments using next method on an iterator",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 101
+ },
+ {
+  "q": "why circular references cause memory leaks with reference counting smart pointers",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 1
+ },
+ {
+  "q": "how to disable parallel test execution and run tests sequentially",
+  "file": "ch11-02-running-tests.md",
+  "line": 21
+ },
+ {
+  "q": "difference between growable heap allocated strings and string literals in memory",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 134
+ },
+ {
+  "q": "chapter overview generics traits trait bounds and lifetime parameters summary",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 621
+ },
+ {
+  "q": "setup and install rust compiler toolchain and visual studio on windows",
+  "file": "ch01-01-installation.md",
+  "line": 58
+ },
+ {
+  "q": "what operations and features are allowed inside an unsafe block",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 30
+ },
+ {
+  "q": "how to define functions with input arguments and type annotations in rust",
+  "file": "ch03-03-how-functions-work.md",
+  "line": 41
+ },
+ {
+  "q": "how closures capture environment variables by borrow or move in rust",
+  "file": "ch13-01-closures.md",
+  "line": 176
+ },
+ {
+  "q": "how mutex locking works to share data safely between threads in rust",
+  "file": "ch16-03-shared-state.md",
+  "line": 25
+ },
+ {
+  "q": "how to shut down worker threads gracefully by dropping channel sender in rust",
+  "file": "ch21-03-graceful-shutdown-and-cleanup.md",
+  "line": 90
+ },
+ {
+  "q": "passing regular functions as arguments using function pointer fn type in rust",
+  "file": "ch20-04-advanced-functions-and-closures.md",
+  "line": 6
+ },
+ {
+  "q": "how to test multiple branch conditions using else if in rust",
+  "file": "ch03-05-control-flow.md",
+  "line": 90
+ },
+ {
+  "q": "how to initialize empty string or create string from literal in rust",
+  "file": "ch08-02-strings.md",
+  "line": 40
+ },
+ {
+  "q": "how memory leaks happen from reference cycles using rc and refcell in rust",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 12
+ },
+ {
+  "q": "rust closure syntax type inference and optional parameter type annotations",
+  "file": "ch13-01-closures.md",
+  "line": 92
+ },
+ {
+  "q": "how to return a value from loop expression using break in rust",
+  "file": "ch03-05-control-flow.md",
+  "line": 232
+ },
+ {
+  "q": "rust deref coercion passing box string to str parameter",
+  "file": "ch15-02-deref.md",
+  "line": 203
+ },
+ {
+  "q": "rust define struct fields and create instance mutable update",
+  "file": "ch05-01-defining-structs.md",
+  "line": 1
+ },
+ {
+  "q": "how to read file contents to string rust fs",
+  "file": "ch12-02-reading-a-file.md",
+  "line": 1
+ },
+ {
+  "q": "rust minigrep tdd write failing test case insensitive search",
+  "file": "ch12-05-working-with-environment-variables.md",
+  "line": 13
+ },
+ {
+  "q": "rust multiple trait bounds plus syntax generic parameter function",
+  "file": "ch10-02-traits.md",
+  "line": 267
+ },
+ {
+  "q": "rust generic lifetime parameters function returning longer string slice",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 108
+ },
+ {
+  "q": "rust return error to caller result match propagating errors",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 233
+ },
+ {
+  "q": "rust derive partialeq vs eq trait differences float nan",
+  "file": "appendix-03-derivable-traits.md",
+  "line": 53
+ },
+ {
+  "q": "why unsafe rust exists low level systems programming superpowers",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 1
+ },
+ {
+  "q": "rust cargo toml edition key differences 2015 2018 2021 2024",
+  "file": "appendix-05-editions.md",
+  "line": 1
+ },
+ {
+  "q": "how to loop through string characters or bytes in rust",
+  "file": "ch08-02-strings.md",
+  "line": 380
+ },
+ {
+  "q": "rust enum basics and pattern matching with match and if let",
+  "file": "ch06-00-enums.md",
+  "line": 1
+ },
+ {
+  "q": "how to break outer loop in nested loops rust labels",
+  "file": "ch03-05-control-flow.md",
+  "line": 259
+ },
+ {
+  "q": "rust floating point primitive data types f32 vs f64 precision",
+  "file": "ch03-02-data-types.md",
+  "line": 128
+ },
+ {
+  "q": "how to pass ownership of channel sender to async block rust",
+  "file": "ch17-02-concurrency-with-async.md",
+  "line": 316
+ },
+ {
+  "q": "how to define static constructor functions in impl block rust",
+  "file": "ch05-03-method-syntax.md",
+  "line": 194
+ },
+ {
+  "q": "handling recoverable errors using result enum and match in rust",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 1
+ },
+ {
+  "q": "handling missing command line arguments without panicking in rust",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 196
+ },
+ {
+  "q": "how to handle error from main run function without unwrap rust",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 426
+ },
+ {
+  "q": "how to update dependencies to newer versions with cargo",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 471
+ },
+ {
+  "q": "how to perform a deep copy of heap allocated string data in rust",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 393
+ },
+ {
+  "q": "how to overwrite or insert values for existing keys in a hash map",
+  "file": "ch08-03-hash-maps.md",
+  "line": 107
+ },
+ {
+  "q": "how to open and view standard library documentation locally in a web browser",
+  "file": "ch01-01-installation.md",
+  "line": 132
+ },
+ {
+  "q": "understanding concurrency risks like race conditions and deadlocks using operating system threads",
+  "file": "ch16-01-threads.md",
+  "line": 1
+ },
+ {
+  "q": "comparing performance and ergonomics of functional iterators versus traditional loops",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 176
+ },
+ {
+  "q": "why do I need explicit type annotations when parsing strings to numbers",
+  "file": "ch03-02-data-types.md",
+  "line": 1
+ },
+ {
+  "q": "how to append characters or string slices to a mutable string in rust",
+  "file": "ch08-02-strings.md",
+  "line": 113
+ },
+ {
+  "q": "what makes macros different from functions and when to use metaprogramming",
+  "file": "ch20-05-macros.md",
+  "line": 17
+ },
+ {
+  "q": "how to associate and store different data types inside enum variants",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 33
+ },
+ {
+  "q": "how to skip slow tests by default and run them with cargo flags",
+  "file": "ch11-02-running-tests.md",
+  "line": 156
+ },
+ {
+  "q": "how to write documentation comments and generate html with cargo doc",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 13
+ },
+ {
+  "q": "why assigning a string to another variable invalidates the original variable",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 240
+ },
+ {
+  "q": "how to initialize an empty or prefilled vector in rust",
+  "file": "ch08-01-vectors.md",
+  "line": 9
+ },
+ {
+  "q": "implementing parent child node relationships using reference counting smart pointers",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 151
+ },
+ {
+  "q": "difference between recoverable result errors and unrecoverable panic crashes in rust",
+  "file": "ch09-00-error-handling.md",
+  "line": 1
+ },
+ {
+  "q": "organizing project by moving logic into lib.rs and calling from main.rs",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 447
+ },
+ {
+  "q": "handling nullable values safely without null using option enum",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 193
+ },
+ {
+  "q": "rules for defining compile time immutable constant values with const keyword",
+  "file": "ch03-01-variables-and-mutability.md",
+  "line": 77
+ },
+ {
+  "q": "convention for placing and configuring unit test modules in source files",
+  "file": "ch11-03-test-organization.md",
+  "line": 15
+ },
+ {
+  "q": "reference table for rust punctuation symbols comments parentheses brackets and attributes",
+  "file": "appendix-02-operators.md",
+  "line": 151
+ },
+ {
+  "q": "how to inspect stack backtrace and abort on panic in rust",
+  "file": "ch09-01-unrecoverable-errors-with-panic.md",
+  "line": 1
+ },
+ {
+  "q": "overview of rust compile time memory safety and ownership recap",
+  "file": "ch04-03-slices.md",
+  "line": 319
+ },
+ {
+  "q": "how to add if condition expressions to rust match arms",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 489
+ },
+ {
+  "q": "how to propagate errors and convert error types using question mark",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 313
+ },
+ {
+  "q": "how to get element from vector safely without panicking",
+  "file": "ch08-01-vectors.md",
+  "line": 69
+ },
+ {
+  "q": "official rust programming language book editions and interactive versions",
+  "file": "title-page.md",
+  "line": 1
+ },
+ {
+  "q": "how to store worker join handles inside a threadpool struct",
+  "file": "ch21-02-multithreaded.md",
+  "line": 352
+ },
+ {
+  "q": "how to access fixed size array elements by index in rust",
+  "file": "ch03-02-data-types.md",
+  "line": 318
+ },
+ {
+  "q": "how to validate constructor arguments and panic on zero thread count",
+  "file": "ch21-02-multithreaded.md",
+  "line": 316
+ },
+ {
+  "q": "how to handle remaining cases using wildcard underscore in match arms",
+  "file": "ch06-02-match.md",
+  "line": 201
+ }
+]
