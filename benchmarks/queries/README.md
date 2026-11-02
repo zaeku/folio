@@ -21,3 +21,21 @@ with the model under test first: `score.py` asks whatever index is there.
 `rust-book-seed55.json` is the set the 2026-10-11 measurement used;
 `generate.py` writes a new one rather than reproducing it, because the model's
 output is not deterministic.
+
+## Functions
+
+A second set asks for functions rather than sections, on a private corpus the
+person running it has checked out. `daq4xss-seed58.json` is the set the
+2026-11-02 measurement used.
+
+```sh
+git -C <checkout> archive 550c4fb | tar -x -C <export>
+(cd <export> && codegraph init .)
+
+./functions.py <export> > units.json
+./generate-code.py <export> units.json ../reports/code-queries     # 60 Rust, 60 Python, 30 C++, seed 58
+./code-arms.py <export> units.json daq4xss-seed58.json \
+    http://127.0.0.1:8080/v1/embeddings http://127.0.0.1:8090/v1/embeddings
+```
+
+The first endpoint serves gte-modernbert-base and the second EmbeddingGemma 2.

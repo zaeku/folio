@@ -1,0 +1,765 @@
+[
+ {
+  "q": "retrieve object store bytes or header by key using range queries",
+  "file": "libs/rust/src/garnet_object_store.rs",
+  "line": 151,
+  "lang": "rust",
+  "hash": "876851f6f9678c37"
+ },
+ {
+  "q": "construct cross correlation estimator by planning forward and inverse fourier transforms",
+  "file": "domains/interfaces/oxc-extractor-gui/src/analysis/mod.rs",
+  "line": 19,
+  "lang": "rust",
+  "hash": "aa277300e66ddb2b"
+ },
+ {
+  "q": "get mutable slice into memory mapped ring buffer slot payload",
+  "file": "libs/rust/src/shm_bus.rs",
+  "line": 58,
+  "lang": "rust",
+  "hash": "a90d71737584e64a"
+ },
+ {
+  "q": "number of points in each correlation reference profile row",
+  "file": "domains/interfaces/oxc-extractor-gui/src/analysis/mod.rs",
+  "line": 120,
+  "lang": "rust",
+  "hash": "ffa38cd1caf3d6f3"
+ },
+ {
+  "q": "log current process memory consumption and cpu utilization metrics",
+  "file": "domains/archival/lance-compactor/src/src/main.rs",
+  "line": 231,
+  "lang": "rust",
+  "hash": "ce6e48e39e8fb8e6"
+ },
+ {
+  "q": "check whether flush timeout elapsed since previous write update",
+  "file": "domains/interfaces/jungfrau-gui/src/roi.rs",
+  "line": 122,
+  "lang": "rust",
+  "hash": "473496f42564fccc"
+ },
+ {
+  "q": "load two dimensional float matrix from zipped numpy archive file",
+  "file": "domains/pipelines/oxc/src/extractor/src/oxc_loader.rs",
+  "line": 33,
+  "lang": "rust",
+  "hash": "b988a47cbd2bd12f"
+ },
+ {
+  "q": "clamp bounding box regions to fit within image boundaries",
+  "file": "domains/interfaces/viz-gateway/src/src/main.rs",
+  "line": 31,
+  "lang": "rust",
+  "hash": "b369586fb20c54e5"
+ },
+ {
+  "q": "generate moving gaussian curve profiles across time steps",
+  "file": "domains/interfaces/oxc-extractor-gui/src/pipeline.rs",
+  "line": 277,
+  "lang": "rust",
+  "hash": "b622fedbaf86bc74"
+ },
+ {
+  "q": "connect asynchronous messaging client using environment variable address",
+  "file": "libs/rust/src/nats_io.rs",
+  "line": 14,
+  "lang": "rust",
+  "hash": "82e6972f5ae83977"
+ },
+ {
+  "q": "partition process variables across worker instances using hashing",
+  "file": "domains/gateways/epics-bridge/src/src/config.rs",
+  "line": 19,
+  "lang": "rust",
+  "hash": "543614b6b12dc1f5"
+ },
+ {
+  "q": "initialize infiniband device context and setup connection identifier",
+  "file": "libs/rust/rdma-io/src/lib.rs",
+  "line": 174,
+  "lang": "rust",
+  "hash": "9575602a69176b2b"
+ },
+ {
+  "q": "fetch floating point measurement from process variable channel",
+  "file": "domains/interfaces/oxc-extractor-gui/src/control/motor.rs",
+  "line": 42,
+  "lang": "rust",
+  "hash": "768f048a01954c6f"
+ },
+ {
+  "q": "infer dimensions and grid resolution from incoming hardware payload buffer",
+  "file": "domains/archival/zarr-archiver/src/src/archiver.rs",
+  "line": 982,
+  "lang": "rust",
+  "hash": "82ade1194a83c1f8"
+ },
+ {
+  "q": "load single dimensional floating point array from compressed numpy archive",
+  "file": "domains/pipelines/oxc/src/extractor/src/oxc_loader.rs",
+  "line": 38,
+  "lang": "rust",
+  "hash": "d2eda41f9a5b093c"
+ },
+ {
+  "q": "retrieve raw binary bytes by lookup key from key value storage",
+  "file": "libs/rust/src/garnet_io.rs",
+  "line": 449,
+  "lang": "rust",
+  "hash": "1a73ebfa8effe870"
+ },
+ {
+  "q": "combine multiple columnar table definitions into a unified field structure",
+  "file": "libs/rust-arrow/src/compaction.rs",
+  "line": 6,
+  "lang": "rust",
+  "hash": "05385d4e0d66487f"
+ },
+ {
+  "q": "advance progress counter and mark operation finished when reaching target limit",
+  "file": "domains/pipelines/evr/src/timestamp-counter/src/context.rs",
+  "line": 57,
+  "lang": "rust",
+  "hash": "def9448b6547fccd"
+ },
+ {
+  "q": "parse text file into bit position mappings across thirty two bit words",
+  "file": "domains/pipelines/evr/src/processor/src/main.rs",
+  "line": 206,
+  "lang": "rust",
+  "hash": "34b253024de11145"
+ },
+ {
+  "q": "persist buffered pulse segments to disk and mark scan interval finished",
+  "file": "domains/archival/zarr-archiver/src/src/archiver.rs",
+  "line": 731,
+  "lang": "rust",
+  "hash": "cfa75938d9f24ded"
+ },
+ {
+  "q": "delete previous acquisition directories matching older indices in shared memory",
+  "file": "domains/archival/zarr-uploader/src/src/main.rs",
+  "line": 53,
+  "lang": "rust",
+  "hash": "705ec15e484ef5dc"
+ },
+ {
+  "q": "construct synthetic display payload with calculated stride for testing purposes",
+  "file": "domains/interfaces/jungfrau-gui/src/accum.rs",
+  "line": 271,
+  "lang": "rust",
+  "hash": "14476de934643ed2"
+ },
+ {
+  "q": "dispatch live streaming updates and process incoming client commands over two way connection",
+  "file": "domains/interfaces/viz-gateway/src/src/main.rs",
+  "line": 344,
+  "lang": "rust",
+  "hash": "44ee9addbd6a1849"
+ },
+ {
+  "q": "adjust bounding box dimensions by dragging corner anchor point",
+  "file": "domains/interfaces/jungfrau-gui/src/roi.rs",
+  "line": 66,
+  "lang": "rust",
+  "hash": "f81d7f4ba412565e"
+ },
+ {
+  "q": "retrieve serialized dashboard layout parameters from cache by identifier",
+  "file": "domains/interfaces/viz-gateway/src/src/main.rs",
+  "line": 308,
+  "lang": "rust",
+  "hash": "ed7473dd156ca4ee"
+ },
+ {
+  "q": "normalize floating point values into eight bit unsigned pixel intensities",
+  "file": "domains/interfaces/viz-gateway/src/src/processor.rs",
+  "line": 15,
+  "lang": "rust",
+  "hash": "ad1d366893197253"
+ },
+ {
+  "q": "render graphical interface widgets for palette selection and contrast thresholds",
+  "file": "domains/interfaces/jungfrau-gui/src/display.rs",
+  "line": 111,
+  "lang": "rust",
+  "hash": "29ed2b295ce3ce4e"
+ },
+ {
+  "q": "serialize gathered application telemetry counters to plain text format",
+  "file": "libs/rust/src/metrics.rs",
+  "line": 131,
+  "lang": "rust",
+  "hash": "634467cde1705938"
+ },
+ {
+  "q": "track sequence continuity and report dropped items across circular buffer",
+  "file": "libs/rust/src/indexer.rs",
+  "line": 37,
+  "lang": "rust",
+  "hash": "a8592e29be421565"
+ },
+ {
+  "q": "listen to message broker subject and consume strongly typed events",
+  "file": "domains/interfaces/oxc-extractor-gui/src/io/mod.rs",
+  "line": 20,
+  "lang": "rust",
+  "hash": "c7ca5c9a1a4c756b"
+ },
+ {
+  "q": "initialize multidimensional storage dataset with specific chunking and fallback values",
+  "file": "domains/archival/zarr-archiver/src/src/archiver.rs",
+  "line": 1008,
+  "lang": "rust",
+  "hash": "8a2ce5517e5f467a"
+ },
+ {
+  "q": "precompute colormap lookup values across range",
+  "file": "domains/interfaces/jungfrau-gui/src/colormap.rs",
+  "line": 110,
+  "lang": "rust",
+  "hash": "19d2040809e94ff7"
+ },
+ {
+  "q": "interpolate peak position and relative power from overlap",
+  "file": "domains/interfaces/oxc-extractor-gui/src/analysis/mod.rs",
+  "line": 127,
+  "lang": "rust",
+  "hash": "89406f6c2d4afc48"
+ },
+ {
+  "q": "load array from archive trying extension fallback",
+  "file": "domains/pipelines/oxc/src/extractor/src/oxc_loader.rs",
+  "line": 21,
+  "lang": "rust",
+  "hash": "648c575625558f42"
+ },
+ {
+  "q": "populate screen pixels from current statistical buffer",
+  "file": "domains/interfaces/jungfrau-gui/src/accum.rs",
+  "line": 185,
+  "lang": "rust",
+  "hash": "2b41a9642453b324"
+ },
+ {
+  "q": "exponentially smooth incoming matrix using time constant",
+  "file": "domains/interfaces/jungfrau-gui/src/accum.rs",
+  "line": 246,
+  "lang": "rust",
+  "hash": "f48aacac349cf1af"
+ },
+ {
+  "q": "execute closed loop tracking adjustment with state filter",
+  "file": "domains/interfaces/oxc-extractor-gui/src/feedback.rs",
+  "line": 225,
+  "lang": "rust",
+  "hash": "60cdc9454d90b157"
+ },
+ {
+  "q": "configure overwrite dataset export options with session",
+  "file": "domains/archival/lance-archiver/src/src/writer.rs",
+  "line": 32,
+  "lang": "rust",
+  "hash": "3a54fca6e63a59d1"
+ },
+ {
+  "q": "generate pseudo random float centered at zero",
+  "file": "domains/interfaces/oxc-extractor-gui/src/pipeline.rs",
+  "line": 288,
+  "lang": "rust",
+  "hash": "1aabba22dc898f43"
+ },
+ {
+  "q": "sample normally distributed floating point number via transform",
+  "file": "domains/interfaces/oxc-extractor-gui/src/kalman.rs",
+  "line": 145,
+  "lang": "rust",
+  "hash": "d2594e029a015347"
+ },
+ {
+  "q": "stream remote object storage keys asynchronously matching a prefix",
+  "file": "libs/rust/src/garnet_object_store.rs",
+  "line": 322,
+  "lang": "rust",
+  "hash": "6caafab12035b1d8"
+ },
+ {
+  "q": "construct telemetry state packet combining position sensor and feedback loop settings",
+  "file": "domains/interfaces/oxc-extractor-gui/src/plugin.rs",
+  "line": 62,
+  "lang": "rust",
+  "hash": "063a1ea4954140c3"
+ },
+ {
+  "q": "retrieve metadata and byte length for object in cache store",
+  "file": "libs/rust/src/garnet_object_store.rs",
+  "line": 280,
+  "lang": "rust",
+  "hash": "a156b994585ddbf9"
+ },
+ {
+  "q": "compute background noise offset using parallel histogram and quadratic curve fitting",
+  "file": "domains/pipelines/jungfrau/src/processor/src/isp.rs",
+  "line": 25,
+  "lang": "rust",
+  "hash": "98e25715d0681b22"
+ },
+ {
+  "q": "accumulate incoming image frames into running sum and maximum buffers",
+  "file": "domains/interfaces/jungfrau-gui/src/accum.rs",
+  "line": 136,
+  "lang": "rust",
+  "hash": "4c8dab72b19aa592"
+ },
+ {
+  "q": "check whether bitmask matches timing system event code",
+  "file": "archive/quarantine/evr-pipeline/timestamp-counter-py/src/main.py",
+  "line": 102,
+  "lang": "python",
+  "hash": "99f3f88d147f7801"
+ },
+ {
+  "q": "record finish timestamp and completion status to disk",
+  "file": "archive/prototypes/scan-system/scan_logger.py",
+  "line": 96,
+  "lang": "python",
+  "hash": "576adf4540d18d33"
+ },
+ {
+  "q": "block until acquisition processor signals finished count or timeout",
+  "file": "archive/prototypes/scan-system/nats_bridge.py",
+  "line": 260,
+  "lang": "python",
+  "hash": "db6718ff63af10fe"
+ },
+ {
+  "q": "find all archived dataset directories under experiment storage",
+  "file": "domains/interfaces/lance-analyzer/cache_manager.py",
+  "line": 395,
+  "lang": "python",
+  "hash": "9ae06437cb45fde9"
+ },
+ {
+  "q": "compute partition routing bucket using cyclical redundancy check algorithm",
+  "file": "libs/python/garnetfs/build/lib/garnetfs/core.py",
+  "line": 7,
+  "lang": "python",
+  "hash": "e7718ed3f69c3425"
+ },
+ {
+  "q": "parse command line options and configure motors for experiment execution",
+  "file": "archive/prototypes/scan-system/scan.py",
+  "line": 115,
+  "lang": "python",
+  "hash": "8e746f8761898224"
+ },
+ {
+  "q": "split tabular records and persist to parquet storage files",
+  "file": "domains/interfaces/lance-analyzer/cache_manager.py",
+  "line": 356,
+  "lang": "python",
+  "hash": "a9b25c69d09dd055"
+ },
+ {
+  "q": "route partition key to matching connection client instance",
+  "file": "libs/python/garnetfs/build/lib/garnetfs/core.py",
+  "line": 78,
+  "lang": "python",
+  "hash": "b703b368e3b5efad"
+ },
+ {
+  "q": "discover distributed nodes topology and establish server connections",
+  "file": "libs/python/garnetfs/build/lib/garnetfs/core.py",
+  "line": 41,
+  "lang": "python",
+  "hash": "33098795990ade0a"
+ },
+ {
+  "q": "update mock process variable record and set readback mirror",
+  "file": "archive/prototypes/scan-system/conftest.py",
+  "line": 40,
+  "lang": "python",
+  "hash": "5d2c383fc093792d"
+ },
+ {
+  "q": "listen for experiment scan status notifications across messaging bus",
+  "file": "archive/prototypes/scan-system/nats_bridge.py",
+  "line": 74,
+  "lang": "python",
+  "hash": "18706cb06b9cbe71"
+ },
+ {
+  "q": "serialize acquisition step configuration and parameters to mapping",
+  "file": "archive/quarantine/evr-pipeline/timestamp-counter-py/src/main.py",
+  "line": 147,
+  "lang": "python",
+  "hash": "b0c83cba4153794d"
+ },
+ {
+  "q": "split monolithic parquet archive into individual run directories",
+  "file": "domains/interfaces/lance-analyzer/cache_manager.py",
+  "line": 287,
+  "lang": "python",
+  "hash": "408a0bd68ae8e90a"
+ },
+ {
+  "q": "save filtered tabular columns and runs to columnar file storage",
+  "file": "domains/interfaces/lance-analyzer/cache_manager.py",
+  "line": 686,
+  "lang": "python",
+  "hash": "88ce3d8b20eb38fd"
+ },
+ {
+  "q": "append fallback local repository path to module resolution environment",
+  "file": "domains/interfaces/lance-analyzer/garnet_tail.py",
+  "line": 28,
+  "lang": "python",
+  "hash": "fc11fd7cbe327f9d"
+ },
+ {
+  "q": "decode typed resource string into python primitive and categorical label",
+  "file": "domains/interfaces/lance-analyzer/garnet_tail.py",
+  "line": 74,
+  "lang": "python",
+  "hash": "20fedaa9216c970f"
+ },
+ {
+  "q": "check whether current output stream is attached to an interactive terminal",
+  "file": "archive/prototypes/scan-system/libscan.py",
+  "line": 82,
+  "lang": "python",
+  "hash": "6c501035089ef349"
+ },
+ {
+  "q": "queue consumer acknowledging processed message or handling processing errors",
+  "file": "archive/legacy_reference_codes/old oxc_processor/main.py",
+  "line": 180,
+  "lang": "python",
+  "hash": "75a2ec9e6fb701d3"
+ },
+ {
+  "q": "route partition hash to matching connection in distributed cache",
+  "file": "libs/python/garnetfs/garnetfs/core.py",
+  "line": 78,
+  "lang": "python",
+  "hash": "b703b368e3b5efad"
+ },
+ {
+  "q": "retrieve sorted unique recorded entries across multiple categories for timestamp",
+  "file": "domains/interfaces/lance-analyzer/garnet_tail.py",
+  "line": 232,
+  "lang": "python",
+  "hash": "1a3a62f398a570e6"
+ },
+ {
+  "q": "combine motion control coordinates preventing conflicting driver assignments",
+  "file": "archive/prototypes/scan-system/scan_config.py",
+  "line": 260,
+  "lang": "python",
+  "hash": "e01225f45a40d579"
+ },
+ {
+  "q": "compute sliding window average over continuous waveform points",
+  "file": "archive/legacy_reference_codes/old oxc_processor/atomic_funcs.py",
+  "line": 209,
+  "lang": "python",
+  "hash": "57f123e2409402f6"
+ },
+ {
+  "q": "consolidate fragmented storage partitions from previous period into single file",
+  "file": "scripts/lance_compact.py",
+  "line": 6,
+  "lang": "python",
+  "hash": "c13bade960dc49df"
+ },
+ {
+  "q": "calculate optical cross correlator displacement jitter and publish metrics",
+  "file": "archive/legacy_reference_codes/old oxc_processor/main.py",
+  "line": 71,
+  "lang": "python",
+  "hash": "a14edeba190ca4f9"
+ },
+ {
+  "q": "calculate rolling standard deviation across consecutive waveform windows",
+  "file": "archive/legacy_reference_codes/old oxc_processor/atomic_funcs.py",
+  "line": 214,
+  "lang": "python",
+  "hash": "5099fbbb1f4f4cab"
+ },
+ {
+  "q": "fetch value across distributed cache instances with redirect handling",
+  "file": "print_fast.py",
+  "line": 9,
+  "lang": "python",
+  "hash": "bf0adfdb248d0cbe"
+ },
+ {
+  "q": "evaluate simulated controller performance and error metrics against recorded timeline",
+  "file": "domains/interfaces/oxc-extractor-gui/plugin/oxc_feedback_plugin.py",
+  "line": 270,
+  "lang": "python",
+  "hash": "6d6b4949464e3baf"
+ },
+ {
+  "q": "determine output folder path for experiment records with safety check",
+  "file": "archive/prototypes/scan-system/libscan.py",
+  "line": 60,
+  "lang": "python",
+  "hash": "dd51bea1e8c10bfd"
+ },
+ {
+  "q": "apply normalized square matching filter across kernel array slices",
+  "file": "archive/legacy_reference_codes/old oxc_processor/atomic_funcs.py",
+  "line": 252,
+  "lang": "python",
+  "hash": "3a9c22b304ad7379"
+ },
+ {
+  "q": "consume and inspect unacknowledged streaming messages from a message broker topic",
+  "file": "domains/archival/zarr-archiver/src/src/bin/read_nats_stream.py",
+  "line": 6,
+  "lang": "python",
+  "hash": "232970e07161def4"
+ },
+ {
+  "q": "subscribe to streaming hardware channel and print incoming message headers",
+  "file": "archive/scratch/inspect_qbpm.py",
+  "line": 5,
+  "lang": "python",
+  "hash": "5f485ca96712b1e4"
+ },
+ {
+  "q": "convert half precision floating point array chunk metadata to standard floats",
+  "file": "domains/pipelines/oxc/tools/make_oxc_calibration.py",
+  "line": 27,
+  "lang": "python",
+  "hash": "3d6d59560b9bc611"
+ },
+ {
+  "q": "retrieve memoized list of stored test runs avoiding slow recalculation",
+  "file": "domains/interfaces/lance-analyzer/app.py",
+  "line": 135,
+  "lang": "python",
+  "hash": "bbea9fa9cbaf9217"
+ },
+ {
+  "q": "drain all pending non blocking messages currently queued in the network socket",
+  "file": "archive/legacy_reference_codes/old scan script/libscan.py",
+  "line": 49,
+  "lang": "python",
+  "hash": "584ab91e882b73bf"
+ },
+ {
+  "q": "share primary thread channel access connection across background worker threads",
+  "file": "archive/prototypes/scan-system/libscan.py",
+  "line": 108,
+  "lang": "python",
+  "hash": "a52dc61143d01f2f"
+ },
+ {
+  "q": "check whether hardware actuator target position matches actual current position within tolerance",
+  "file": "archive/prototypes/scan-system/libscan.py",
+  "line": 188,
+  "lang": "python",
+  "hash": "ffa18a998f196e3a"
+ },
+ {
+  "q": "simulate closed loop feedback control tracking error with noise filtering verification",
+  "file": "domains/interfaces/oxc-extractor-gui/plugin/oxc_feedback_plugin.py",
+  "line": 308,
+  "lang": "python",
+  "hash": "7d65ced24d54b405"
+ },
+ {
+  "q": "convert nested timestamped measurement dictionaries into structured tabular columns with inferred schemas",
+  "file": "domains/interfaces/lance-analyzer/garnet_tail.py",
+  "line": 425,
+  "lang": "python",
+  "hash": "16eb0decc6b43426"
+ },
+ {
+  "q": "calculate directory state fingerprint by aggregating file count size and timestamp",
+  "file": "domains/interfaces/lance-analyzer/cache_manager.py",
+  "line": 125,
+  "lang": "python",
+  "hash": "13e2327e0487b06f"
+ },
+ {
+  "q": "convolve signal to fifth power and fit model parameters to peak",
+  "file": "archive/legacy_reference_codes/old oxc_processor/atomic_funcs.py",
+  "line": 258,
+  "lang": "python",
+  "hash": "ddd03816c17f8523"
+ },
+ {
+  "q": "read binary byte slice between boundaries from remote key value store",
+  "file": "libs/python/garnetfs/garnetfs/core.py",
+  "line": 221,
+  "lang": "python",
+  "hash": "d2d1570ca80fcf08"
+ },
+ {
+  "q": "periodic dashboard panel displaying real time metrics recent records and intensity ratios",
+  "file": "domains/interfaces/lance-analyzer/app.py",
+  "line": 957,
+  "lang": "python",
+  "hash": "0c09e483ee274c71"
+ },
+ {
+  "q": "receive socket packets to unpack timing headers and pulse identifiers",
+  "file": "archive/legacy_reference_codes/old scan script/libscan.py",
+  "line": 59,
+  "lang": "python",
+  "hash": "e73048a1ecaeb495"
+ },
+ {
+  "q": "handle start message dispatch and emit immediate completion event for monitors",
+  "file": "archive/prototypes/scan-system/conftest.py",
+  "line": 167,
+  "lang": "python",
+  "hash": "d777501c107c264b"
+ },
+ {
+  "q": "thread loop publish ring buffer messages over network connection",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/cal_pub_rdma.cpp",
+  "line": 32,
+  "lang": "cpp",
+  "hash": "d1841179af7ad338"
+ },
+ {
+  "q": "copy sixty four bytes of memory using two chunks",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/include/memcpy_simd.h",
+  "line": 48,
+  "lang": "cpp",
+  "hash": "46d53c3e000d41b5"
+ },
+ {
+  "q": "round up byte count to the nearest alignment boundary",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/include/memory.h",
+  "line": 25,
+  "lang": "cpp",
+  "hash": "b45952f1786683f9"
+ },
+ {
+  "q": "destructor freeing network buffers and destroying queue pair channels",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/lib/pxrdma_src/src/pxrdma_qp.cpp",
+  "line": 55,
+  "lang": "cpp",
+  "hash": "ac9327759341163f"
+ },
+ {
+  "q": "mark entry processed in circular queue and store associated payload",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/include/queue.h",
+  "line": 240,
+  "lang": "cpp",
+  "hash": "8e41669b7148e2a4"
+ },
+ {
+  "q": "convert verbs work request operation code enum to string representation",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/lib/pxrdma_src/src/pxrdma_common.cpp",
+  "line": 14,
+  "lang": "cpp",
+  "hash": "0b95ce382af5ecbe"
+ },
+ {
+  "q": "insert sequential identifier into ring buffer queue tracking reference entries",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/include/queue.h",
+  "line": 228,
+  "lang": "cpp",
+  "hash": "1514fa048ec2dccc"
+ },
+ {
+  "q": "read count of available sysfs large memory pages on specific socket",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/memory.cpp",
+  "line": 17,
+  "lang": "cpp",
+  "hash": "827e1d3ab1bbb5b5"
+ },
+ {
+  "q": "open or create scientific hierarchical data format file for recording output",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/jf_h5_writer.cpp",
+  "line": 214,
+  "lang": "cpp",
+  "hash": "75fe83da7a38cb11"
+ },
+ {
+  "q": "create nested parent directory hierarchy path ensuring each component exists",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/system_util.cpp",
+  "line": 405,
+  "lang": "cpp",
+  "hash": "5c81c63b710f51dc"
+ },
+ {
+  "q": "background monitoring thread coordinating processed frames between network sockets",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/calibration.cpp",
+  "line": 31,
+  "lang": "cpp",
+  "hash": "321f976ac5417c3d"
+ },
+ {
+  "q": "initialize socket specific shared memory allocator with custom page settings",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/memory.cpp",
+  "line": 50,
+  "lang": "cpp",
+  "hash": "2c8869d0a13226e1"
+ },
+ {
+  "q": "parse system memory statistics and large page totals from virtual proc filesystem",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/system_util.cpp",
+  "line": 223,
+  "lang": "cpp",
+  "hash": "ded357f22215c722"
+ },
+ {
+  "q": "monitor thread receiving raw frames synchronizing modules and forwarding via sockets",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/raw_receiver.cpp",
+  "line": 44,
+  "lang": "cpp",
+  "hash": "ed88e284c4b95ccc"
+ },
+ {
+  "q": "periodically calculate and print transfer throughput transfer rate in megabytes per second",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/palJFTransf/transfer.cpp",
+  "line": 167,
+  "lang": "cpp",
+  "hash": "2058e13b7ff04b8f"
+ },
+ {
+  "q": "fast copy memory in sixty four byte aligned chunks",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/include/memcpy_simd.h",
+  "line": 83,
+  "lang": "cpp",
+  "hash": "867c202ae1409331"
+ },
+ {
+  "q": "remove and return item from circular queue buffer clearing slot",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/include/queue.h",
+  "line": 276,
+  "lang": "cpp",
+  "hash": "c35d4b5175ddda91"
+ },
+ {
+  "q": "read available sysfs huge page count for specific numa node",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/memory.cpp",
+  "line": 33,
+  "lang": "cpp",
+  "hash": "3f290aee4cdabec1"
+ },
+ {
+  "q": "write detector frame metadata and chunks to storage datasets",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/jf_h5_writer.cpp",
+  "line": 570,
+  "lang": "cpp",
+  "hash": "e0b1ff5c09e85629"
+ },
+ {
+  "q": "unmap allocated heap memory region under mutex protection",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/memory.cpp",
+  "line": 168,
+  "lang": "cpp",
+  "hash": "f5d61466bd11d003"
+ }
+]
