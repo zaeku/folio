@@ -12,6 +12,17 @@ use crate::config::validate_transport;
 
 const BATCH: usize = 32;
 
+/// What a model expects in front of a query and in front of a document.
+///
+/// A prefix changes the text the endpoint embeds, so a document prefix belongs
+/// to an index the way its model does, and a query is sent with the query
+/// prefix of the index it reads. Empty for a model that expects none.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct Prefixes {
+    pub query: String,
+    pub document: String,
+}
+
 #[derive(Serialize)]
 struct EmbedReq<'a> {
     model: &'a str,

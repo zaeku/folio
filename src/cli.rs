@@ -231,7 +231,8 @@ pub(crate) enum Cmd {
 pub(crate) enum ConfigCmd {
     /// Write one setting to a config file, creating it if it is absent.
     Set {
-        /// `endpoint`, `model`, `api_key`, or `allow_insecure`.
+        /// `endpoint`, `model`, `api_key`, `allow_insecure`, `query_prefix`, or
+        /// `document_prefix`.
         key: String,
         value: String,
         /// Write `folio.yaml` beside the corpus instead of the user's config.

@@ -7,6 +7,7 @@
 //! folio asks of SQL is small enough to keep in one place, and an engine behind
 //! it can be replaced without the rest of folio knowing.
 
+use crate::embed::Prefixes;
 use crate::sections::Section;
 use anyhow::{Context, Result};
 use rusqlite::{Connection, params};
@@ -42,6 +43,9 @@ pub struct Meta {
     /// folio starts on its own uses the one the user chose rather than a
     /// default they never saw.
     pub max_chars: usize,
+    /// The prefixes every row was embedded behind and every query is sent
+    /// behind.
+    pub prefixes: Prefixes,
 }
 
 /// What the index covers.
@@ -153,6 +157,8 @@ impl Store {
                 "endpoint" => m.endpoint = v,
                 "dim" => m.dim = v.parse().unwrap_or(0),
                 "max_chars" => m.max_chars = v.parse().unwrap_or(0),
+                "query_prefix" => m.prefixes.query = v,
+                "document_prefix" => m.prefixes.document = v,
                 "fingerprint" => m.fingerprint = v,
                 "fingerprint_vec" => {
                     m.fingerprint_vec = serde_json::from_str(&v).unwrap_or_default()
@@ -406,6 +412,8 @@ impl Store {
         ins.execute(params!["endpoint", meta.endpoint])?;
         ins.execute(params!["dim", meta.dim.to_string()])?;
         ins.execute(params!["max_chars", meta.max_chars.to_string()])?;
+        ins.execute(params!["query_prefix", meta.prefixes.query])?;
+        ins.execute(params!["document_prefix", meta.prefixes.document])?;
         ins.execute(params!["fingerprint", meta.fingerprint])?;
         ins.execute(params!["fingerprint_vec", serde_json::to_string(&meta.fingerprint_vec)?])?;
         Ok(())
@@ -481,6 +489,7 @@ mod tests {
             endpoint: "e".into(),
             dim: 3,
             max_chars: 99,
+            prefixes: Prefixes { query: "q: ".into(), document: "d: ".into() },
             ..Meta::default()
         };
         let files =

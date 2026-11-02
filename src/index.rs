@@ -20,8 +20,9 @@ use std::sync::Mutex;
 use crate::config::{
     DEFAULT_ENDPOINT, DEFAULT_MODEL, PROJECT_CONFIG, config_path, enclosing_index,
     nearest_declaration, read_config_at, resolve, resolve_allow_insecure, resolve_api_key,
+    resolve_prefixes,
 };
-use crate::embed::{SAME_SPACE, calibrate, embed, same_space};
+use crate::embed::{Prefixes, SAME_SPACE, calibrate, embed, same_space};
 use crate::sections::{self, Section};
 use crate::store::{self, Meta, Stamp, Store};
 use crate::{as_floats, map_vectors, stamp};
@@ -90,8 +91,8 @@ fn pair_moves(
 /// `Ok(None)` means another process holds the write lock and this one declined
 /// to wait: a re-index nobody asked for is not worth blocking on, and one the
 /// user asked for says so rather than hanging.
-// Eight, and the endpoint, model, key and budget among them are what a run
-// sends rather than what it computes. Grouping them into a struct would name a
+// Nine, and the endpoint, model, key, budget and prefixes among them are what a
+// run sends rather than what it computes. Grouping them into a struct would name a
 // thing that exists only for the length of one call.
 #[expect(clippy::too_many_arguments)]
 pub(crate) fn reindex(
@@ -101,6 +102,7 @@ pub(crate) fn reindex(
     api_key: Option<&str>,
     allow_insecure: bool,
     max_chars: usize,
+    prefixes: &Prefixes,
     rebuild: bool,
     wait: std::time::Duration,
 ) -> Result<Option<Indexed>> {
@@ -147,7 +149,18 @@ pub(crate) fn reindex(
             }
         }
     }
-    let reuse = !rebuild && prev.dim > 0 && drifted.is_none();
+    // A document prefix is part of what was embedded, so rows written behind
+    // another one are in another space however the fingerprint reads. A query
+    // prefix is only recorded, so changing it re-embeds nothing.
+    let reprefixed = !rebuild && prev.dim > 0 && prev.prefixes.document != prefixes.document;
+    if reprefixed {
+        println!(
+            "this index was built behind document prefix {:?} and {:?} is configured now — \
+             re-embedding every section",
+            prev.prefixes.document, prefixes.document
+        );
+    }
+    let reuse = !rebuild && prev.dim > 0 && drifted.is_none() && !reprefixed;
     if let Some(near) = drifted {
         // Discarding is the decision working. Saying so, with the number that
         // caused it, is the difference between that and a re-index someone
@@ -271,7 +284,7 @@ pub(crate) fn reindex(
     // says here.
     let mut max_chars = max_chars;
     if let Some(longest) = fresh.iter().max_by_key(|s| s.text.chars().count()) {
-        let longest = longest.text.clone();
+        let longest = format!("{}{}", prefixes.document, longest.text);
         let fitted = calibrate(endpoint, model, api_key, allow_insecure, &longest, max_chars)?;
         if fitted < max_chars {
             println!("  budget for this run: {fitted} characters, not {max_chars}");
@@ -311,6 +324,7 @@ pub(crate) fn reindex(
         endpoint: endpoint.to_string(),
         dim,
         max_chars,
+        prefixes: prefixes.clone(),
         fingerprint: fingerprint_text,
         fingerprint_vec: fingerprint,
     })?;
@@ -321,7 +335,8 @@ pub(crate) fn reindex(
     // current for one: written for a file whose sections are only half in, the
     // next run would skip the other half forever.
     for batch in batches(fresh, FLUSH) {
-        let inputs: Vec<String> = batch.iter().map(|s| s.text.clone()).collect();
+        let inputs: Vec<String> =
+            batch.iter().map(|s| format!("{}{}", prefixes.document, s.text)).collect();
         let vectors = embed(endpoint, model, api_key, allow_insecure, &inputs)?;
         if dim == 0 {
             dim = vectors[0].len();
@@ -422,6 +437,7 @@ pub(crate) fn cmd_index(
         resolve(model, "FOLIO_MODEL", proj.model.as_deref(), user.model.as_deref(), DEFAULT_MODEL);
     let (api_key, _) = resolve_api_key(&endpoint, user.api_key.as_deref());
     let allow_insecure = resolve_allow_insecure(allow_insecure, user.allow_insecure);
+    let prefixes = resolve_prefixes(&proj, &user);
     let (endpoint, model) = (endpoint.as_str(), model.as_str());
     // An index the user asked for waits a little for one already running, and
     // then says who it is waiting for rather than hanging on it.
@@ -433,6 +449,7 @@ pub(crate) fn cmd_index(
         api_key.as_deref(),
         allow_insecure,
         max_chars,
+        &prefixes,
         rebuild,
         wait,
     )?

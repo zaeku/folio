@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::embed::Prefixes;
 use crate::store;
 
 /// The default character budget per section. Set below the 8192-token context
@@ -36,6 +37,10 @@ pub(crate) struct Config {
     pub(crate) api_key: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) allow_insecure: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) query_prefix: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) document_prefix: Option<String>,
 }
 
 /// The per-corpus config, meant to be committed with the corpus.
@@ -197,6 +202,26 @@ pub(crate) fn resolve_api_key(
         return (Some(v.to_string()), "user config");
     }
     (None, "none")
+}
+
+/// The prefixes a new index is built with, from the environment, the corpus's
+/// declaration and the user's config, in that order, for each side apart.
+pub(crate) fn resolve_prefixes(project: &Config, user: &Config) -> Prefixes {
+    let (query, _) = resolve(
+        None,
+        "FOLIO_QUERY_PREFIX",
+        project.query_prefix.as_deref(),
+        user.query_prefix.as_deref(),
+        "",
+    );
+    let (document, _) = resolve(
+        None,
+        "FOLIO_DOCUMENT_PREFIX",
+        project.document_prefix.as_deref(),
+        user.document_prefix.as_deref(),
+        "",
+    );
+    Prefixes { query, document }
 }
 
 pub(crate) fn resolve_allow_insecure(flag: bool, user: Option<bool>) -> bool {
@@ -388,6 +413,24 @@ mod tests {
 
         fs::remove_dir_all(&tmp).ok();
     }
+
+    #[test]
+    fn each_prefix_resolves_on_its_own() {
+        unsafe {
+            std::env::remove_var("FOLIO_QUERY_PREFIX");
+            std::env::remove_var("FOLIO_DOCUMENT_PREFIX");
+        }
+        let project = Config { query_prefix: Some("q: ".into()), ..Config::default() };
+        let user = Config {
+            query_prefix: Some("user q: ".into()),
+            document_prefix: Some("d: ".into()),
+            ..Config::default()
+        };
+        let p = resolve_prefixes(&project, &user);
+        assert_eq!((p.query.as_str(), p.document.as_str()), ("q: ", "d: "));
+        assert_eq!(resolve_prefixes(&Config::default(), &Config::default()), Prefixes::default());
+    }
+
     #[test]
     fn resolve_api_key_precedence() {
         unsafe {

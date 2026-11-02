@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 use crate::config::{
     DEFAULT_ENDPOINT, budget, config_path, read_config_at, resolve_allow_insecure, resolve_api_key,
 };
-use crate::embed::{SAME_SPACE, dot, embed, same_space};
+use crate::embed::{Prefixes, SAME_SPACE, dot, embed, same_space};
 use crate::filters::{Pred, blames, keeps, parse_preds, pointed_at, scalar_text};
 use crate::index::reindex;
 use crate::sections::Section;
@@ -87,6 +87,15 @@ fn open_all(roots: &[PathBuf]) -> Result<Vec<Opened>> {
                 first.meta.max_chars
             );
         }
+        if o.meta.prefixes != first.meta.prefixes {
+            bail!(
+                "the indexes under {} and {} were embedded behind different prefixes, so a \
+                 question cannot be sent in a form both were built for — re-index one of them \
+                 with the other's query_prefix and document_prefix",
+                first.root.display(),
+                o.root.display()
+            );
+        }
     }
     // Where there is one index, an index built before folio recorded a
     // fingerprint is still answered: what that costs is an unverified answer
@@ -126,7 +135,7 @@ fn embed_and_prove(
             inputs.push(o.meta.fingerprint.clone());
         }
     }
-    inputs.push(text.to_string());
+    inputs.push(format!("{}{text}", first.prefixes.query));
     let mut vectors = embed(&first.endpoint, &first.model, api_key, allow_insecure, &inputs)?;
     let asked = vectors.pop().expect("one input yields one vector");
 
@@ -402,7 +411,7 @@ pub(crate) fn cmd_query(
         // What a refresh needs, taken before the maps are given up. Only the
         // indexes with a stale row are re-indexed: the others answered from
         // files that have not moved.
-        let plans: Vec<(PathBuf, String, String, usize)> = if refresh && !refreshed {
+        let plans: Vec<(PathBuf, String, String, usize, Prefixes)> = if refresh && !refreshed {
             opened
                 .iter()
                 .enumerate()
@@ -413,6 +422,7 @@ pub(crate) fn cmd_query(
                         o.meta.endpoint.clone(),
                         o.meta.model.clone(),
                         budget(o.meta.max_chars),
+                        o.meta.prefixes.clone(),
                     )
                 })
                 .collect()
@@ -424,7 +434,7 @@ pub(crate) fn cmd_query(
         if !plans.is_empty() {
             let mut reembedded = 0usize;
             let mut ran = false;
-            for (root, endpoint, model, budget) in &plans {
+            for (root, endpoint, model, budget, prefixes) in &plans {
                 // Declined rather than waited: another folio is already
                 // writing, and its result will be at least as fresh as this
                 // one's would be.
@@ -435,6 +445,7 @@ pub(crate) fn cmd_query(
                     api_key.as_deref(),
                     allow_insecure,
                     *budget,
+                    prefixes,
                     false,
                     std::time::Duration::ZERO,
                 )? {
