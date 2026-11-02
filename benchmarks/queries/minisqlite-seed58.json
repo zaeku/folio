@@ -1,0 +1,541 @@
+[
+ {
+  "q": "check expression references only columns inside specified index span",
+  "file": "crates/minisqlite-plan/src/compile/from.rs",
+  "line": 1604,
+  "lang": "rust",
+  "hash": "286c72a4002f6340"
+ },
+ {
+  "q": "construct initial compilation scope for single table queries without joins",
+  "file": "crates/minisqlite-plan/src/bind/scope.rs",
+  "line": 521,
+  "lang": "rust",
+  "hash": "e20d64cdfcf4ec45"
+ },
+ {
+  "q": "initialize database header page and allocate initial pages in storage pager",
+  "file": "crates/minisqlite-pager/src/diskpager.rs",
+  "line": 363,
+  "lang": "rust",
+  "hash": "e5c018a4bedaec2b"
+ },
+ {
+  "q": "collect flattened tables from nested comma separated joins",
+  "file": "crates/minisqlite-plan/src/compile/from.rs",
+  "line": 1696,
+  "lang": "rust",
+  "hash": "65c16f3e6ae3a27c"
+ },
+ {
+  "q": "transform optional subexpression tree using scope and output mappings",
+  "file": "crates/minisqlite-plan/src/compile/aggregate.rs",
+  "line": 454,
+  "lang": "rust",
+  "hash": "7a9a90031a23ad7f"
+ },
+ {
+  "q": "execute accumulator step across slice of items and finalize",
+  "file": "crates/minisqlite-functions/src/json/mod.rs",
+  "line": 112,
+  "lang": "rust",
+  "hash": "c48ec9fd4c0bf9e6"
+ },
+ {
+  "q": "database schema lookup sequence prioritizing temporary over persistent stores",
+  "file": "crates/minisqlite-engine/src/namespace.rs",
+  "line": 72,
+  "lang": "rust",
+  "hash": "a02403802cc5d044"
+ },
+ {
+  "q": "translate query block into relational plan node with filtering and windowing",
+  "file": "crates/minisqlite-plan/src/compile/select.rs",
+  "line": 468,
+  "lang": "rust",
+  "hash": "e15848a782c4e2cb"
+ },
+ {
+  "q": "retrieve memoized compiled event handlers for modified relations",
+  "file": "crates/minisqlite-exec/src/runtime.rs",
+  "line": 611,
+  "lang": "rust",
+  "hash": "98d33a43d238a527"
+ },
+ {
+  "q": "parse and generate execution representation for insert statement string",
+  "file": "crates/minisqlite-plan/src/compile/insert.rs",
+  "line": 1497,
+  "lang": "rust",
+  "hash": "67e0156765070e90"
+ },
+ {
+  "q": "extract list of attribute identifiers for relation schema validation",
+  "file": "crates/minisqlite-catalog/src/multicatalog.rs",
+  "line": 445,
+  "lang": "rust",
+  "hash": "f40b3592acfaffe0"
+ },
+ {
+  "q": "determine if expression references attributes strictly from first or second relation",
+  "file": "crates/minisqlite-plan/src/compile/from.rs",
+  "line": 1929,
+  "lang": "rust",
+  "hash": "c4fae4a67cbed67a"
+ },
+ {
+  "q": "disallow letters directly attached to numbers in parser",
+  "file": "crates/minisqlite-sql/src/token.rs",
+  "line": 443,
+  "lang": "rust",
+  "hash": "5d47bb5695a26b88"
+ },
+ {
+  "q": "find database page count visible to reader commit snapshot",
+  "file": "crates/minisqlite-pager/src/walindex.rs",
+  "line": 120,
+  "lang": "rust",
+  "hash": "a44994ba0c5e3f9c"
+ },
+ {
+  "q": "parse btree starting page index from master schema binary tuple",
+  "file": "crates/minisqlite-pager/src/reclaim.rs",
+  "line": 611,
+  "lang": "rust",
+  "hash": "e8435501b9810310"
+ },
+ {
+  "q": "construct database execution context from storage pager and catalog metadata",
+  "file": "crates/minisqlite-engine/src/engine.rs",
+  "line": 122,
+  "lang": "rust",
+  "hash": "fa1537f34b7142e8"
+ },
+ {
+  "q": "format structured document with specified indentation and spacing",
+  "file": "crates/minisqlite-functions/src/json/value.rs",
+  "line": 162,
+  "lang": "rust",
+  "hash": "88f3c8bbe9f744ba"
+ },
+ {
+  "q": "calculate available space per block excluding database header reserved area",
+  "file": "crates/minisqlite-btree/src/tree.rs",
+  "line": 19,
+  "lang": "rust",
+  "hash": "63c0291d2c2d8c42"
+ },
+ {
+  "q": "global lazily initialized catalog of standard library functions",
+  "file": "crates/minisqlite-exec/src/ops/trigger.rs",
+  "line": 314,
+  "lang": "rust",
+  "hash": "fd7ba19e74a972ab"
+ },
+ {
+  "q": "traverse path steps to get mutable reference to containing object",
+  "file": "crates/minisqlite-functions/src/json/path.rs",
+  "line": 226,
+  "lang": "rust",
+  "hash": "59730f89384a6a6f"
+ },
+ {
+  "q": "step cursor forward decode and evaluate generated virtual columns",
+  "file": "crates/minisqlite-exec/src/ops/scan.rs",
+  "line": 110,
+  "lang": "rust",
+  "hash": "4d522a02b7eae8f2"
+ },
+ {
+  "q": "in memory registration for sqlite master system catalog table",
+  "file": "crates/minisqlite-catalog/src/schemacatalog.rs",
+  "line": 98,
+  "lang": "rust",
+  "hash": "1522af330284f9c6"
+ },
+ {
+  "q": "check if join tree shape allows pushing down filters",
+  "file": "crates/minisqlite-plan/src/compile/from.rs",
+  "line": 1473,
+  "lang": "rust",
+  "hash": "c9040208d129e6e3"
+ },
+ {
+  "q": "normalize value for deduplication grouping under specified collation",
+  "file": "crates/minisqlite-exec/src/keys.rs",
+  "line": 32,
+  "lang": "rust",
+  "hash": "ec8f2e26cd9a4849"
+ },
+ {
+  "q": "accumulate rows into groups finalize aggregates and evaluate having",
+  "file": "crates/minisqlite-exec/src/ops/aggregate.rs",
+  "line": 97,
+  "lang": "rust",
+  "hash": "4cec4d105b0e9867"
+ },
+ {
+  "q": "scalar custom function increment integer argument by one handle null",
+  "file": "crates/minisqlite-expr/src/eval.rs",
+  "line": 776,
+  "lang": "rust",
+  "hash": "c0b878a6da14e3de"
+ },
+ {
+  "q": "divide overflowing non leaf btree node into multiple nodes and allocate",
+  "file": "crates/minisqlite-btree/src/insert.rs",
+  "line": 366,
+  "lang": "rust",
+  "hash": "002a08276306558b"
+ },
+ {
+  "q": "compare two database scalar values for exact equality across types",
+  "file": "crates/minisqlite-fileformat/src/record_cursor.rs",
+  "line": 116,
+  "lang": "rust",
+  "hash": "ec4781632ce513d0"
+ },
+ {
+  "q": "dispatch compiled command ast to appropriate transaction ddl or execution handler",
+  "file": "crates/minisqlite-engine/src/dispatch.rs",
+  "line": 15,
+  "lang": "rust",
+  "hash": "71c7b9378773166a"
+ },
+ {
+  "q": "check if leading column satisfies min max optimization binary order",
+  "file": "crates/minisqlite-plan/src/compile/minmax_index.rs",
+  "line": 148,
+  "lang": "rust",
+  "hash": "ac7b4fbd1618facc"
+ },
+ {
+  "q": "test helper asserting planned root node matches record modification node",
+  "file": "crates/minisqlite-plan/src/compile/update.rs",
+  "line": 627,
+  "lang": "rust",
+  "hash": "9ff8ead301203c28"
+ },
+ {
+  "q": "fill buffer with exact number of bytes from specific disk location",
+  "file": "crates/minisqlite-journal/src/recover.rs",
+  "line": 184,
+  "lang": "rust",
+  "hash": "55e409c62b123d39"
+ },
+ {
+  "q": "construct table schema integer column definition with default settings for tests",
+  "file": "crates/minisqlite-plan/src/bind/expr.rs",
+  "line": 1937,
+  "lang": "rust",
+  "hash": "04b0007a88742350"
+ },
+ {
+  "q": "downgrade mutable storage pager borrow to shared read cursor",
+  "file": "crates/minisqlite-exec/src/env.rs",
+  "line": 101,
+  "lang": "rust",
+  "hash": "6b25da937b89546f"
+ },
+ {
+  "q": "execute test scalar operation with dummy context expecting success",
+  "file": "crates/minisqlite-functions/src/json/operators.rs",
+  "line": 143,
+  "lang": "rust",
+  "hash": "0cf8067009d084ac"
+ },
+ {
+  "q": "parse variable length encoded integer from byte slice",
+  "file": "crates/minisqlite-fileformat/src/varint.rs",
+  "line": 14,
+  "lang": "rust",
+  "hash": "e331319a4b29c0d3"
+ },
+ {
+  "q": "compute physical storage order for index organized table primary keys",
+  "file": "crates/minisqlite-exec/src/ops/without_rowid.rs",
+  "line": 221,
+  "lang": "rust",
+  "hash": "5a22a6c5c633295d"
+ },
+ {
+  "q": "accumulate integer argument into running aggregate state",
+  "file": "crates/minisqlite-expr/src/eval.rs",
+  "line": 801,
+  "lang": "rust",
+  "hash": "fe1fe2f457c10de7"
+ },
+ {
+  "q": "populate database index statistics table by scanning trees",
+  "file": "crates/minisqlite-engine/src/analyze.rs",
+  "line": 63,
+  "lang": "rust",
+  "hash": "031780a60083ded3"
+ },
+ {
+  "q": "hash semi or anti join streaming left input against right keys",
+  "file": "crates/minisqlite-exec/src/ops/setop.rs",
+  "line": 156,
+  "lang": "rust",
+  "hash": "5b6b05be7cd3a99f"
+ },
+ {
+  "q": "construct basic table field definition with name and declared data format",
+  "file": "crates/minisqlite-plan/src/compile/select.rs",
+  "line": 1085,
+  "lang": "rust",
+  "hash": "ffc4330ad83a1ef9"
+ },
+ {
+  "q": "traverse hierarchical structured document path steps tracking current location string",
+  "file": "crates/minisqlite-functions/src/json/table.rs",
+  "line": 177,
+  "lang": "rust",
+  "hash": "a527b75be3dab810"
+ },
+ {
+  "q": "generate execution step for subquery in from clause as materialized source",
+  "file": "crates/minisqlite-plan/src/compile/from.rs",
+  "line": 1217,
+  "lang": "rust",
+  "hash": "5f8426bc3ea1fe1e"
+ },
+ {
+  "q": "create virtual table column descriptor with standard text sorting order",
+  "file": "crates/minisqlite-plan/src/compile/pragma_tvf.rs",
+  "line": 58,
+  "lang": "rust",
+  "hash": "9520150065685914"
+ },
+ {
+  "q": "parse database header byte offset to determine character representation scheme",
+  "file": "crates/minisqlite-fileformat/src/text_encoding.rs",
+  "line": 63,
+  "lang": "rust",
+  "hash": "b0f216a20b97fd08"
+ },
+ {
+  "q": "evaluate equality ordering between two items applying type coercion rules",
+  "file": "crates/minisqlite-exec/src/context.rs",
+  "line": 669,
+  "lang": "rust",
+  "hash": "0011620e91cf497c"
+ },
+ {
+  "q": "total number of key definitions across table and field declarations",
+  "file": "crates/minisqlite-catalog/src/builder.rs",
+  "line": 860,
+  "lang": "rust",
+  "hash": "44c580a12e8a57f9"
+ },
+ {
+  "q": "initialize memory storage with first block allocated to prevent collisions",
+  "file": "crates/minisqlite-btree/src/overflow_io.rs",
+  "line": 174,
+  "lang": "rust",
+  "hash": "543d39a775098f11"
+ },
+ {
+  "q": "advance scanner past spaces and multi line or inline remarks",
+  "file": "crates/minisqlite-functions/src/json/parse.rs",
+  "line": 147,
+  "lang": "rust",
+  "hash": "23b1029bf304caad"
+ },
+ {
+  "q": "extract schema definition fragment after removing a field",
+  "file": "crates/minisqlite-catalog/src/drop_checks.rs",
+  "line": 281,
+  "lang": "rust",
+  "hash": "5dfd232b83915366"
+ },
+ {
+  "q": "update relation identifier in existing schema statement text",
+  "file": "crates/minisqlite-catalog/src/alter_rewrite.rs",
+  "line": 188,
+  "lang": "rust",
+  "hash": "4cd06054be07e316"
+ },
+ {
+  "q": "lookup committed storage page count visible at write ahead log mark",
+  "file": "crates/minisqlite-wal/src/index.rs",
+  "line": 183,
+  "lang": "rust",
+  "hash": "b204ccd43eb3a292"
+ },
+ {
+  "q": "find virtual table definition searching across database schemas in priority sequence",
+  "file": "crates/minisqlite-catalog/src/multicatalog.rs",
+  "line": 132,
+  "lang": "rust",
+  "hash": "652a9c303389468d"
+ },
+ {
+  "q": "serialize initial column fallback value back into SQL string representation",
+  "file": "crates/minisqlite-catalog/src/builder.rs",
+  "line": 1408,
+  "lang": "rust",
+  "hash": "c1e04e263d9051b7"
+ },
+ {
+  "q": "apply sorting deduplication row limit and pagination to query plan",
+  "file": "crates/minisqlite-plan/src/compile/select.rs",
+  "line": 675,
+  "lang": "rust",
+  "hash": "02eecb8f6b04d1f2"
+ },
+ {
+  "q": "lexer parse numeric literal decimal hexadecimal floating point token",
+  "file": "crates/minisqlite-sql/src/token.rs",
+  "line": 352,
+  "lang": "rust",
+  "hash": "a6f3b8702ff27c85"
+ },
+ {
+  "q": "format date time civil breakdown into string according to specifiers",
+  "file": "crates/minisqlite-functions/src/datetime/strftime.rs",
+  "line": 8,
+  "lang": "rust",
+  "hash": "198804bcfeab142e"
+ },
+ {
+  "q": "abort transaction discard uncommitted changes and unlock storage",
+  "file": "crates/minisqlite-pager/src/cow.rs",
+  "line": 360,
+  "lang": "rust",
+  "hash": "0ccedfb468d9215a"
+ },
+ {
+  "q": "lookup virtual table or query definition by database and name",
+  "file": "crates/minisqlite-catalog/src/multicatalog.rs",
+  "line": 231,
+  "lang": "rust",
+  "hash": "802236cbfb0b50f0"
+ },
+ {
+  "q": "construct deduplication sort keys across tuple values with collations",
+  "file": "crates/minisqlite-exec/src/keys.rs",
+  "line": 53,
+  "lang": "rust",
+  "hash": "58b7d32e997f421e"
+ },
+ {
+  "q": "wrap row iterator to yield items matching boolean condition",
+  "file": "crates/minisqlite-exec/src/ops/filter.rs",
+  "line": 13,
+  "lang": "rust",
+  "hash": "65278a76fabaeca5"
+ },
+ {
+  "q": "evaluate running aggregate state intermediate value without resetting",
+  "file": "crates/minisqlite-exec/src/ops/window.rs",
+  "line": 604,
+  "lang": "rust",
+  "hash": "2c8c6b941fc52def"
+ },
+ {
+  "q": "check if column identifier matches built in primary key alias",
+  "file": "crates/minisqlite-plan/src/bind/scope.rs",
+  "line": 1274,
+  "lang": "rust",
+  "hash": "9a71e898d5cef8e6"
+ },
+ {
+  "q": "generate execution plan for nested select expression within outer query",
+  "file": "crates/minisqlite-plan/src/compile/select.rs",
+  "line": 79,
+  "lang": "rust",
+  "hash": "2551780bac766e18"
+ },
+ {
+  "q": "foreign key cascade modify child records on referenced row modification",
+  "file": "crates/minisqlite-exec/src/ops/foreign_key.rs",
+  "line": 830,
+  "lang": "rust",
+  "hash": "46a2381056e7f75c"
+ },
+ {
+  "q": "write-ahead log file construction with initial header and running checksum",
+  "file": "crates/minisqlite-wal/src/codec.rs",
+  "line": 298,
+  "lang": "rust",
+  "hash": "912aefb59a32a5b6"
+ },
+ {
+  "q": "scan btree index to find duplicate key using custom text ordering",
+  "file": "crates/minisqlite-exec/src/ops/dml_index.rs",
+  "line": 837,
+  "lang": "rust",
+  "hash": "a3cd1e611336d260"
+ },
+ {
+  "q": "determine whether write ahead log record signals transaction completion",
+  "file": "crates/minisqlite-wal/src/codec.rs",
+  "line": 203,
+  "lang": "rust",
+  "hash": "1ef40d33940f09b9"
+ },
+ {
+  "q": "expand wildcard select into projected columns and output names",
+  "file": "crates/minisqlite-plan/src/compile/update.rs",
+  "line": 497,
+  "lang": "rust",
+  "hash": "6c08b48df3c3c86c"
+ },
+ {
+  "q": "overwrite big endian integer at offset in database page buffer",
+  "file": "crates/minisqlite-pager/src/reclaim.rs",
+  "line": 423,
+  "lang": "rust",
+  "hash": "008a0f8e27e7508b"
+ },
+ {
+  "q": "helper constructing sample catalog with two integer columns for tests",
+  "file": "crates/minisqlite-plan/src/bind/expr.rs",
+  "line": 1951,
+  "lang": "rust",
+  "hash": "4615d7381e348f51"
+ },
+ {
+  "q": "get or register shared database coordinator using weak references",
+  "file": "crates/minisqlite-pager/src/walshared.rs",
+  "line": 150,
+  "lang": "rust",
+  "hash": "977e2f129f7bb701"
+ },
+ {
+  "q": "construct subquery memoization lookup key from outer query row registers",
+  "file": "crates/minisqlite-exec/src/corr_key.rs",
+  "line": 60,
+  "lang": "rust",
+  "hash": "d4cef46549f6dfc2"
+ },
+ {
+  "q": "compare query result tuples by debug formatting due to floating point values",
+  "file": "crates/minisqlite-catalog/src/alter_data.rs",
+  "line": 132,
+  "lang": "rust",
+  "hash": "7ca94fe4b25c3c8c"
+ },
+ {
+  "q": "compute absolute value of numeric SQL argument handling integer overflow",
+  "file": "crates/minisqlite-functions/src/scalar/math.rs",
+  "line": 214,
+  "lang": "rust",
+  "hash": "6d232258bc29f253"
+ },
+ {
+  "q": "extract equality seek expression from row identifier comparison filter",
+  "file": "crates/minisqlite-plan/src/access_path.rs",
+  "line": 635,
+  "lang": "rust",
+  "hash": "6df835f84ff427a3"
+ },
+ {
+  "q": "export database copy to specified destination file path",
+  "file": "crates/minisqlite-engine/src/vacuum.rs",
+  "line": 59,
+  "lang": "rust",
+  "hash": "ed2d3ee00788f60a"
+ }
+]

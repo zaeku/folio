@@ -1,0 +1,891 @@
+[
+ {
+  "q": "callback invoked when non text content is discovered during scanning",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 174,
+  "lang": "rust",
+  "hash": "61e531d9dfa38aee"
+ },
+ {
+  "q": "display pattern syntax failure message with optional pattern string",
+  "file": "crates/globset/src/lib.rs",
+  "line": 244,
+  "lang": "rust",
+  "hash": "b5f169db87bb3e94"
+ },
+ {
+  "q": "construct matching target instance from raw slice of characters",
+  "file": "crates/globset/src/lib.rs",
+  "line": 632,
+  "lang": "rust",
+  "hash": "0014c0c390cca029"
+ },
+ {
+  "q": "check whether item satisfies every pattern in collection",
+  "file": "crates/globset/src/lib.rs",
+  "line": 383,
+  "lang": "rust",
+  "hash": "df7164901a9bd0f4"
+ },
+ {
+  "q": "detailed help text for surrounding context lines flag",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1019,
+  "lang": "rust",
+  "hash": "b039321724ca220f"
+ },
+ {
+  "q": "append parsed item to current branch pattern group",
+  "file": "crates/globset/src/glob.rs",
+  "line": 875,
+  "lang": "rust",
+  "hash": "5384574938041213"
+ },
+ {
+  "q": "initialize state and timers before starting structured output stream",
+  "file": "crates/printer/src/json.rs",
+  "line": 802,
+  "lang": "rust",
+  "hash": "22ed90f5ab65dde9"
+ },
+ {
+  "q": "helper to construct rules from list of patterns",
+  "file": "crates/ignore/src/overrides.rs",
+  "line": 192,
+  "lang": "rust",
+  "hash": "d10c25a3819c67c3"
+ },
+ {
+  "q": "parse ignore rule entry and convert to pattern matching structure",
+  "file": "crates/ignore/src/gitignore.rs",
+  "line": 457,
+  "lang": "rust",
+  "hash": "151aa428f7e60ad6"
+ },
+ {
+  "q": "toggle collection of match counts and byte totals for output formatting",
+  "file": "crates/printer/src/standard.rs",
+  "line": 188,
+  "lang": "rust",
+  "hash": "4acfe6a8b82fcf4d"
+ },
+ {
+  "q": "allocate unique scratch folder in operating system temporary location",
+  "file": "crates/ignore/src/lib.rs",
+  "line": 521,
+  "lang": "rust",
+  "hash": "80734d15529fba89"
+ },
+ {
+  "q": "callback invoked when encountering surrounding non-matching text lines",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 130,
+  "lang": "rust",
+  "hash": "b043b7455a4b85bb"
+ },
+ {
+  "q": "extended manual page text explaining how to reset file associations",
+  "file": "crates/core/flags/defs.rs",
+  "line": 7043,
+  "lang": "rust",
+  "hash": "97f2b74891553abd"
+ },
+ {
+  "q": "construct failure object when numeric size representation fails to parse",
+  "file": "crates/cli/src/human.rs",
+  "line": 26,
+  "lang": "rust",
+  "hash": "2bb119794c6f1d38"
+ },
+ {
+  "q": "determine whether search terms can bypass regex parsing as plain substrings",
+  "file": "crates/regex/src/config.rs",
+  "line": 94,
+  "lang": "rust",
+  "hash": "5e681f5f4d4faa33"
+ },
+ {
+  "q": "open terminal escape sequence linking to current file location",
+  "file": "crates/printer/src/summary.rs",
+  "line": 591,
+  "lang": "rust",
+  "hash": "28b0e375497c3297"
+ },
+ {
+  "q": "documentation for command line option enabling memory mapped file search",
+  "file": "crates/core/flags/defs.rs",
+  "line": 4080,
+  "lang": "rust",
+  "hash": "e3653e7ae352f7ef"
+ },
+ {
+  "q": "output current file location before match line content with separator",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1655,
+  "lang": "rust",
+  "hash": "09de571422d79efd"
+ },
+ {
+  "q": "accumulate and merge consecutive occurrences on neighboring lines before reporting",
+  "file": "crates/searcher/src/searcher/glue.rs",
+  "line": 208,
+  "lang": "rust",
+  "hash": "cd385972e7ccbdc7"
+ },
+ {
+  "q": "execute callback across sequential pattern occurrences in byte buffer",
+  "file": "crates/pcre2/src/matcher.rs",
+  "line": 343,
+  "lang": "rust",
+  "hash": "acc4b1f22c82a49b"
+ },
+ {
+  "q": "construct compiled pattern searcher from single expression string",
+  "file": "crates/pcre2/src/matcher.rs",
+  "line": 32,
+  "lang": "rust",
+  "hash": "ae28916ff2003b65"
+ },
+ {
+  "q": "manual page description for filtering search targets by wildcard pattern",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3109,
+  "lang": "rust",
+  "hash": "1060e3f5b2ad56f6"
+ },
+ {
+  "q": "parse command line argument to configure worker pool execution count",
+  "file": "crates/core/flags/defs.rs",
+  "line": 6740,
+  "lang": "rust",
+  "hash": "be381eb40e33bee1"
+ },
+ {
+  "q": "configure null byte handling strategy based on command options",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 1158,
+  "lang": "rust",
+  "hash": "0f1d4d0e96e02fad"
+ },
+ {
+  "q": "retrieve file location reference from directory traversal item representation",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 138,
+  "lang": "rust",
+  "hash": "1c2a59e0ede4d9e9"
+ },
+ {
+  "q": "help text explaining automatic selection between regular expression backends",
+  "file": "crates/core/flags/defs.rs",
+  "line": 260,
+  "lang": "rust",
+  "hash": "e2a8e19de22812f3"
+ },
+ {
+  "q": "extract literal trailing characters from path matching pattern",
+  "file": "crates/globset/src/glob.rs",
+  "line": 460,
+  "lang": "rust",
+  "hash": "af6b06d177351d29"
+ },
+ {
+  "q": "transform wrapped value inside variant using callback function",
+  "file": "crates/ignore/src/types.rs",
+  "line": 205,
+  "lang": "rust",
+  "hash": "b74a7bd266262014"
+ },
+ {
+  "q": "stub directory entry creation for unsupported target platforms",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 424,
+  "lang": "rust",
+  "hash": "07e9c6ab173c7f0a"
+ },
+ {
+  "q": "configure decompression of archive files before scanning contents",
+  "file": "crates/core/search.rs",
+  "line": 116,
+  "lang": "rust",
+  "hash": "dce85a390e227d6e"
+ },
+ {
+  "q": "documentation for regular expression dot matching newline characters",
+  "file": "crates/core/flags/defs.rs",
+  "line": 4232,
+  "lang": "rust",
+  "hash": "45efd658b34d214c"
+ },
+ {
+  "q": "extract three character sliding substrings from command option string",
+  "file": "crates/core/flags/parse.rs",
+  "line": 462,
+  "lang": "rust",
+  "hash": "81368aa372b86817"
+ },
+ {
+  "q": "find indices of all matching patterns for given path",
+  "file": "crates/globset/src/lib.rs",
+  "line": 399,
+  "lang": "rust",
+  "hash": "e9eb95db910acd92"
+ },
+ {
+  "q": "pair search targets with their file system modification dates",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 771,
+  "lang": "rust",
+  "hash": "e18290d7f87d1362"
+ },
+ {
+  "q": "configure console terminal output stream with line buffering and colors",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 826,
+  "lang": "rust",
+  "hash": "6fd40d57b9e7941d"
+ },
+ {
+  "q": "benchmark directory tree traversal inside nested project package folder",
+  "file": "crates/ignore/benches/workloads.rs",
+  "line": 221,
+  "lang": "rust",
+  "hash": "9de5283fac6de4cd"
+ },
+ {
+  "q": "read raw bytes from user global version control settings file",
+  "file": "crates/ignore/src/gitignore.rs",
+  "line": 632,
+  "lang": "rust",
+  "hash": "dce27d3310927b5d"
+ },
+ {
+  "q": "toggle whether search respects rules from enclosing ancestor directories",
+  "file": "crates/ignore/src/dir.rs",
+  "line": 971,
+  "lang": "rust",
+  "hash": "a31534c37c64dab8"
+ },
+ {
+  "q": "terminate search execution immediately upon encountering first nonmatching record",
+  "file": "crates/core/flags/defs.rs",
+  "line": 6598,
+  "lang": "rust",
+  "hash": "cf9cbce6ecb038a5"
+ },
+ {
+  "q": "normalize operating system directory slashes in raw byte string",
+  "file": "crates/printer/src/util.rs",
+  "line": 317,
+  "lang": "rust",
+  "hash": "1a0ee056d6148ae2"
+ },
+ {
+  "q": "combine extracted literal candidate sequences while trimming length within threshold",
+  "file": "crates/regex/src/literal.rs",
+  "line": 395,
+  "lang": "rust",
+  "hash": "ca49a4daf4385f8c"
+ },
+ {
+  "q": "search byte buffer for pattern occurrence starting at specified offset",
+  "file": "crates/searcher/src/testutil.rs",
+  "line": 67,
+  "lang": "rust",
+  "hash": "409cbbc03b0cfd58"
+ },
+ {
+  "q": "format candidate search entry details for debugging display",
+  "file": "crates/globset/src/lib.rs",
+  "line": 617,
+  "lang": "rust",
+  "hash": "35b58be5761c05e9"
+ },
+ {
+  "q": "test if target file or ancestor directory matches exclusion pattern",
+  "file": "crates/ignore/src/gitignore.rs",
+  "line": 213,
+  "lang": "rust",
+  "hash": "66f3ad16fcec533b"
+ },
+ {
+  "q": "filter filesystem entries by directory traversal depth and size limits",
+  "file": "crates/ignore/src/incremental.rs",
+  "line": 267,
+  "lang": "rust",
+  "hash": "2733b5fb7e0d3e43"
+ },
+ {
+  "q": "create custom rule collector rooted at base folder",
+  "file": "crates/ignore/src/overrides.rs",
+  "line": 120,
+  "lang": "rust",
+  "hash": "79c98ea08a76c14e"
+ },
+ {
+  "q": "background task processing loop executing queued items until stopped",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 1757,
+  "lang": "rust",
+  "hash": "3c3260f08a8cbbb4"
+ },
+ {
+  "q": "configure custom delimiter byte separating aggregate tally columns",
+  "file": "crates/printer/src/summary.rs",
+  "line": 295,
+  "lang": "rust",
+  "hash": "2c6445110bb575c9"
+ },
+ {
+  "q": "retrieve starting position from beginning of entire input stream",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 396,
+  "lang": "rust",
+  "hash": "c4df53d54ee0d46a"
+ },
+ {
+  "q": "extract line position and decode text before passing to closure",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 598,
+  "lang": "rust",
+  "hash": "114360d7788a31d3"
+ },
+ {
+  "q": "compile multiple search expressions together into a single automata",
+  "file": "crates/globset/src/lib.rs",
+  "line": 287,
+  "lang": "rust",
+  "hash": "d68f4a072716597b"
+ },
+ {
+  "q": "benchmark directory tree traversal without repository ignore files",
+  "file": "crates/ignore/benches/workloads.rs",
+  "line": 232,
+  "lang": "rust",
+  "hash": "27be10e7e8fed64b"
+ },
+ {
+  "q": "output delimiter between printed columns or file location segments",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1717,
+  "lang": "rust",
+  "hash": "fdab5c415a2b149f"
+ },
+ {
+  "q": "man page extended description for specifying search target expressions",
+  "file": "crates/core/flags/defs.rs",
+  "line": 5865,
+  "lang": "rust",
+  "hash": "11aeffc5d6956d48"
+ },
+ {
+  "q": "execute query scan on disk location using chosen backend",
+  "file": "crates/core/search.rs",
+  "line": 341,
+  "lang": "rust",
+  "hash": "c914ad28e5e9d273"
+ },
+ {
+  "q": "handle command line switch asking to print external engine release information",
+  "file": "crates/core/flags/defs.rs",
+  "line": 5434,
+  "lang": "rust",
+  "hash": "bca8f2a98959bfb8"
+ },
+ {
+  "q": "choose beginning match assertion depending on newline carriage return conventions",
+  "file": "crates/regex/src/config.rs",
+  "line": 333,
+  "lang": "rust",
+  "hash": "c370f94f60e55f64"
+ },
+ {
+  "q": "parse colon delimited custom file category and extension mapping specification",
+  "file": "crates/ignore/src/types.rs",
+  "line": 437,
+  "lang": "rust",
+  "hash": "32b20067b3add7e3"
+ },
+ {
+  "q": "toggle whether traversal honors repository exclude rules",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 915,
+  "lang": "rust",
+  "hash": "d20873e959dd27e5"
+ },
+ {
+  "q": "emit terminal escape sequence linking to source location coordinates",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1454,
+  "lang": "rust",
+  "hash": "d246882356efb6b6"
+ },
+ {
+  "q": "traverse nested character groups and operations in parsed regular expression syntax",
+  "file": "crates/regex/src/ast.rs",
+  "line": 92,
+  "lang": "rust",
+  "hash": "42861c7a19e9e740"
+ },
+ {
+  "q": "test if file or folder path matches repository exclusion rules",
+  "file": "crates/ignore/src/gitignore.rs",
+  "line": 191,
+  "lang": "rust",
+  "hash": "90f3f2b06bbb3b70"
+ },
+ {
+  "q": "determine whether search should ignore casing based on uppercase characters",
+  "file": "crates/regex/src/config.rs",
+  "line": 82,
+  "lang": "rust",
+  "hash": "c20814d463ed6ec1"
+ },
+ {
+  "q": "configure console output formatter for displaying search hits and metadata",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 606,
+  "lang": "rust",
+  "hash": "6b7ac0ceb1638da2"
+ },
+ {
+  "q": "set command line search options to ignore character capitalization",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3181,
+  "lang": "rust",
+  "hash": "5926d72e96b15893"
+ },
+ {
+  "q": "documentation explaining carriage return line feed handling and regex anchors",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1400,
+  "lang": "rust",
+  "hash": "9793152ef19edc4c"
+ },
+ {
+  "q": "read configuration file and extract command line arguments per line",
+  "file": "crates/core/flags/config.rs",
+  "line": 73,
+  "lang": "rust",
+  "hash": "51f33f9f3cca792b"
+ },
+ {
+  "q": "documentation for flag that includes dotfiles and hidden directories in traversal",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2791,
+  "lang": "rust",
+  "hash": "42bcdf6ddd5d32e5"
+ },
+ {
+  "q": "help text for flag enforcing exact casing and overriding case folding",
+  "file": "crates/core/flags/defs.rs",
+  "line": 656,
+  "lang": "rust",
+  "hash": "48207c055ab35258"
+ },
+ {
+  "q": "extract trailing path component retaining parent directory dots for pattern evaluation",
+  "file": "crates/globset/src/lib.rs",
+  "line": 655,
+  "lang": "rust",
+  "hash": "71a174efbb8d3b2d"
+ },
+ {
+  "q": "retrieve configured upper bound on total matching lines or entries",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 875,
+  "lang": "rust",
+  "hash": "93beabe9da922558"
+ },
+ {
+  "q": "check whether search configuration can produce any valid hits",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 516,
+  "lang": "rust",
+  "hash": "5b17db4ce71837e0"
+ },
+ {
+  "q": "parse character charset flag into internal text decode configuration",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1630,
+  "lang": "rust",
+  "hash": "63165993a5abc4b1"
+ },
+ {
+  "q": "compile high level intermediate representation into finite automaton engine",
+  "file": "crates/regex/src/config.rs",
+  "line": 241,
+  "lang": "rust",
+  "hash": "33da21d821b1e0cd"
+ },
+ {
+  "q": "help description for option to traverse symlinks and detect loops",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2362,
+  "lang": "rust",
+  "hash": "4e06cb10a01b7af7"
+ },
+ {
+  "q": "execute search across in memory buffer with binary detection and context",
+  "file": "crates/searcher/src/searcher/glue.rs",
+  "line": 166,
+  "lang": "rust",
+  "hash": "b0fef2f5468e155a"
+ },
+ {
+  "q": "human readable message for directory walking and file traversal failure conditions",
+  "file": "crates/ignore/src/lib.rs",
+  "line": 311,
+  "lang": "rust",
+  "hash": "87847fe5b635713a"
+ },
+ {
+  "q": "check whether expression contains at least one exact string or character constant",
+  "file": "crates/regex/src/ast.rs",
+  "line": 43,
+  "lang": "rust",
+  "hash": "55d5462046692e0d"
+ },
+ {
+  "q": "configure count of preceding lines displayed around search target during testing",
+  "file": "crates/searcher/src/testutil.rs",
+  "line": 436,
+  "lang": "rust",
+  "hash": "30ece457fd4225e9"
+ },
+ {
+  "q": "initialize per worker lifo queues and distribute initial discovery jobs",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 1659,
+  "lang": "rust",
+  "hash": "48a89dd14c1f2078"
+ },
+ {
+  "q": "configure lowest allowable directory recursion level clamped by upper bound",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 741,
+  "lang": "rust",
+  "hash": "722ed653e1addcec"
+ },
+ {
+  "q": "enable or disable verbose mode ignoring comments and insignificant spaces",
+  "file": "crates/regex/src/matcher.rs",
+  "line": 162,
+  "lang": "rust",
+  "hash": "d4b2035bce3e12c1"
+ },
+ {
+  "q": "parse system machine identifier executable path argument into command settings",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2875,
+  "lang": "rust",
+  "hash": "0d27b4c608966b21"
+ },
+ {
+  "q": "construct updated match span keeping original beginning byte boundary",
+  "file": "crates/matcher/src/lib.rs",
+  "line": 116,
+  "lang": "rust",
+  "hash": "0fbffc3c449c53bd"
+ },
+ {
+  "q": "documentation explaining preview behavior when output exceeds maximum column width threshold",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3837,
+  "lang": "rust",
+  "hash": "f6eb5f5316321155"
+ },
+ {
+  "q": "parse user supplied delimiter string into unescaped raw byte sequence",
+  "file": "crates/core/flags/lowargs.rs",
+  "line": 593,
+  "lang": "rust",
+  "hash": "10e7ea1a718f1590"
+ },
+ {
+  "q": "construct pattern matching engine from multiple file search wildcards",
+  "file": "crates/globset/src/lib.rs",
+  "line": 458,
+  "lang": "rust",
+  "hash": "7617bd743deec3dd"
+ },
+ {
+  "q": "initial settings for printer styling separators and line break delimiters",
+  "file": "crates/printer/src/path.rs",
+  "line": 21,
+  "lang": "rust",
+  "hash": "c8b6e41579d71e37"
+ },
+ {
+  "q": "apply file type filtering selection from command line option value",
+  "file": "crates/core/flags/defs.rs",
+  "line": 6904,
+  "lang": "rust",
+  "hash": "f69da65a5e74925b"
+ },
+ {
+  "q": "validate that syntax tree does not match forbidden literal character",
+  "file": "crates/regex/src/ban.rs",
+  "line": 7,
+  "lang": "rust",
+  "hash": "f3a475c8847a5613"
+ },
+ {
+  "q": "extract text payload from parsed command line parameter or abort on boolean",
+  "file": "crates/core/flags/mod.rs",
+  "line": 286,
+  "lang": "rust",
+  "hash": "8cd4c182d5769c5a"
+ },
+ {
+  "q": "scan memory buffer for matches and stream outputs to collector",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 767,
+  "lang": "rust",
+  "hash": "b2002e9fcfc9bcf5"
+ },
+ {
+  "q": "record exact match text and update maximum seen string length",
+  "file": "crates/globset/src/lib.rs",
+  "line": 1044,
+  "lang": "rust",
+  "hash": "5c217fea8710d3a0"
+ },
+ {
+  "q": "create standard output stream choosing line or block buffer based on terminal",
+  "file": "crates/cli/src/wtr.rs",
+  "line": 9,
+  "lang": "rust",
+  "hash": "9651685f738cf399"
+ },
+ {
+  "q": "enable counting total matched occurrences mode from command line option",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1357,
+  "lang": "rust",
+  "hash": "157192d7e65fd02d"
+ },
+ {
+  "q": "configure number of surrounding lines to show on match",
+  "file": "crates/core/flags/lowargs.rs",
+  "line": 395,
+  "lang": "rust",
+  "hash": "869393d5dcbe918c"
+ },
+ {
+  "q": "parse cli flag generating shell completion scripts or documentation",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2452,
+  "lang": "rust",
+  "hash": "c5500ace68c158ec"
+ },
+ {
+  "q": "configure terminal terminal output to include clickable links",
+  "file": "crates/printer/src/standard.rs",
+  "line": 169,
+  "lang": "rust",
+  "hash": "f2fa009935a4def6"
+ },
+ {
+  "q": "disable regular expression syntax matching patterns as exact literals",
+  "file": "crates/pcre2/src/matcher.rs",
+  "line": 181,
+  "lang": "rust",
+  "hash": "dcf9f29dd31a3286"
+ },
+ {
+  "q": "check whether byte character set range size exceeds maximum capacity",
+  "file": "crates/regex/src/literal.rs",
+  "line": 363,
+  "lang": "rust",
+  "hash": "32c1ee5947a42b77"
+ },
+ {
+  "q": "set flag listing files that do not contain any matches",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2253,
+  "lang": "rust",
+  "hash": "b0f955e7208b9ba2"
+ },
+ {
+  "q": "reset internal buffer offsets and positions for reading next stream",
+  "file": "crates/searcher/src/line_buffer.rs",
+  "line": 334,
+  "lang": "rust",
+  "hash": "f6c9dffc68517953"
+ },
+ {
+  "q": "construct structured serialized format output stream handler",
+  "file": "crates/printer/src/json.rs",
+  "line": 64,
+  "lang": "rust",
+  "hash": "09feb8d421a501ab"
+ },
+ {
+  "q": "configure terminal styling rules on standard output builder",
+  "file": "crates/printer/src/standard.rs",
+  "line": 147,
+  "lang": "rust",
+  "hash": "e83b66172efaa5b1"
+ },
+ {
+  "q": "enable null byte separator option flag in low level arguments",
+  "file": "crates/core/flags/defs.rs",
+  "line": 5047,
+  "lang": "rust",
+  "hash": "19c2c484c8213796"
+ },
+ {
+  "q": "instantiate byte offset boundary span for pattern occurrence",
+  "file": "crates/matcher/src/lib.rs",
+  "line": 75,
+  "lang": "rust",
+  "hash": "724a3221086b6158"
+ },
+ {
+  "q": "check whether negative pattern filtering mode is active",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 846,
+  "lang": "rust",
+  "hash": "4cac9aaa46d0f61b"
+ },
+ {
+  "q": "builtin terminal highlight theme palette definitions for console output",
+  "file": "crates/printer/src/color.rs",
+  "line": 3,
+  "lang": "rust",
+  "hash": "293d8ff2c3b4f285"
+ },
+ {
+  "q": "check whether command line execution should suppress normal output",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 668,
+  "lang": "rust",
+  "hash": "773211b7b492d99a"
+ },
+ {
+  "q": "display descriptive message for invalid terminal styling options",
+  "file": "crates/printer/src/color.rs",
+  "line": 49,
+  "lang": "rust",
+  "hash": "92316d369f034758"
+ },
+ {
+  "q": "format cli option help text and wrap descriptions",
+  "file": "crates/core/flags/doc/help.rs",
+  "line": 130,
+  "lang": "rust",
+  "hash": "1a8a55be727d3c73"
+ },
+ {
+  "q": "help description explaining stdout chunked stream buffering option",
+  "file": "crates/core/flags/defs.rs",
+  "line": 536,
+  "lang": "rust",
+  "hash": "30058d6317cf3c41"
+ },
+ {
+  "q": "check whether file path satisfies file pattern strategy",
+  "file": "crates/globset/src/lib.rs",
+  "line": 725,
+  "lang": "rust",
+  "hash": "28f1b0b9bc481cd9"
+ },
+ {
+  "q": "handle printing binary release build and commit info",
+  "file": "crates/core/flags/defs.rs",
+  "line": 7320,
+  "lang": "rust",
+  "hash": "1f539e06eef445c1"
+ },
+ {
+  "q": "configure search expression to ignore character casing differences",
+  "file": "crates/regex/src/matcher.rs",
+  "line": 99,
+  "lang": "rust",
+  "hash": "26ae8f1830bc0fdf"
+ },
+ {
+  "q": "assign row index for terminal hyperlink template interpolation",
+  "file": "crates/printer/src/hyperlink/mod.rs",
+  "line": 596,
+  "lang": "rust",
+  "hash": "b1808012d7a36086"
+ },
+ {
+  "q": "construct directory item inspecting windows filesystem file metadata",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 338,
+  "lang": "rust",
+  "hash": "86ce21edf30f2ac3"
+ },
+ {
+  "q": "character that triggers stopping search upon encountering non text content",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 99,
+  "lang": "rust",
+  "hash": "15f0e39b5d77e0ab"
+ },
+ {
+  "q": "configure collector to track total matches and processed byte counts",
+  "file": "crates/printer/src/summary.rs",
+  "line": 244,
+  "lang": "rust",
+  "hash": "1c1870179d34afe7"
+ },
+ {
+  "q": "parse terminal clickable link template option from command line flag",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3041,
+  "lang": "rust",
+  "hash": "cd4a2a77eb979a4a"
+ },
+ {
+  "q": "relative ranking weight for ordering alternative names in documentation",
+  "file": "crates/printer/src/hyperlink/mod.rs",
+  "line": 209,
+  "lang": "rust",
+  "hash": "ace39b58f3ccbdca"
+ },
+ {
+  "q": "replenish reader cache and check whether non text data appeared",
+  "file": "crates/searcher/src/searcher/glue.rs",
+  "line": 58,
+  "lang": "rust",
+  "hash": "8a71274bcbcd1eca"
+ },
+ {
+  "q": "documentation for delimiter separating file path line number and text",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1909,
+  "lang": "rust",
+  "hash": "881a060eb1249920"
+ },
+ {
+  "q": "format diagnostic messages with severity target and source location to stderr",
+  "file": "crates/core/logger.rs",
+  "line": 37,
+  "lang": "rust",
+  "hash": "2579b856ddaa8845"
+ },
+ {
+  "q": "remove leading directory components from filesystem location",
+  "file": "crates/ignore/src/pathutil.rs",
+  "line": 93,
+  "lang": "rust",
+  "hash": "24886ae4890b5dd6"
+ },
+ {
+  "q": "build terminal manual documentation by populating template with CLI options",
+  "file": "crates/core/flags/doc/man.rs",
+  "line": 25,
+  "lang": "rust",
+  "hash": "e0f142bbcec3d6d8"
+ },
+ {
+  "q": "find buffer position starting N rows backward from buffer end",
+  "file": "crates/searcher/src/lines.rs",
+  "line": 149,
+  "lang": "rust",
+  "hash": "fb68b0a1004fa865"
+ }
+]

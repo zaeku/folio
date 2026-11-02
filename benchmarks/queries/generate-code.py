@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Draw random functions, have agy write one question per function, in batches.
 
-usage: generate-code.py <corpus-dir> <units.json> <out-dir> [seed=58]
-Draws 60 Rust, 60 Python and 30 C++ functions of at least 200 characters, tests
+usage: generate-code.py <corpus-dir> <units.json> <out-dir> [seed=58] [rust=60,python=60,cpp=30]
+Draws that many functions per language, each of at least 200 characters, tests
 left out, and writes <out-dir>/pairs.json as [{q, file, line, lang, hash}], line
 being the unit's start. A question that contains a piece of the function's name
 is dropped, or the lexical arms win on a leak rather than on search; a piece of
@@ -30,6 +30,8 @@ Return ONLY the JSON object matching the schema. Do not use tools.
 root, units = Path(sys.argv[1]), json.load(open(sys.argv[2]))
 out = Path(sys.argv[3]); out.mkdir(parents=True, exist_ok=True)
 seed = int(sys.argv[4]) if len(sys.argv) > 4 else 58
+if len(sys.argv) > 5:
+    STRATA = {lang: int(n) for lang, n in (s.split('=') for s in sys.argv[5].split(','))}
 src = {}
 
 

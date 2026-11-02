@@ -52,6 +52,9 @@ def embedding_arm(url, doc, qry):
 
 
 def codegraph_arm():
+    by_file = {}
+    for i, u in enumerate(units):
+        by_file.setdefault(u['file'], []).append(i)
     ranks = []
     for p in pairs:
         r = json.loads(subprocess.run(['codegraph', 'query', p['q'], '-j', '-l', '100', '-p', str(root)],
@@ -61,8 +64,8 @@ def codegraph_arm():
             n = h['node']
             if n['kind'] not in ('function', 'method'):
                 continue
-            i = next((i for i, u in enumerate(units) if u['file'] == n['filePath']
-                      and u['start'] <= n['startLine'] <= u['end']), None)
+            i = next((i for i in by_file.get(n['filePath'], [])
+                      if units[i]['start'] <= n['startLine'] <= units[i]['end']), None)
             if i is not None and i not in order:
                 order.append(i)
         ranks.append(rank_of(order, p))
@@ -79,12 +82,15 @@ def rg_arm():
     ranks = []
     for p in pairs:
         terms = sorted({w for w in re.findall(r'[a-z0-9]+', p['q'].lower()) if w not in STOP and len(w) > 1})
-        out = subprocess.run(['rg', '-i', '-n', '-o', '--no-heading', '-g', '!.codegraph',
+        out = subprocess.run(['rg', '-i', '-n', '-o', '--no-heading', '--null', '-g', '!.codegraph',
                               r'\b(' + '|'.join(terms) + ')', '.'],
                              cwd=root, capture_output=True, text=True).stdout
         hits = {}
         for row in out.splitlines():
-            f, line, word = row.split(':', 2)
+            if '\0' not in row:
+                continue  # rg's note that it stopped reading a binary file
+            f, rest = row.split('\0', 1)
+            line, word = rest.split(':', 1)
             i = at.get((f.removeprefix('./'), int(line)))
             if i is not None:
                 distinct, total = hits.get(i, (set(), 0))
@@ -115,6 +121,6 @@ arms = {
 print(json.dumps({"units": len(units), "truncated": truncated, "pairs": len(pairs),
                   "arms": {name: {"all": summary(r),
                                   **{lang: summary(r, lambda p, l=lang: p['lang'] == l)
-                                     for lang in ('rust', 'python', 'cpp')},
+                                     for lang in sorted({p['lang'] for p in pairs})},
                                   "ranks": r}
                            for name, r in arms.items()}}, indent=1))

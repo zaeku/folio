@@ -39,3 +39,13 @@ git -C <checkout> archive 550c4fb | tar -x -C <export>
 ```
 
 The first endpoint serves gte-modernbert-base and the second EmbeddingGemma 2.
+
+`ripgrep-seed58.json` and `minisqlite-seed58.json` are the sets the 2026-11-03
+measurement used, on two public trees fetched as tarballs at a pinned commit.
+Each was drawn with `rust=150` as the fifth argument of `generate-code.py`.
+
+```sh
+curl -sL https://github.com/BurntSushi/ripgrep/archive/91f5d22ef48b.tar.gz | tar -xz -C <export> --strip-components 1
+curl -sL https://github.com/cursor/minisqlite/archive/4a5c1341fdde.tar.gz | tar -xz -C <export> --strip-components 1
+./generate-code.py <export> units.json ../reports/code-queries 58 rust=150
+```
