@@ -80,3 +80,13 @@ line overlap with the target and by lines read to reach it.
 ```sh
 ./unit-arms.py <export> units.json ripgrep-seed58.json http://127.0.0.1:8090/v1/embeddings
 ```
+
+`mixed.py` ranks section questions and function questions together in one
+index, under each pairing of the search or code-retrieval query prefix with a
+`title: none` or filename document title. The sections are the rows `folio
+index` records for the tree's markdown, dumped from `.folio/index.db`.
+
+```sh
+sqlite3 <root>/.folio/index.db "SELECT path, start, stop FROM sections" | tr '|' '\t' > sections.tsv
+./mixed.py <root> sections.tsv units.json ripgrep rust-book-seed55.json ripgrep-seed58.json http://127.0.0.1:8090/v1/embeddings
+```
