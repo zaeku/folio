@@ -71,3 +71,12 @@ the ones generation dropped for naming the function, which are
 ./chunked.py <export> units.json minisqlite-seed58.json http://127.0.0.1:8090/v1/embeddings
 ./hybrid.py <export> units.json minisqlite-seed58.json minisqlite-seed58-dropped.json http://127.0.0.1:8090/v1/embeddings
 ```
+
+`unit-arms.py` ranks the same questions over four other cuts of the tree — fixed
+windows, regex declarations, and Tree-sitter functions led by their container's
+declaration with and without the file's module comment — and scores each by
+line overlap with the target and by lines read to reach it.
+
+```sh
+./unit-arms.py <export> units.json ripgrep-seed58.json http://127.0.0.1:8090/v1/embeddings
+```
