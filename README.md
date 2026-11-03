@@ -380,7 +380,7 @@ were embedded — after dividing, only the ones no boundary could divide.
 
 ```
 $ folio status --truncated
-1 of 5 sections were cut at 8000 characters, and ranked on what was left:
+1 of 5 records were cut at 8000 characters, and ranked on what was left:
   reference.md:7-7
         Reference > Compatibility table
 ```

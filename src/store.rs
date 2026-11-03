@@ -56,7 +56,10 @@ pub struct Meta {
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Counts {
     pub files: usize,
+    /// Every record, sections and functions alike.
     pub sections: usize,
+    /// The records that are functions of a source file.
+    pub functions: usize,
     pub truncated: usize,
 }
 
@@ -320,14 +323,23 @@ impl Store {
     /// What the index covers, counted in the database rather than by walking
     /// the records out of it.
     pub fn counts(&self) -> Result<Counts> {
-        let (files, sections, truncated) = self.conn.query_row(
-            "SELECT count(DISTINCT path), count(*), coalesce(sum(truncated), 0) FROM sections",
+        let (files, sections, functions, truncated) = self.conn.query_row(
+            "SELECT count(DISTINCT path), count(*), coalesce(sum(path NOT LIKE '%.md'), 0), \
+             coalesce(sum(truncated), 0) FROM sections",
             [],
-            |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?, r.get::<_, i64>(2)?)),
+            |r| {
+                Ok((
+                    r.get::<_, i64>(0)?,
+                    r.get::<_, i64>(1)?,
+                    r.get::<_, i64>(2)?,
+                    r.get::<_, i64>(3)?,
+                ))
+            },
         )?;
         Ok(Counts {
             files: files as usize,
             sections: sections as usize,
+            functions: functions as usize,
             truncated: truncated as usize,
         })
     }
@@ -522,7 +534,10 @@ mod tests {
 
         assert_eq!(st.slots().unwrap(), vec![0, 7], "the slot names the matrix row");
         assert_eq!(st.high_water().unwrap(), 8, "the next append goes past the last row");
-        assert_eq!(st.counts().unwrap(), Counts { files: 1, sections: 2, truncated: 2 });
+        assert_eq!(
+            st.counts().unwrap(),
+            Counts { files: 1, sections: 2, functions: 0, truncated: 2 }
+        );
 
         // Read back in the order asked for, not the order stored.
         let got = st.hydrate(&[7, 0]).unwrap();

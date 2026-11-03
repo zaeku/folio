@@ -52,6 +52,7 @@ pub(crate) fn hash(bytes: &[u8]) -> u64 {
 pub(crate) struct Indexed {
     pub(crate) files: usize,
     pub(crate) sections: usize,
+    pub(crate) functions: usize,
     pub(crate) truncated: usize,
     /// The budget these sections were cut at, which is `--max-chars` unless the
     /// endpoint refused it.
@@ -428,6 +429,7 @@ pub(crate) fn reindex(
     Ok(Some(Indexed {
         files: counts.files,
         sections: counts.sections,
+        functions: counts.functions,
         truncated: counts.truncated,
         budget: max_chars,
         dim,
@@ -493,7 +495,14 @@ pub(crate) fn cmd_index(
             root.display()
         );
     };
-    println!("indexed {} files · {} sections · dim {}", r.files, r.sections, r.dim);
+    let functions =
+        if r.functions > 0 { format!(" · {} functions", r.functions) } else { String::new() };
+    println!(
+        "indexed {} files · {} sections{functions} · dim {}",
+        r.files,
+        r.sections - r.functions,
+        r.dim
+    );
     println!(
         "  {} re-embedded, {} replaced or removed, {} dead row(s)",
         r.reembedded, r.retired, r.dead

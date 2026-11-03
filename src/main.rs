@@ -562,7 +562,7 @@ fn status_of(root: &Path, list_truncated: bool) -> Result<()> {
             return Ok(());
         }
         println!(
-            "{} of {} sections were cut at {} characters, and ranked on what was left:",
+            "{} of {} records were cut at {} characters, and ranked on what was left:",
             cut.len(),
             counts.sections,
             meta.max_chars
@@ -583,7 +583,10 @@ fn status_of(root: &Path, list_truncated: bool) -> Result<()> {
 
     println!("{}", root.display());
     println!("  files       {}", counts.files);
-    println!("  sections    {}", counts.sections);
+    println!("  sections    {}", counts.sections - counts.functions);
+    if counts.functions > 0 {
+        println!("  functions   {}", counts.functions);
+    }
     println!("  truncated   {}", counts.truncated);
     println!("  model       {} @ {}", meta.model, meta.endpoint);
     // A corpus that arrived from another machine carries an index built in one
