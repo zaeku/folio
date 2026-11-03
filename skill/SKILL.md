@@ -32,9 +32,9 @@ cannot tell you at the moment you need it.
 ## The commands
 
 ```sh
-folio index                 # every .md under the working directory
+folio index                 # every .md under the working directory, and source with code on
 folio query "does unfinished work count as a failure"
-folio status                # files, sections, model, frontmatter keys carried
+folio status                # files, sections, functions, model, frontmatter keys carried
 folio config                # the configuration a new index would use
 folio doctor                # ask the endpoint what ranking depends on
 ```
@@ -85,7 +85,8 @@ return may still exist, so do not take an empty result as proof. Once a result
 gives you a name, switch to `rg` for every use of it.
 
 folio marks a row `(N sections)` when it covers several sections that touch and
-rank alike, because that is the one read they describe.
+rank alike, because that is the one read they describe, and `(N functions)` for
+functions the same way.
 
 A row marked `(stale)` sits in a file that moved after folio indexed it. Treat
 its range as approximate. Locate its heading yourself before reading.
@@ -102,6 +103,12 @@ endpoint, which must be running:
 ```sh
 folio config set endpoint http://127.0.0.1:8080/v1/embeddings
 ```
+
+A model that wants prefixes in front of what it embeds gets them from
+`query_prefix`, `document_prefix` and, for functions, `function_prefix`, and
+folio sends none unless they are set. Without them EmbeddingGemma 2 ranks worse
+than with them and fails nothing, so check `folio config` before indexing for
+it.
 
 Run `folio config` to see where that answer came from. A corpus needing its own
 model — one in a language the default was not trained for — carries `folio.yaml`

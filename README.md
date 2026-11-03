@@ -167,7 +167,7 @@ travel off the loopback only over TLS unless `--allow-insecure` is passed.
 ```sh
 folio config set endpoint http://127.0.0.1:8080/v1/embeddings
 
-folio index                      # every .md under the working directory
+folio index                      # every .md under the working directory, and source with code on
 folio query "does unfinished work count as a failure"
 folio status
 ```

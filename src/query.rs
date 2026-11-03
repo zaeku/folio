@@ -529,7 +529,8 @@ pub(crate) fn cmd_query(
             let mark = if is_stale { "  (stale)" } else { "" };
             let joined = match h.pieces.len() {
                 1 => String::new(),
-                n => format!("  ({n} sections)"),
+                n if at.ends_with(".md") => format!("  ({n} sections)"),
+                n => format!("  ({n} functions)"),
             };
             println!("#{}  {:.3}  {at}:{}-{}{mark}", i + 1, h.score, h.start, h.end);
             println!("        {}{joined}", h.trail);
