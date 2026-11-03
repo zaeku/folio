@@ -340,12 +340,7 @@ pub(crate) fn cmd_query(
         let q = q.as_deref().expect("embedded above");
 
         let (hits, dropped) = rank(&opened, q, &preds, exclude_pointed_by, identity)?;
-        // Hydrated wider than the limit, because merging joins pieces that both
-        // rank and the limit counts merged rows rather than sections.
-        // Never below the limit: a caller asking for every record must be able
-        // to receive every record, which D-01M1PP6HGWJMQC's fence checks.
-        let window = (limit * MERGE_WINDOW).max(32);
-        let top: Vec<ScoredSlot> = hits.iter().take(window).copied().collect();
+        let top: Vec<ScoredSlot> = hits.iter().take(hydration_window(limit)).copied().collect();
 
         // Hydrated one index at a time and put back in the order they ranked,
         // because a slot means a row in one index's matrix.
@@ -544,7 +539,17 @@ pub(crate) fn cmd_query(
 /// Merging joins pieces that both rank, so a piece below this window joins
 /// nothing and a run stops there. Hydrating every record instead would restore
 /// the read D-01M1QWB73G6WNZ removed, which was 180 ms of a 267 ms query.
-const MERGE_WINDOW: usize = 8;
+const MERGE_HYDRATED: usize = 128;
+
+/// The window is fixed rather than a multiple of the limit, because what is
+/// hydrated decides what merges: grown with `--limit`, it let pieces further
+/// down join a run and reordered the rows above them, so `-l 4` was not the
+/// first four of `-l 10`. Never below the limit, because a caller asking for
+/// every record must be able to receive every record, which D-01M1PP6HGWJMQC's
+/// fence checks.
+fn hydration_window(limit: usize) -> usize {
+    limit.max(MERGE_HYDRATED)
+}
 /// One range to read, and the ranked sections it was assembled from.
 struct Hit {
     /// Which of the indexes read holds this, so that the reference prints the
@@ -575,7 +580,12 @@ struct Hit {
 /// next to one that merely surrounds it, and joining those two replaces a tight
 /// pointer with a loose one: measured on a fixture, a three-line answer at 0.766
 /// became a seven-line range at 0.618. So a piece joins a run only while it is
-/// comparably relevant to it, and a background neighbour is left out.
+/// comparably relevant to the run's best piece, and a background neighbour is
+/// left out.
+///
+/// The best is found first and the run grows outward from it. Grown in line
+/// order instead, weak pieces that came first were compared with the best seen
+/// so far and never with the one that arrived after them.
 fn merge_adjacent(rows: &[Section], owners: &[usize], scores: &[f32]) -> Vec<Hit> {
     // Keyed by the index as well as the path, because two indexes may hold the
     // same relative path and two files are not one run.
@@ -587,28 +597,37 @@ fn merge_adjacent(rows: &[Section], owners: &[usize], scores: &[f32]) -> Vec<Hit
     let mut out: Vec<Hit> = Vec::new();
     for ((owner, path), mut idx) in by_path {
         idx.sort_by_key(|&i| rows[i].start);
-        let mut run: Vec<usize> = Vec::new();
-        let mut best = 0.0f32;
+        // Pieces that touch, in line order; a gap starts another.
+        let mut touching: Vec<Vec<usize>> = Vec::new();
         for i in idx {
-            let touches = run.last().is_some_and(|&last| rows[last].end + 1 == rows[i].start);
+            match touching.last_mut() {
+                Some(t) if rows[t[t.len() - 1]].end + 1 == rows[i].start => t.push(i),
+                _ => touching.push(vec![i]),
+            }
+        }
+        // Each is cut into runs around its best piece, then the best of what is
+        // left, until nothing is.
+        let mut pending: Vec<&[usize]> = touching.iter().map(Vec::as_slice).collect();
+        while let Some(t) = pending.pop() {
+            if t.is_empty() {
+                continue;
+            }
+            let b = (0..t.len()).max_by(|&x, &y| scores[t[x]].total_cmp(&scores[t[y]])).unwrap();
             // ponytail: one ratio, read off a fixture where 0.741 against 0.780
             // is one answer in five pieces and 0.507 against 0.766 is background
             // beside an answer. A corpus should set it, and cosine scales differ
             // by model, so this is a starting point rather than a constant.
-            let alike = {
-                let (lo, hi) = if scores[i] < best { (scores[i], best) } else { (best, scores[i]) };
-                lo >= 0.9 * hi
-            };
-            if !run.is_empty() && !(touches && alike) {
-                out.push(assemble(owner, path, rows, scores, &run));
-                run.clear();
-                best = 0.0;
+            let alike = |k: usize| scores[t[k]] >= 0.9 * scores[t[b]];
+            let (mut lo, mut hi) = (b, b);
+            while lo > 0 && alike(lo - 1) {
+                lo -= 1;
             }
-            best = best.max(scores[i]);
-            run.push(i);
-        }
-        if !run.is_empty() {
-            out.push(assemble(owner, path, rows, scores, &run));
+            while hi + 1 < t.len() && alike(hi + 1) {
+                hi += 1;
+            }
+            out.push(assemble(owner, path, rows, scores, &t[lo..=hi]));
+            pending.push(&t[..lo]);
+            pending.push(&t[hi + 1..]);
         }
     }
     out.sort_by(|a, b| b.score.total_cmp(&a.score));
@@ -687,6 +706,34 @@ mod tests {
         assert_eq!(one.len(), 1, "touching pieces of one file are one run");
         let two = merge_adjacent(&rows, &[0, 1], &[0.8, 0.79]);
         assert_eq!(two.len(), 2, "one relative path in two indexes is two files");
+    }
+    #[test]
+    fn weak_neighbours_before_a_strong_piece_stay_out_of_its_run() {
+        // The report from 2026-11-03: four background sections touch the
+        // corpus's best one, and arrive first in line order.
+        let rows = [
+            sec("r.md", 89, 90),
+            sec("r.md", 91, 108),
+            sec("r.md", 109, 124),
+            sec("r.md", 125, 139),
+            sec("r.md", 140, 156),
+            sec("r.md", 157, 177),
+        ];
+        let scores = [0.674, 0.673, 0.676, 0.674, 0.716, 0.791];
+        let hits = merge_adjacent(&rows, &[0; 6], &scores);
+        let top = &hits[0];
+        assert_eq!((top.start, top.end), (140, 177), "the answer is a tight range");
+        assert!(top.score > 0.75, "and keeps its score, not {}", top.score);
+        let rest = &hits[1];
+        assert_eq!((rest.start, rest.end), (89, 139), "the background is a run of its own");
+    }
+    #[test]
+    fn the_hydration_window_does_not_move_with_the_limit() {
+        // So `-l 4` is the first four of `-l 10`: what merges cannot depend on
+        // how many rows were asked for.
+        assert_eq!(hydration_window(4), hydration_window(10));
+        assert_eq!(hydration_window(1), hydration_window(MERGE_HYDRATED));
+        assert!(hydration_window(10_000) >= 10_000, "a caller asking for every record gets them");
     }
     #[test]
     fn a_reference_is_bare_only_from_the_root_it_names() {
