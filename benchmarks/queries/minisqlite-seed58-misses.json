@@ -1,0 +1,785 @@
+[
+ {
+  "rank": 7,
+  "target": "A",
+  "above": [
+   "C",
+   "B",
+   "D"
+  ],
+  "case": "minisqlite/2",
+  "kind": "false miss",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C is the real init_database writing the header page; A and D are test stand-ins that also allocate extra pages, B only reads the header."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/5",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B drives step over a slice then finalizes; A is only a finalize impl."
+ },
+ {
+  "rank": 33,
+  "target": "B",
+  "above": [
+   "C",
+   "D",
+   "A"
+  ],
+  "case": "minisqlite/7",
+  "kind": "true miss",
+  "lenient_rank": 33,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B compiles a SELECT core into a plan node; the others are test helpers wrapping a Window node."
+ },
+ {
+  "rank": 3,
+  "target": "A",
+  "above": [
+   "B",
+   "C"
+  ],
+  "case": "minisqlite/8",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 1
+  },
+  "why": "A looks up the memoized recompiled triggers; B stores them and C builds the key."
+ },
+ {
+  "rank": 4,
+  "target": "D",
+  "above": [
+   "C",
+   "B",
+   "A"
+  ],
+  "case": "minisqlite/9",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D parses an insert string and plans it; A-C are parser pieces only."
+ },
+ {
+  "rank": 10,
+  "target": "B",
+  "above": [
+   "A",
+   "C",
+   "D"
+  ],
+  "case": "minisqlite/10",
+  "kind": "true miss",
+  "lenient_rank": 10,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B returns a table's column names; the others return affinities."
+ },
+ {
+  "rank": 13,
+  "target": "A",
+  "above": [
+   "C",
+   "B",
+   "D"
+  ],
+  "case": "minisqlite/11",
+  "kind": "true miss",
+  "lenient_rank": 13,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1,
+   "D": 0
+  },
+  "why": "A classifies an operand as left-only/right-only; C checks one range only; B and D are about column-name references in DDL."
+ },
+ {
+  "rank": 13,
+  "target": "D",
+  "above": [
+   "A",
+   "B",
+   "C"
+  ],
+  "case": "minisqlite/12",
+  "kind": "true miss",
+  "lenient_rank": 13,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D rejects an identifier char directly after a numeric literal."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/14",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both decode the rootpage column of a schema record; A also assembles overflow, B decodes a raw record."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/17",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both compute page size minus reserved space; A on a header struct, B from the pager's page 1."
+ },
+ {
+  "rank": 11,
+  "target": "B",
+  "above": [
+   "C",
+   "D",
+   "A"
+  ],
+  "case": "minisqlite/18",
+  "kind": "true miss",
+  "lenient_rank": 11,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 1,
+   "D": 0
+  },
+  "why": "B is the OnceLock global builtin registry; C builds it eagerly and A wraps it."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/24",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 2
+  },
+  "why": "B drains input into groups, finalizes and applies HAVING; A is an end-to-end test."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "minisqlite/27",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both implement exact per-storage-class Value equality; B is documented and public, A is a test helper."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/30",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B is the helper asserting the root is an Update node; A is a test doing it inline."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "minisqlite/35",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A is the library varint decoder; B is a test-local copy that panics on short input."
+ },
+ {
+  "rank": 21,
+  "target": "B",
+  "above": [
+   "C",
+   "D",
+   "A"
+  ],
+  "case": "minisqlite/36",
+  "kind": "true miss",
+  "lenient_rank": 21,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 1,
+   "D": 0
+  },
+  "why": "B builds the WITHOUT ROWID PK-first storage permutation; C applies it; A and D are order/compare logic."
+ },
+ {
+  "rank": 3,
+  "target": "A",
+  "above": [
+   "B",
+   "C"
+  ],
+  "case": "minisqlite/37",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1
+  },
+  "why": "A adds the integer argument to running state; C is a sum handling all types; B only counts."
+ },
+ {
+  "rank": 196,
+  "target": "C",
+  "above": [
+   "B",
+   "D",
+   "A"
+  ],
+  "case": "minisqlite/38",
+  "kind": "true miss",
+  "lenient_rank": 196,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C runs ANALYZE end to end into sqlite_stat1; B computes the rows and D queues a job."
+ },
+ {
+  "rank": 61,
+  "target": "D",
+  "above": [
+   "A",
+   "C",
+   "B"
+  ],
+  "case": "minisqlite/39",
+  "kind": "true miss",
+  "lenient_rank": 61,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D streams the left against a hashed right key set keeping present/absent rows; A is an ordinary hash join."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "minisqlite/40",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A takes exactly name and declared type; B also takes optional collation."
+ },
+ {
+  "rank": 6,
+  "target": "D",
+  "above": [
+   "C",
+   "A",
+   "B"
+  ],
+  "case": "minisqlite/42",
+  "kind": "true miss",
+  "lenient_rank": 6,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D compiles a FROM subquery into a materialized CteScan; A dispatches to it."
+ },
+ {
+  "rank": 254,
+  "target": "D",
+  "above": [
+   "C",
+   "A",
+   "B"
+  ],
+  "case": "minisqlite/43",
+  "kind": "true miss",
+  "lenient_rank": 254,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D builds a synthetic TVF column with BINARY collation; the others are generic test ColumnDef/TableDef builders."
+ },
+ {
+  "rank": 104,
+  "target": "C",
+  "above": [
+   "D",
+   "A",
+   "B"
+  ],
+  "case": "minisqlite/44",
+  "kind": "true miss",
+  "lenient_rank": 104,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C maps the offset-56 code to a TextEncoding; A and D test it, B decodes the whole header."
+ },
+ {
+  "rank": 10,
+  "target": "D",
+  "above": [
+   "C",
+   "A",
+   "B"
+  ],
+  "case": "minisqlite/45",
+  "kind": "true miss",
+  "lenient_rank": 10,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D applies per-side affinity then compares for equality; C compares without coercion, A only builds such an expression in a test."
+ },
+ {
+  "rank": 40,
+  "target": "A",
+  "above": [
+   "B",
+   "D",
+   "C"
+  ],
+  "case": "minisqlite/47",
+  "kind": "true miss",
+  "lenient_rank": 40,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 0
+  },
+  "why": "A creates a MemPager and reserves page 1 so later ids do not collide; others edit/read the header or count allocations."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "minisqlite/48",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A skips whitespace and line/block comments; B is the tokenizer loop that calls a trivia skipper."
+ },
+ {
+  "rank": 314,
+  "target": "C",
+  "above": [
+   "D",
+   "B",
+   "A"
+  ],
+  "case": "minisqlite/49",
+  "kind": "false miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 1,
+   "D": 1
+  },
+  "why": "B rewrites CREATE TABLE text with a column removed; D extracts an ADD COLUMN fragment, C is a drop-check test helper."
+ },
+ {
+  "rank": 7,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "minisqlite/51",
+  "kind": "ambiguous",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 0,
+   "D": 2
+  },
+  "why": "A and D both return the committed db size at a WAL snapshot mark; B is a plain current page count."
+ },
+ {
+  "rank": 283,
+  "target": "D",
+  "above": [
+   "A",
+   "B",
+   "C"
+  ],
+  "case": "minisqlite/52",
+  "kind": "true miss",
+  "lenient_rank": 283,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D looks up a view across catalogs in search order; A/B/C resolve which namespace owns a name, not the definition."
+ },
+ {
+  "rank": 4,
+  "target": "A",
+  "above": [
+   "B",
+   "D",
+   "C"
+  ],
+  "case": "minisqlite/53",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 1,
+   "D": 1
+  },
+  "why": "A renders a column DEFAULT back to SQL text; D renders general expressions as labels, B/C are test helpers."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/54",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B wraps the plan with DISTINCT, ORDER BY and LIMIT; A is a test helper walking those nodes."
+ },
+ {
+  "rank": 8,
+  "target": "B",
+  "above": [
+   "C",
+   "D",
+   "A"
+  ],
+  "case": "minisqlite/56",
+  "kind": "true miss",
+  "lenient_rank": 8,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 1,
+   "D": 1
+  },
+  "why": "B is the strftime format-specifier renderer; A/D render fixed formats, C produces the civil breakdown."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "minisqlite/57",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A drops the overlay and releases the write lock; B is the engine-level ROLLBACK that delegates to pagers and reloads catalogs."
+ },
+ {
+  "rank": 7,
+  "target": "C",
+  "above": [
+   "B",
+   "D",
+   "A"
+  ],
+  "case": "minisqlite/58",
+  "kind": "true miss",
+  "lenient_rank": 7,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2,
+   "D": 0
+  },
+  "why": "C looks up a view by database index and name; A lacks the database, B/D are table lookups."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/61",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B reads the accumulator's current result without consuming it; A is a test aggregate's finalize."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/62",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 2
+  },
+  "why": "B is the rowid/_rowid_/oid alias predicate; A is an affinity test about INTEGER PRIMARY KEY."
+ },
+ {
+  "rank": 16,
+  "target": "D",
+  "above": [
+   "A",
+   "C",
+   "B"
+  ],
+  "case": "minisqlite/63",
+  "kind": "true miss",
+  "lenient_rank": 16,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D compiles an expression subquery under its parent scope; A compiles trigger-action selects, B is the top-level planner."
+ },
+ {
+  "rank": 17,
+  "target": "C",
+  "above": [
+   "B",
+   "A",
+   "D"
+  ],
+  "case": "minisqlite/64",
+  "kind": "true miss",
+  "lenient_rank": 17,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C implements ON UPDATE actions on child rows; A/B/D are tests of it."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "B",
+   "A"
+  ],
+  "case": "minisqlite/65",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2
+  },
+  "why": "C starts a WAL builder emitting the header and seeding the running checksum; B only builds the header."
+ },
+ {
+  "rank": 10,
+  "target": "A",
+  "above": [
+   "B",
+   "C",
+   "D"
+  ],
+  "case": "minisqlite/66",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "A and B both scan an index for a UNIQUE conflict under non-BINARY collation (WITHOUT ROWID vs rowid); C/D are unrelated tests."
+ },
+ {
+  "rank": 41,
+  "target": "B",
+  "above": [
+   "A",
+   "D",
+   "C"
+  ],
+  "case": "minisqlite/67",
+  "kind": "true miss",
+  "lenient_rank": 41,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B is is_commit on a WAL frame; others concern checkpoints, refresh, journal sync."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "B",
+   "A"
+  ],
+  "case": "minisqlite/68",
+  "kind": "false miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 1
+  },
+  "why": "A pushes star columns as projections with names and source ASTs; B gives names only, C is the UPDATE RETURNING variant."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/69",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both overwrite a big-endian integer at an offset in a page; A fixed 4 bytes, B variable width."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "minisqlite/73",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both compare row results via Debug formatting because Value lacks PartialEq."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "minisqlite/76",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 0
+  },
+  "why": "A implements VACUUM INTO a target file; B is a test helper writing raw pages."
+ }
+]

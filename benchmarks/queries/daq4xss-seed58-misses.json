@@ -1,0 +1,895 @@
+[
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "daq/0",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A handles head and range options; B only fetches a byte range."
+ },
+ {
+  "rank": 4,
+  "target": "B",
+  "above": [
+   "D",
+   "A",
+   "C"
+  ],
+  "case": "daq/5",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 1,
+   "D": 1
+  },
+  "why": "B checks elapsed time since last modification; C and D are idle-step timeouts in the archiver."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "daq/6",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B reads a 2D f32 array from npz; A is the generic helper it calls."
+ },
+ {
+  "rank": 6,
+  "target": "D",
+  "above": [
+   "C",
+   "A",
+   "B"
+  ],
+  "case": "daq/9",
+  "kind": "true miss",
+  "lenient_rank": 6,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D connects a NATS client with a NATS_URL env fallback; A only reads the env config."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "daq/10",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 2
+  },
+  "why": "B filters PVs by hash modulo pod count; A is a Redis slot map init."
+ },
+ {
+  "rank": 4,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "daq/11",
+  "kind": "ambiguous",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2,
+   "D": 2
+  },
+  "why": "C and D both open the IB device and set up context; A is the constructor that stores parameters."
+ },
+ {
+  "rank": 6,
+  "target": "C",
+  "above": [
+   "A",
+   "B",
+   "D"
+  ],
+  "case": "daq/16",
+  "kind": "true miss",
+  "lenient_rank": 6,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C merges Arrow schemas; D pads a batch to a merged schema and A infers fields from data."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "B",
+   "A"
+  ],
+  "case": "daq/17",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2
+  },
+  "why": "C increments the sequence and marks DONE at n_pulses; A is a caller handling counters."
+ },
+ {
+  "rank": 27,
+  "target": "D",
+  "above": [
+   "A",
+   "C",
+   "B"
+  ],
+  "case": "daq/19",
+  "kind": "true miss",
+  "lenient_rank": 27,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D writes the buffered step and marks it finalized; A only logs a scan end."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "daq/22",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B is a WebSocket loop broadcasting updates and handling client commands; A is a NATS live loop, not two-way client connection."
+ },
+ {
+  "rank": 6,
+  "target": "D",
+  "above": [
+   "B",
+   "C",
+   "A"
+  ],
+  "case": "daq/24",
+  "kind": "true miss",
+  "lenient_rank": 6,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D loads a viz config JSON from Redis by id; others are data/schema cache readers."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "A",
+   "B"
+  ],
+  "case": "daq/27",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2,
+   "C": 2
+  },
+  "why": "All three encode gathered Prometheus metrics to text in different services."
+ },
+ {
+  "rank": 126,
+  "target": "D",
+  "above": [
+   "A",
+   "C",
+   "B"
+  ],
+  "case": "daq/28",
+  "kind": "true miss",
+  "lenient_rank": 126,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D detects index discontinuity modulo ring capacity; A is a test of a sequence gap counter."
+ },
+ {
+  "rank": 4,
+  "target": "B",
+  "above": [
+   "C",
+   "D",
+   "A"
+  ],
+  "case": "daq/29",
+  "kind": "false miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D is the generic typed subscribe; B wraps it and C is a specific tick listener."
+ },
+ {
+  "rank": 3,
+  "target": "B",
+  "above": [
+   "A",
+   "C"
+  ],
+  "case": "daq/30",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 1
+  },
+  "why": "B builds a zarr array with chunk shape and fill values; C is a bare HDF5 dataset constructor."
+ },
+ {
+  "rank": 4,
+  "target": "B",
+  "above": [
+   "A",
+   "D",
+   "C"
+  ],
+  "case": "daq/33",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 1,
+   "D": 0
+  },
+  "why": "B retries the npz entry with a .npy extension; C is a typed wrapper over it."
+ },
+ {
+  "rank": 10,
+  "target": "D",
+  "above": [
+   "A",
+   "C",
+   "B"
+  ],
+  "case": "daq/34",
+  "kind": "true miss",
+  "lenient_rank": 10,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D renders the accumulated statistic buffer into display pixels; C calls it and A is a whole update loop."
+ },
+ {
+  "rank": 23,
+  "target": "C",
+  "above": [
+   "A",
+   "D",
+   "B"
+  ],
+  "case": "daq/35",
+  "kind": "false miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D is the EMA smoother with tau; C is a different accumulator push and B a test."
+ },
+ {
+  "rank": 4,
+  "target": "D",
+  "above": [
+   "A",
+   "C",
+   "B"
+  ],
+  "case": "daq/36",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D is the feedback step with Kalman filter; the rest are tests and fixtures."
+ },
+ {
+  "rank": 32,
+  "target": "A",
+  "above": [
+   "B",
+   "C",
+   "D"
+  ],
+  "case": "daq/38",
+  "kind": "true miss",
+  "lenient_rank": 32,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1,
+   "D": 0
+  },
+  "why": "A returns a uniform float in [-0.5,0.5); C is Gaussian."
+ },
+ {
+  "rank": 6,
+  "target": "A",
+  "above": [
+   "C",
+   "D",
+   "B"
+  ],
+  "case": "daq/39",
+  "kind": "true miss",
+  "lenient_rank": 6,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 0,
+   "D": 1
+  },
+  "why": "A uses a Box-Muller transform; D approximates normal by summing uniforms and B uses gauss."
+ },
+ {
+  "rank": 3,
+  "target": "A",
+  "above": [
+   "C",
+   "B"
+  ],
+  "case": "daq/41",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0
+  },
+  "why": "A builds the plugin state packet from measurement, actuator and params; B is default params."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "daq/45",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Same event-pattern check in Rust and Python."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "daq/47",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 2
+  },
+  "why": "B waits for a pulse count DONE signal with timeout; A polls an RDMA CQ."
+ },
+ {
+  "rank": 6,
+  "target": "C",
+  "above": [
+   "D",
+   "A",
+   "B"
+  ],
+  "case": "daq/49",
+  "kind": "ambiguous",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 2,
+   "D": 0
+  },
+  "why": "A and C both compute Redis cluster slot with CRC16, in Rust and Python."
+ },
+ {
+  "rank": 4,
+  "target": "A",
+  "above": [
+   "C",
+   "B",
+   "D"
+  ],
+  "case": "daq/51",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 0
+  },
+  "why": "A writes a DataFrame split per run to parquet cache files; others write zarr or lance."
+ },
+ {
+  "rank": 5,
+  "target": "B",
+  "above": [
+   "A",
+   "D",
+   "C"
+  ],
+  "case": "daq/52",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2,
+   "C": 1,
+   "D": 1
+  },
+  "why": "A and B compute the key slot and return the owning connection; C and D only delegate to B."
+ },
+ {
+  "rank": 4,
+  "target": "D",
+  "above": [
+   "B",
+   "C",
+   "A"
+  ],
+  "case": "daq/53",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 2,
+   "D": 2
+  },
+  "why": "B, C and D resolve seeds, read CLUSTER SLOTS and open node connections; A only logs topology."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "daq/54",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B is the mock put that stores the value and mirrors it to .RBV; A only seeds a motor fixture."
+ },
+ {
+  "rank": 37,
+  "target": "C",
+  "above": [
+   "B",
+   "D",
+   "A"
+  ],
+  "case": "daq/55",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C subscribes to the scan monitor subject and B handles its status messages; D is a legacy ZMQ subscriber setup, A is a mock publisher."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "daq/57",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 0
+  },
+  "why": "A splits a legacy single parquet cache into per-run files; B deletes old run directories."
+ },
+ {
+  "rank": 19,
+  "target": "D",
+  "above": [
+   "A",
+   "C",
+   "B"
+  ],
+  "case": "daq/63",
+  "kind": "true miss",
+  "lenient_rank": 19,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D maps the key slot to its node connection; A delegates to an addr lookup, C builds the slot map, B only formats keys."
+ },
+ {
+  "rank": 19,
+  "target": "A",
+  "above": [
+   "C",
+   "D",
+   "B"
+  ],
+  "case": "daq/64",
+  "kind": "true miss",
+  "lenient_rank": 19,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1,
+   "D": 0
+  },
+  "why": "A collects ZSET members of one second across several events and returns them sorted and unique."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "daq/66",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A is a plain moving-mean over a signal; B is a per-pulse smoother with window and EMA modes across pulses."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "daq/70",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A fetches a key across nodes and follows MOVED redirects; B pipelines by node and retries once on MOVED."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "A",
+   "B"
+  ],
+  "case": "daq/71",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2
+  },
+  "why": "C replays a recorded timeline through the controller and reports rms error; A simulates synthetically, B evaluates an estimator scan."
+ },
+ {
+  "rank": 11,
+  "target": "B",
+  "above": [
+   "C",
+   "D",
+   "A"
+  ],
+  "case": "daq/73",
+  "kind": "true miss",
+  "lenient_rank": 11,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B correlates data against each kernel row and returns the normalized square; A is an FFT ensemble score, C and D are constructors."
+ },
+ {
+  "rank": 7,
+  "target": "D",
+  "above": [
+   "B",
+   "C",
+   "A"
+  ],
+  "case": "daq/77",
+  "kind": "false miss",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 1,
+   "D": 1
+  },
+  "why": "B is the st.cache_data memoized run list; C is the uncached lister, D memoizes experiments not runs."
+ },
+ {
+  "rank": 26,
+  "target": "A",
+  "above": [
+   "C",
+   "B",
+   "D"
+  ],
+  "case": "daq/79",
+  "kind": "true miss",
+  "lenient_rank": 26,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1,
+   "D": 0
+  },
+  "why": "A makes worker threads join the main thread CA context; C caches CA channels but not across threads."
+ },
+ {
+  "rank": 7,
+  "target": "C",
+  "above": [
+   "B",
+   "D",
+   "A"
+  ],
+  "case": "daq/81",
+  "kind": "true miss",
+  "lenient_rank": 7,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C simulates a closed loop with noise and verifies Kalman filtering and rms; the Rust tests each check one aspect via a shared helper."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "daq/82",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both turn {timestamp: {field: value}} into typed columns with first-seen type inference."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "A",
+   "B"
+  ],
+  "case": "daq/83",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 2
+  },
+  "why": "C returns count, latest mtime and total size as a directory signature; A and B only sum size."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "daq/86",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A is a periodically refreshed fragment showing live metrics and recent tail records; B is a GUI frame update with plots."
+ },
+ {
+  "rank": 12,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "daq/89",
+  "kind": "false miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "A and C are thread functions that read ring buffers and publish monitor messages over sockets; D sends over RDMA, B is a simple ZMQ republisher."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "daq/91",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B rounds a size up to an arbitrary alignment; A only aligns to 64."
+ },
+ {
+  "rank": 3,
+  "target": "B",
+  "above": [
+   "A",
+   "C"
+  ],
+  "case": "daq/93",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0
+  },
+  "why": "B sets the count bit for an id in the ring queue and stores the item."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "daq/94",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A maps ibv_wr_opcode (work request); B maps work completion opcodes."
+ },
+ {
+  "rank": 28,
+  "target": "B",
+  "above": [
+   "C",
+   "A",
+   "D"
+  ],
+  "case": "daq/99",
+  "kind": "true miss",
+  "lenient_rank": 28,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 1,
+   "D": 1
+  },
+  "why": "B is a monitor thread that polls sockets and coordinates processed calibrated frames; A receives status, C writes stats, D receives EVR."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "B",
+   "A"
+  ],
+  "case": "daq/102",
+  "kind": "ambiguous",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 2
+  },
+  "why": "A and C receive raw frames, sync modules and push via sockets; B receives detector status."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "daq/106",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A reads free_hugepages (available); B reads nr_hugepages (total)."
+ },
+ {
+  "rank": 5,
+  "target": "C",
+  "above": [
+   "B",
+   "D",
+   "A"
+  ],
+  "case": "daq/107",
+  "kind": "true miss",
+  "lenient_rank": 5,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C appends detector frame data and metadata chunks to HDF5 datasets; B and D write metadata or waveforms separately to zarr."
+ }
+]

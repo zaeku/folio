@@ -49,3 +49,14 @@ curl -sL https://github.com/BurntSushi/ripgrep/archive/91f5d22ef48b.tar.gz | tar
 curl -sL https://github.com/cursor/minisqlite/archive/4a5c1341fdde.tar.gz | tar -xz -C <export> --strip-components 1
 ./generate-code.py <export> units.json ../reports/code-queries 58 rust=150
 ```
+
+`misses.py` writes the questions the best Gemma arm does not rank first, with the
+units ranked above each target, in shuffled batches that hide which is the
+target. A judge scores every candidate against the question, and `judged.py`
+joins those scores with the key. `*-seed58-misses.json` are the joined
+judgements the 2026-11-03 miss measurement used.
+
+```sh
+./misses.py <export> units.json ripgrep-seed58.json http://127.0.0.1:8090/v1/embeddings ripgrep ../reports/misses 3
+./judged.py ../reports/misses/key-ripgrep.json verdicts.json 127 31 > ripgrep-seed58-misses.json
+```

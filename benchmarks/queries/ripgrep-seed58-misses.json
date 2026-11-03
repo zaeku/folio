@@ -1,0 +1,1734 @@
+[
+ {
+  "rank": 13,
+  "target": "A",
+  "above": [
+   "B",
+   "D",
+   "C"
+  ],
+  "case": "ripgrep/0",
+  "kind": "true miss",
+  "lenient_rank": 13,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 0,
+   "D": 0
+  },
+  "why": "A is the Sink::binary_data callback; B only runs binary detection."
+ },
+ {
+  "rank": 18,
+  "target": "A",
+  "above": [
+   "B",
+   "D",
+   "C"
+  ],
+  "case": "ripgrep/1",
+  "kind": "true miss",
+  "lenient_rank": 18,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1,
+   "D": 1
+  },
+  "why": "A formats a glob syntax error with optional glob string; C builds that error, D is a UTF-8 pattern error."
+ },
+ {
+  "rank": 31,
+  "target": "C",
+  "above": [
+   "D",
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/2",
+  "kind": "true miss",
+  "lenient_rank": 31,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 2,
+   "D": 0
+  },
+  "why": "C builds a Candidate from raw bytes; others make Match ranges or search."
+ },
+ {
+  "rank": 9,
+  "target": "C",
+  "above": [
+   "D",
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/3",
+  "kind": "true miss",
+  "lenient_rank": 9,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C checks all globs in the set match; D is the per-strategy helper."
+ },
+ {
+  "rank": 3,
+  "target": "B",
+  "above": [
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/4",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 1
+  },
+  "why": "B is the --context long help; A and C are separator flags."
+ },
+ {
+  "rank": 5,
+  "target": "D",
+  "above": [
+   "C",
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/5",
+  "kind": "true miss",
+  "lenient_rank": 5,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D pushes a token onto the last branch; B/C open new branches."
+ },
+ {
+  "rank": 3,
+  "target": "A",
+  "above": [
+   "C",
+   "B"
+  ],
+  "case": "ripgrep/6",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 1
+  },
+  "why": "A is the JSON printer begin that resets state and writes the begin message."
+ },
+ {
+  "rank": 85,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/7",
+  "kind": "true miss",
+  "lenient_rank": 85,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D is a small helper building an Override from a glob list; others are full builders."
+ },
+ {
+  "rank": 3,
+  "target": "A",
+  "above": [
+   "B",
+   "C"
+  ],
+  "case": "ripgrep/8",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0
+  },
+  "why": "A parses a gitignore line into a Glob."
+ },
+ {
+  "rank": 193,
+  "target": "C",
+  "above": [
+   "A",
+   "D",
+   "B"
+  ],
+  "case": "ripgrep/9",
+  "kind": "true miss",
+  "lenient_rank": 193,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2,
+   "D": 0
+  },
+  "why": "C toggles stats gathering on the printer builder; A consumes stats."
+ },
+ {
+  "rank": 60,
+  "target": "A",
+  "above": [
+   "B",
+   "C",
+   "D"
+  ],
+  "case": "ripgrep/11",
+  "kind": "true miss",
+  "lenient_rank": 60,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 1
+  },
+  "why": "A is the Sink::context callback."
+ },
+ {
+  "rank": 4,
+  "target": "A",
+  "above": [
+   "C",
+   "B",
+   "D"
+  ],
+  "case": "ripgrep/12",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 0
+  },
+  "why": "A is the --type-clear long help; decompress associate is unrelated."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/13",
+  "kind": "ambiguous",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 2
+  },
+  "why": "A and C construct ParseSizeError for format and int failures; B only displays it."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/14",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 0
+  },
+  "why": "A is is_fixed_strings; B decides fast line search."
+ },
+ {
+  "rank": 461,
+  "target": "D",
+  "above": [
+   "A",
+   "B",
+   "C"
+  ],
+  "case": "ripgrep/15",
+  "kind": "true miss",
+  "lenient_rank": 461,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D starts the hyperlink span for the path."
+ },
+ {
+  "rank": 15,
+  "target": "B",
+  "above": [
+   "D",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/17",
+  "kind": "true miss",
+  "lenient_rank": 15,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B writes the path followed by field separator in the prelude."
+ },
+ {
+  "rank": 28,
+  "target": "D",
+  "above": [
+   "C",
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/19",
+  "kind": "true miss",
+  "lenient_rank": 28,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D runs a callback over successive matches; B/C iterate captures."
+ },
+ {
+  "rank": 30,
+  "target": "D",
+  "above": [
+   "A",
+   "B",
+   "C"
+  ],
+  "case": "ripgrep/21",
+  "kind": "true miss",
+  "lenient_rank": 30,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D is the --glob long help."
+ },
+ {
+  "rank": 9,
+  "target": "D",
+  "above": [
+   "C",
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/22",
+  "kind": "true miss",
+  "lenient_rank": 9,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D parses the --threads value into args."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "ripgrep/23",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B derives binary (NUL) detection from options; A is a test."
+ },
+ {
+  "rank": 14,
+  "target": "A",
+  "above": [
+   "D",
+   "C",
+   "B"
+  ],
+  "case": "ripgrep/24",
+  "kind": "true miss",
+  "lenient_rank": 14,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1,
+   "D": 0
+  },
+  "why": "A returns path from the walker's DirEntryInner; C is an example copy."
+ },
+ {
+  "rank": 4,
+  "target": "A",
+  "above": [
+   "D",
+   "C",
+   "B"
+  ],
+  "case": "ripgrep/25",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 0,
+   "D": 1
+  },
+  "why": "A is the auto-hybrid-regex long help about automatic engine choice."
+ },
+ {
+  "rank": 30,
+  "target": "A",
+  "above": [
+   "B",
+   "D",
+   "C"
+  ],
+  "case": "ripgrep/27",
+  "kind": "ambiguous",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "A and D both map the inner value of an enum variant."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/28",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both are unsupported-platform stub DirEntryRaw constructors."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/30",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2
+  },
+  "why": "C is the long doc for --multiline-dotall; A is the short form, B the builder."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/32",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both return indices of matching globs, path vs candidate input."
+ },
+ {
+  "rank": 3,
+  "target": "A",
+  "above": [
+   "C",
+   "B"
+  ],
+  "case": "ripgrep/35",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1
+  },
+  "why": "A benchmarks walking a nested workspace member folder."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/36",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "Both read the global gitconfig bytes, from home vs GIT_CONFIG_GLOBAL."
+ },
+ {
+  "rank": 9,
+  "target": "C",
+  "above": [
+   "A",
+   "D",
+   "B"
+  ],
+  "case": "ripgrep/37",
+  "kind": "true miss",
+  "lenient_rank": 9,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C toggles reading ignore files from parent directories."
+ },
+ {
+  "rank": 15,
+  "target": "D",
+  "above": [
+   "B",
+   "C",
+   "A"
+  ],
+  "case": "ripgrep/38",
+  "kind": "false miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C is the searcher stop_on_nonmatch setting; B/D are the CLI flag."
+ },
+ {
+  "rank": 4,
+  "target": "B",
+  "above": [
+   "C",
+   "D",
+   "A"
+  ],
+  "case": "ripgrep/39",
+  "kind": "false miss",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C normalizes OS separators in a byte Cow; D is the unix no-op."
+ },
+ {
+  "rank": 5,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/41",
+  "kind": "true miss",
+  "lenient_rank": 5,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D is find_at on a haystack from an offset."
+ },
+ {
+  "rank": 10,
+  "target": "B",
+  "above": [
+   "D",
+   "C",
+   "A"
+  ],
+  "case": "ripgrep/43",
+  "kind": "true miss",
+  "lenient_rank": 10,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B is matched_path_or_any_parents; the others test excludesFile parsing."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/44",
+  "kind": "bad query",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 1
+  },
+  "why": "A filters by min/max depth only; B skips by max filesize and filters but not by depth limits."
+ },
+ {
+  "rank": 31,
+  "target": "D",
+  "above": [
+   "B",
+   "C",
+   "A"
+  ],
+  "case": "ripgrep/45",
+  "kind": "true miss",
+  "lenient_rank": 31,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D constructs an OverrideBuilder relative to a directory; A builds the root ignore matcher from cwd."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/46",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A is the worker loop running work until none or quit; B fetches the next work item."
+ },
+ {
+  "rank": 5,
+  "target": "B",
+  "above": [
+   "D",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/49",
+  "kind": "true miss",
+  "lenient_rank": 5,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B decodes UTF-8, gets the line number and calls the closure; others are context tests."
+ },
+ {
+  "rank": 5,
+  "target": "B",
+  "above": [
+   "A",
+   "D",
+   "C"
+  ],
+  "case": "ripgrep/50",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2,
+   "C": 0,
+   "D": 1
+  },
+  "why": "A joins patterns into one PCRE2 regex and B builds a multi-pattern regex set; D compiles regexes one by one."
+ },
+ {
+  "rank": 9,
+  "target": "C",
+  "above": [
+   "D",
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/51",
+  "kind": "true miss",
+  "lenient_rank": 9,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2,
+   "D": 0
+  },
+  "why": "C walks a tree with .git removed and require_git off; B removes ignore files but benchmarks matching, A walks with git present."
+ },
+ {
+  "rank": 23,
+  "target": "C",
+  "above": [
+   "D",
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/52",
+  "kind": "true miss",
+  "lenient_rank": 23,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C writes the field separator or path terminator; B and D document the separator flags."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/53",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A is the long doc for -e/--regexp pattern flag; B documents patterns-from-file."
+ },
+ {
+  "rank": 68,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/54",
+  "kind": "true miss",
+  "lenient_rank": 68,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D searches a path dispatching on the chosen regex engine; C dispatches by haystack kind and A searches a file."
+ },
+ {
+  "rank": 317,
+  "target": "B",
+  "above": [
+   "C",
+   "A",
+   "D"
+  ],
+  "case": "ripgrep/55",
+  "kind": "true miss",
+  "lenient_rank": 317,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 1
+  },
+  "why": "B handles --pcre2-version by setting the special mode; D is its doc text, A/C pick engines."
+ },
+ {
+  "rank": 42,
+  "target": "A",
+  "above": [
+   "C",
+   "D",
+   "B"
+  ],
+  "case": "ripgrep/56",
+  "kind": "true miss",
+  "lenient_rank": 42,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 0
+  },
+  "why": "A picks StartCRLF or StartLF by crlf config; others are unrelated tests."
+ },
+ {
+  "rank": 79,
+  "target": "C",
+  "above": [
+   "A",
+   "D",
+   "B"
+  ],
+  "case": "ripgrep/58",
+  "kind": "false miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 1,
+   "D": 1
+  },
+  "why": "B toggles no_ignore_exclude (repo exclude rules); A/D toggle require_git and C toggles .gitignore."
+ },
+ {
+  "rank": 114,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/59",
+  "kind": "true miss",
+  "lenient_rank": 114,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D begins a hyperlink with path, line and column; others are offsets or docs."
+ },
+ {
+  "rank": 478,
+  "target": "B",
+  "above": [
+   "D",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/60",
+  "kind": "true miss",
+  "lenient_rank": 478,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 1,
+   "D": 0
+  },
+  "why": "B recurses through regex AST class sets and binary ops; C parses glob classes."
+ },
+ {
+  "rank": 21,
+  "target": "B",
+  "above": [
+   "A",
+   "C",
+   "D"
+  ],
+  "case": "ripgrep/61",
+  "kind": "true miss",
+  "lenient_rank": 21,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B is Gitignore::matched for a path; others test excludesFile parsing."
+ },
+ {
+  "rank": 3,
+  "target": "A",
+  "above": [
+   "C",
+   "B"
+  ],
+  "case": "ripgrep/62",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 2
+  },
+  "why": "A decides case insensitivity from smart-case and uppercase literals; C is the PCRE2 uppercase scan; B is docs."
+ },
+ {
+  "rank": 14,
+  "target": "D",
+  "above": [
+   "A",
+   "C",
+   "B"
+  ],
+  "case": "ripgrep/63",
+  "kind": "true miss",
+  "lenient_rank": 14,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D builds the standard printer from args; B/C document JSON output, A formats config errors."
+ },
+ {
+  "rank": 245,
+  "target": "B",
+  "above": [
+   "A",
+   "C",
+   "D"
+  ],
+  "case": "ripgrep/64",
+  "kind": "true miss",
+  "lenient_rank": 245,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 1,
+   "D": 1
+  },
+  "why": "B sets case mode to Insensitive for -i; C is ignore-file case, D is short doc, A is gitignore globs."
+ },
+ {
+  "rank": 101,
+  "target": "C",
+  "above": [
+   "B",
+   "A",
+   "D"
+  ],
+  "case": "ripgrep/68",
+  "kind": "true miss",
+  "lenient_rank": 101,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2,
+   "D": 0
+  },
+  "why": "C is the case-sensitive flag doc overriding ignore-case and smart-case; B is smart-case."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/69",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A returns the basename keeping .. for regex matching; B returns None on .."
+ },
+ {
+  "rank": 6,
+  "target": "D",
+  "above": [
+   "B",
+   "C",
+   "A"
+  ],
+  "case": "ripgrep/71",
+  "kind": "true miss",
+  "lenient_rank": 6,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D reports whether any match is possible; B validates searcher config consistency."
+ },
+ {
+  "rank": 6,
+  "target": "B",
+  "above": [
+   "C",
+   "A",
+   "D"
+  ],
+  "case": "ripgrep/72",
+  "kind": "true miss",
+  "lenient_rank": 6,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 1,
+   "D": 0
+  },
+  "why": "B parses the --encoding value into EncodingMode; C is its doc and A the searcher setter."
+ },
+ {
+  "rank": 5,
+  "target": "C",
+  "above": [
+   "D",
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/73",
+  "kind": "true miss",
+  "lenient_rank": 5,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2,
+   "D": 0
+  },
+  "why": "C builds a regex from HIR; B compiles a pattern string."
+ },
+ {
+  "rank": 5,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/75",
+  "kind": "true miss",
+  "lenient_rank": 5,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "D runs a slice search with binary detection and context; B dispatches haystacks, C is a test helper on reader."
+ },
+ {
+  "rank": 4,
+  "target": "A",
+  "above": [
+   "D",
+   "C",
+   "B"
+  ],
+  "case": "ripgrep/76",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 1
+  },
+  "why": "A gives ignore crate error descriptions incl. loops; C is glob errors, D returns an entry error."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/78",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "A is the SearcherTester before_context setter; B is the production builder."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/80",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 2
+  },
+  "why": "C sets min_depth clamped by max_depth; B sets max_depth."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/81",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 2
+  },
+  "why": "C sets the regex x flag ignoring whitespace and comments."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "ripgrep/82",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 2
+  },
+  "why": "B parses the hostname-bin path argument; A resolves programs on PATH."
+ },
+ {
+  "rank": 11,
+  "target": "B",
+  "above": [
+   "D",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/83",
+  "kind": "true miss",
+  "lenient_rank": 11,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B returns a match with new end keeping start."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "ripgrep/84",
+  "kind": "ambiguous",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 2
+  },
+  "why": "A is the builder doc for max_columns_preview and B the flag doc for the same behavior."
+ },
+ {
+  "rank": 4,
+  "target": "D",
+  "above": [
+   "C",
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/85",
+  "kind": "false miss",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 2,
+   "D": 1
+  },
+  "why": "unescape turns a user string into raw bytes; D is a separator constructor that calls it, A and B escape the other way."
+ },
+ {
+  "rank": 19,
+  "target": "B",
+  "above": [
+   "A",
+   "D",
+   "C"
+  ],
+  "case": "ripgrep/87",
+  "kind": "false miss",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 1,
+   "D": 1
+  },
+  "why": "Standard Config::default sets the separators and line terminator; path Config has no separators and C/D set single separators."
+ },
+ {
+  "rank": 198,
+  "target": "A",
+  "above": [
+   "C",
+   "D",
+   "B"
+  ],
+  "case": "ripgrep/88",
+  "kind": "true miss",
+  "lenient_rank": 198,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 1
+  },
+  "why": "A pushes TypeChange::Select from the flag value; D is only the type-not doc text."
+ },
+ {
+  "rank": 18,
+  "target": "C",
+  "above": [
+   "D",
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/90",
+  "kind": "true miss",
+  "lenient_rank": 18,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 2,
+   "D": 0
+  },
+  "why": "unwrap_value returns the flag value and panics on a switch; others are tests or a hint message."
+ },
+ {
+  "rank": 127,
+  "target": "A",
+  "above": [
+   "B",
+   "C",
+   "D"
+  ],
+  "case": "ripgrep/91",
+  "kind": "true miss",
+  "lenient_rank": 127,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 1,
+   "D": 0
+  },
+  "why": "search_slice searches an in-memory slice into a sink; C is an internal match handler step."
+ },
+ {
+  "rank": 131,
+  "target": "B",
+  "above": [
+   "D",
+   "C",
+   "A"
+  ],
+  "case": "ripgrep/92",
+  "kind": "true miss",
+  "lenient_rank": 131,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B adds a literal and updates the longest length; the others are sink match handlers."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "ripgrep/94",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B sets the CountMatches mode; A is the flag documentation."
+ },
+ {
+  "rank": 110,
+  "target": "C",
+  "above": [
+   "A",
+   "B",
+   "D"
+  ],
+  "case": "ripgrep/95",
+  "kind": "true miss",
+  "lenient_rank": 110,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "set_both configures context lines; the others are short help strings."
+ },
+ {
+  "rank": 14,
+  "target": "C",
+  "above": [
+   "D",
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/96",
+  "kind": "true miss",
+  "lenient_rank": 14,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 2,
+   "D": 1
+  },
+  "why": "C parses the --generate value into a GenerateMode; D runs it, B generates bash only, A is doc text."
+ },
+ {
+  "rank": 5,
+  "target": "B",
+  "above": [
+   "A",
+   "C",
+   "D"
+  ],
+  "case": "ripgrep/97",
+  "kind": "ambiguous",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 2,
+   "D": 1
+  },
+  "why": "Both builder hyperlink setters configure links on output; the flag docs only describe it."
+ },
+ {
+  "rank": 4,
+  "target": "D",
+  "above": [
+   "C",
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/98",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 0,
+   "B": 1,
+   "C": 1,
+   "D": 2
+  },
+  "why": "fixed_strings actually configures literal matching; B/C are the flag help, A is a glob literal check."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "ripgrep/100",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 1,
+   "B": 2
+  },
+  "why": "B sets the files-without-match mode; A is doc text."
+ },
+ {
+  "rank": 15,
+  "target": "D",
+  "above": [
+   "A",
+   "B",
+   "C"
+  ],
+  "case": "ripgrep/102",
+  "kind": "true miss",
+  "lenient_rank": 15,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "D builds the JSON printer over a writer; others are serializers or Debug impls."
+ },
+ {
+  "rank": 10,
+  "target": "C",
+  "above": [
+   "A",
+   "D",
+   "B"
+  ],
+  "case": "ripgrep/103",
+  "kind": "true miss",
+  "lenient_rank": 10,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2,
+   "D": 0
+  },
+  "why": "color_specs sets coloring on the standard builder; A makes a color writer, B/D set other options."
+ },
+ {
+  "rank": 41,
+  "target": "B",
+  "above": [
+   "A",
+   "C",
+   "D"
+  ],
+  "case": "ripgrep/104",
+  "kind": "true miss",
+  "lenient_rank": 41,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "B is the null-data flag update setting null_data in LowArgs; the rest are field separators."
+ },
+ {
+  "rank": 111,
+  "target": "D",
+  "above": [
+   "C",
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/105",
+  "kind": "true miss",
+  "lenient_rank": 111,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "Match::new creates a start/end byte span; the others report binary offsets or byte counts."
+ },
+ {
+  "rank": 4,
+  "target": "A",
+  "above": [
+   "D",
+   "C",
+   "B"
+  ],
+  "case": "ripgrep/107",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 2,
+   "B": 0,
+   "C": 0,
+   "D": 1
+  },
+  "why": "default_color_specs is the builtin palette; D documents colors, B is a getter."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/109",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 0
+  },
+  "why": "ColorError Display describes invalid color specs; B suggests multiline mode."
+ },
+ {
+  "rank": 4,
+  "target": "B",
+  "above": [
+   "A",
+   "C",
+   "D"
+  ],
+  "case": "ripgrep/110",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 1,
+   "B": 2,
+   "C": 1,
+   "D": 0
+  },
+  "why": "generate_long_flag formats and wraps one flag's help; A/C assemble whole pages."
+ },
+ {
+  "rank": 7,
+  "target": "B",
+  "above": [
+   "A",
+   "D",
+   "C"
+  ],
+  "case": "ripgrep/112",
+  "kind": "false miss",
+  "lenient_rank": 1,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 1,
+   "D": 1
+  },
+  "why": "Glob is_match_candidate dispatches on the match strategy; C/B are set-level, D a wrapper."
+ },
+ {
+  "rank": 117,
+  "target": "C",
+  "above": [
+   "B",
+   "A",
+   "D"
+  ],
+  "case": "ripgrep/113",
+  "kind": "true miss",
+  "lenient_rank": 117,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2,
+   "D": 1
+  },
+  "why": "The --version update handles printing version info; build.rs only sets the revision hash, D is docs."
+ },
+ {
+  "rank": 8,
+  "target": "D",
+  "above": [
+   "C",
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/114",
+  "kind": "true miss",
+  "lenient_rank": 8,
+  "scores": {
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 2
+  },
+  "why": "case_insensitive on the regex builder configures the expression; A/B are flag docs, C is case sensitive."
+ },
+ {
+  "rank": 44,
+  "target": "C",
+  "above": [
+   "A",
+   "D",
+   "B"
+  ],
+  "case": "ripgrep/117",
+  "kind": "true miss",
+  "lenient_rank": 44,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 2,
+   "D": 0
+  },
+  "why": "quit_byte returns the byte that stops binary search."
+ },
+ {
+  "rank": 4,
+  "target": "C",
+  "above": [
+   "A",
+   "B",
+   "D"
+  ],
+  "case": "ripgrep/118",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2,
+   "D": 1
+  },
+  "why": "SummaryBuilder::stats enables gathering statistics; A is a getter, D consumes them."
+ },
+ {
+  "rank": 3,
+  "target": "A",
+  "above": [
+   "B",
+   "C"
+  ],
+  "case": "ripgrep/119",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 2,
+   "B": 1,
+   "C": 1
+  },
+  "why": "A parses the hyperlink format flag value; B is docs, C a test."
+ },
+ {
+  "rank": 11,
+  "target": "D",
+  "above": [
+   "B",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/120",
+  "kind": "true miss",
+  "lenient_rank": 11,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 2
+  },
+  "why": "display_priority orders hyperlink aliases in docs."
+ },
+ {
+  "rank": 2,
+  "target": "B",
+  "above": [
+   "A"
+  ],
+  "case": "ripgrep/121",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 0,
+   "B": 2
+  },
+  "why": "fill refills the reader buffer and checks for binary data; A is a test helper."
+ },
+ {
+  "rank": 2,
+  "target": "A",
+  "above": [
+   "B"
+  ],
+  "case": "ripgrep/122",
+  "kind": "true miss",
+  "lenient_rank": 2,
+  "scores": {
+   "A": 2,
+   "B": 1
+  },
+  "why": "Field match separator doc covers path/line/text on matches; B is the context-line variant."
+ },
+ {
+  "rank": 4,
+  "target": "B",
+  "above": [
+   "D",
+   "A",
+   "C"
+  ],
+  "case": "ripgrep/123",
+  "kind": "true miss",
+  "lenient_rank": 4,
+  "scores": {
+   "A": 0,
+   "B": 2,
+   "C": 0,
+   "D": 0
+  },
+  "why": "Logger::log writes level, target and file:line to stderr; others are Display impls."
+ },
+ {
+  "rank": 11,
+  "target": "D",
+  "above": [
+   "C",
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/124",
+  "kind": "true miss",
+  "lenient_rank": 11,
+  "scores": {
+   "A": 0,
+   "B": 0,
+   "C": 1,
+   "D": 2
+  },
+  "why": "strip_prefix removes the leading prefix; C wraps it with a fallback."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "A",
+   "B"
+  ],
+  "case": "ripgrep/125",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2
+  },
+  "why": "man generate fills the roff man page template; A is --help output."
+ },
+ {
+  "rank": 3,
+  "target": "C",
+  "above": [
+   "B",
+   "A"
+  ],
+  "case": "ripgrep/126",
+  "kind": "true miss",
+  "lenient_rank": 3,
+  "scores": {
+   "A": 1,
+   "B": 0,
+   "C": 2
+  },
+  "why": "preceding counts back from the buffer end; A is the general pos version, B a test helper."
+ }
+]
