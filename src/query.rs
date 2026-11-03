@@ -385,7 +385,10 @@ pub(crate) fn cmd_query(
             scores.push(hit.score);
         }
 
-        let mut merged = merge_adjacent(&rows, &owners, &scores);
+        // The median is the query's background only while the window is full of
+        // candidates; a corpus smaller than it puts its own matches there.
+        let background = (top.len() >= MERGE_HYDRATED).then(|| median(&top));
+        let mut merged = merge_adjacent(&rows, &owners, &scores, background);
         merged.truncate(limit);
 
         // Always asked, whatever `refresh` says: one stat per returned row is
@@ -586,7 +589,20 @@ struct Hit {
 /// The best is found first and the run grows outward from it. Grown in line
 /// order instead, weak pieces that came first were compared with the best seen
 /// so far and never with the one that arrived after them.
-fn merge_adjacent(rows: &[Section], owners: &[usize], scores: &[f32]) -> Vec<Hit> {
+///
+/// Comparable means within a quarter of the way from the best down to
+/// `background`, the median score of a full hydrated window, which is where this
+/// query's background sits. A ratio to the best assumed one model's scale: 0.9
+/// was read off gte, and under EmbeddingGemma 2, whose scores sit in a narrow
+/// band, it admitted nearly every section of a relevant file. Without a full
+/// window there is no background to measure from, and a piece joins at
+/// `FALLBACK` times the best.
+fn merge_adjacent(
+    rows: &[Section],
+    owners: &[usize],
+    scores: &[f32],
+    background: Option<f32>,
+) -> Vec<Hit> {
     // Keyed by the index as well as the path, because two indexes may hold the
     // same relative path and two files are not one run.
     let mut by_path: BTreeMap<(usize, &str), Vec<usize>> = BTreeMap::new();
@@ -613,11 +629,14 @@ fn merge_adjacent(rows: &[Section], owners: &[usize], scores: &[f32]) -> Vec<Hit
                 continue;
             }
             let b = (0..t.len()).max_by(|&x, &y| scores[t[x]].total_cmp(&scores[t[y]])).unwrap();
-            // ponytail: one ratio, read off a fixture where 0.741 against 0.780
-            // is one answer in five pieces and 0.507 against 0.766 is background
-            // beside an answer. A corpus should set it, and cosine scales differ
-            // by model, so this is a starting point rather than a constant.
-            let alike = |k: usize| scores[t[k]] >= 0.9 * scores[t[b]];
+            // ponytail: a quarter, measured on two English corpora under one
+            // model; the median it is a quarter of moves with the window.
+            let best = scores[t[b]];
+            let floor = match background {
+                Some(m) => best - JOIN * (best - m).max(0.0),
+                None => FALLBACK * best,
+            };
+            let alike = |k: usize| scores[t[k]] >= floor;
             let (mut lo, mut hi) = (b, b);
             while lo > 0 && alike(lo - 1) {
                 lo -= 1;
@@ -649,6 +668,24 @@ fn assemble(owner: usize, path: &str, rows: &[Section], scores: &[f32], run: &[u
         trail: shared_trail(rows, run),
         pieces: run.to_vec(),
     }
+}
+
+/// How far below the best a piece may score and still join it, as a share of
+/// the distance from the best down to the median of what was hydrated.
+const JOIN: f32 = 0.25;
+/// The share of the best a piece must reach to join it when the window holds
+/// the whole corpus, the best fixed ratio measured on EmbeddingGemma 2.
+const FALLBACK: f32 = 0.95;
+
+/// The median score of the hydrated window.
+fn median(top: &[ScoredSlot]) -> f32 {
+    let mut s: Vec<f32> = top.iter().map(|h| h.score).collect();
+    if s.is_empty() {
+        return 0.0;
+    }
+    s.sort_by(f32::total_cmp);
+    let n = s.len();
+    if n % 2 == 1 { s[n / 2] } else { (s[n / 2 - 1] + s[n / 2]) / 2.0 }
 }
 
 /// The trail a merged range is filed under: what its pieces have in common.
@@ -702,9 +739,9 @@ mod tests {
     #[test]
     fn one_path_in_two_indexes_is_two_runs() {
         let rows = [sec("a.md", 1, 4), sec("a.md", 5, 8)];
-        let one = merge_adjacent(&rows, &[0, 0], &[0.8, 0.79]);
+        let one = merge_adjacent(&rows, &[0, 0], &[0.8, 0.79], Some(0.6));
         assert_eq!(one.len(), 1, "touching pieces of one file are one run");
-        let two = merge_adjacent(&rows, &[0, 1], &[0.8, 0.79]);
+        let two = merge_adjacent(&rows, &[0, 1], &[0.8, 0.79], Some(0.6));
         assert_eq!(two.len(), 2, "one relative path in two indexes is two files");
     }
     #[test]
@@ -720,12 +757,32 @@ mod tests {
             sec("r.md", 157, 177),
         ];
         let scores = [0.674, 0.673, 0.676, 0.674, 0.716, 0.791];
-        let hits = merge_adjacent(&rows, &[0; 6], &scores);
+        // That query's median was 0.61, so a piece joins 0.791 at 0.746 or
+        // above, and 0.716 is background too.
+        let hits = merge_adjacent(&rows, &[0; 6], &scores, Some(0.61));
         let top = &hits[0];
-        assert_eq!((top.start, top.end), (140, 177), "the answer is a tight range");
-        assert!(top.score > 0.75, "and keeps its score, not {}", top.score);
-        let rest = &hits[1];
-        assert_eq!((rest.start, rest.end), (89, 139), "the background is a run of its own");
+        assert_eq!((top.start, top.end), (157, 177), "the answer is a tight range");
+        assert!(top.score > 0.79, "and keeps its score, not {}", top.score);
+        assert!(hits.iter().all(|h| h.start != 89 || h.end < 157), "the background stays apart");
+    }
+    #[test]
+    fn pieces_alike_against_the_spread_join() {
+        // Four notes within a quarter of the spread are one read.
+        let rows = [sec("n.md", 1, 3), sec("n.md", 4, 6), sec("n.md", 7, 9), sec("n.md", 10, 12)];
+        let hits = merge_adjacent(&rows, &[0; 4], &[0.78, 0.77, 0.76, 0.75], Some(0.55));
+        assert_eq!(hits.len(), 1);
+        assert_eq!((hits[0].start, hits[0].end), (1, 12));
+    }
+    #[test]
+    fn a_corpus_smaller_than_the_window_joins_by_ratio() {
+        // Four alike notes and an answer beside background, with no window of
+        // background to measure the spread from.
+        let rows = [sec("n.md", 1, 3), sec("n.md", 4, 6), sec("n.md", 7, 9), sec("n.md", 10, 12)];
+        let hits = merge_adjacent(&rows, &[0; 4], &[0.87, 0.87, 0.86, 0.86], None);
+        assert_eq!(hits.len(), 1, "alike notes are one read");
+        let rows = [sec("m.md", 1, 3), sec("m.md", 4, 6)];
+        let hits = merge_adjacent(&rows, &[0; 2], &[0.62, 0.81], None);
+        assert_eq!(hits.len(), 2, "an answer is not joined to its background");
     }
     #[test]
     fn the_hydration_window_does_not_move_with_the_limit() {

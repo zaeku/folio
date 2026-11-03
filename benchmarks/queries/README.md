@@ -101,3 +101,11 @@ rest of each pair, so the same targets are asked for in that language.
 ./translate.py ripgrep-seed58.json Korean ripgrep-seed58-ko.json
 ./translate.py ripgrep-seed58.json Korean ripgrep-seed58-ko-all.json --all-terms
 ```
+
+`merge-replay.py` replays how `folio query` joins touching results under other
+rules — fixed ratios to the best piece and thresholds set from the window's
+median — over the rows an index records, dumped from `.folio/index.db`.
+
+```sh
+./merge-replay.py <root> rows.tsv empty.json ripgrep http://127.0.0.1:8080/v1/embeddings rust-book-seed55.json ripgrep-seed58.json
+```
