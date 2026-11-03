@@ -1,0 +1,737 @@
+[
+ {
+  "q": "let else 사용해서 option unwrap 하거나 early return 하는 방법",
+  "file": "ch06-03-if-let.md",
+  "line": 65
+ },
+ {
+  "q": "cargo 바이너리 커스텀 subcommand 확장 만드는 방법",
+  "file": "ch14-05-extending-cargo.md",
+  "line": 1
+ },
+ {
+  "q": "hash map이 insert된 key와 value의 ownership을 가져가는지",
+  "file": "ch08-03-hash-maps.md",
+  "line": 84
+ },
+ {
+  "q": "언더스코어 접두사로 unused variable warning 무시하는 방법",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 370
+ },
+ {
+  "q": "rust에서 command line argument 읽고 파싱하는 방법",
+  "file": "ch12-01-accepting-command-line-arguments.md",
+  "line": 1
+ },
+ {
+  "q": "rust 문법에서 함수 선언하고 호출하는 방법",
+  "file": "ch03-03-how-functions-work.md",
+  "line": 1
+ },
+ {
+  "q": "trait을 사용해서 타입 간 공통 동작 정의하는 방법",
+  "file": "ch10-02-traits.md",
+  "line": 5
+ },
+ {
+  "q": "pub use로 모듈이랑 아이템 re-export 하는 방법",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 131
+ },
+ {
+  "q": "deref 연산자를 구현하는 커스텀 스마트 포인터 만드는 방법",
+  "file": "ch15-02-deref.md",
+  "line": 82
+ },
+ {
+  "q": "async task와 OS thread 각각 언제 사용해야 하는지",
+  "file": "ch17-06-futures-tasks-threads.md",
+  "line": 1
+ },
+ {
+  "q": "rust match 식에서 데이터가 있는 enum variant destructure 하는 방법",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 198
+ },
+ {
+  "q": "첫 기본 rust 콘솔 애플리케이션 작성하고 실행하기",
+  "file": "ch01-02-hello-world.md",
+  "line": 1
+ },
+ {
+  "q": "if let과 else를 사용해 단일 enum 패턴 간결하게 match 하기",
+  "file": "ch06-03-if-let.md",
+  "line": 1
+ },
+ {
+  "q": "rust에서 async 블록이 concurrent가 아니라 순차적으로 실행되는 이유",
+  "file": "ch17-02-concurrency-with-async.md",
+  "line": 282
+ },
+ {
+  "q": "rust에서 무한 루프를 사용해 사용자 입력을 반복해서 받는 방법",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 760
+ },
+ {
+  "q": "cargo test로 특정 문자열과 매칭되는 테스트만 실행하는 방법",
+  "file": "ch11-02-running-tests.md",
+  "line": 97
+ },
+ {
+  "q": "cargo 패키지 매니저란 무엇이고 cargo 버전 확인하는 방법",
+  "file": "ch01-03-hello-cargo.md",
+  "line": 1
+ },
+ {
+  "q": "rust 클로저가 주변 스코프의 변수와 참조를 캡처하는 방식",
+  "file": "ch13-01-closures.md",
+  "line": 22
+ },
+ {
+  "q": "rust 함수 시그니처에서 String 참조 대신 string slice 받는 방법",
+  "file": "ch04-03-slices.md",
+  "line": 256
+ },
+ {
+  "q": "공식 rust 프로그래밍 언어 책 제공되는 커뮤니티 번역본 목록",
+  "file": "appendix-06-translation.md",
+  "line": 1
+ },
+ {
+  "q": "로직을 라이브러리로 분리해서 rust cli 프로젝트 구조화하는 방법",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 40
+ },
+ {
+  "q": "rust struct에서 method와 self 파라미터란 무엇인가",
+  "file": "ch05-03-method-syntax.md",
+  "line": 1
+ },
+ {
+  "q": "rust에서 impl 블록을 사용해 struct에 method 정의하기",
+  "file": "ch05-03-method-syntax.md",
+  "line": 16
+ },
+ {
+  "q": "rust에서 hashmap key에 Hash trait derive 하는 방법",
+  "file": "appendix-03-derivable-traits.md",
+  "line": 150
+ },
+ {
+  "q": "스레드 간 reference counted 데이터 공유 시 Rc Send 에러 rust",
+  "file": "ch16-03-shared-state.md",
+  "line": 138
+ },
+ {
+  "q": "rust 성공하는 테스트에서 stdout print 출력 보는 법",
+  "file": "ch11-02-running-tests.md",
+  "line": 53
+ },
+ {
+  "q": "rust 값 반환 시 소유권 이동 및 reference 사용 방법",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 478
+ },
+ {
+  "q": "rust threadpool 여러 worker thread에서 channel receiver 공유하기",
+  "file": "ch21-02-multithreaded.md",
+  "line": 479
+ },
+ {
+  "q": "crate 및 module 레벨 문서화를 위한 inner doc comment 작성법",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 109
+ },
+ {
+  "q": "rust에서 trait 정의할 때 다른 trait 요구(supertrait)하는 방법",
+  "file": "ch20-02-advanced-traits.md",
+  "line": 347
+ },
+ {
+  "q": "rust unit test에서 private 내부 함수 테스트하는 방법",
+  "file": "ch11-03-test-organization.md",
+  "line": 56
+ },
+ {
+  "q": "cargo로 rust 프로젝트 clone, build, 관리하는 표준 workflow",
+  "file": "ch01-03-hello-cargo.md",
+  "line": 222
+ },
+ {
+  "q": "rust에서 if else 조건식 결과를 변수에 할당하기",
+  "file": "ch03-05-control-flow.md",
+  "line": 119
+ },
+ {
+  "q": "rust public library api 통합 테스트(integration test) 작성법",
+  "file": "ch11-03-test-organization.md",
+  "line": 81
+ },
+ {
+  "q": "rust 동시성 Send Sync marker trait 안전하게 직접 구현하기",
+  "file": "ch16-04-extensible-concurrency-sync-and-send.md",
+  "line": 63
+ },
+ {
+  "q": "rust 느낌표 bang never return type diverging function",
+  "file": "ch20-03-advanced-types.md",
+  "line": 139
+ },
+ {
+  "q": "Weak 사용해서 트리 노드 부모 포인터 순환 참조 메모리 누수 방지하기",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 188
+ },
+ {
+  "q": "프로젝트 디렉토리별 rustup toolchain override nightly stable 전환",
+  "file": "appendix-07-nightly-rust.md",
+  "line": 144
+ },
+ {
+  "q": "rust에서 로컬 환경 변수 캡처하는 closure로 iterator filter 사용하기",
+  "file": "ch13-02-iterators.md",
+  "line": 191
+ },
+ {
+  "q": "rust struct impl 메서드에 lifetime 파라미터 지정하는 방법",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 539
+ },
+ {
+  "q": "rust alias 사용해서 import한 모듈 타입 이름 변경하는 방법",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 111
+ },
+ {
+  "q": "rust 제네릭 타입 monomorphization으로 인한 런타임 성능 오버헤드 있나요",
+  "file": "ch10-01-syntax.md",
+  "line": 265
+ },
+ {
+  "q": "rust에서 string collection과 utf8 인코딩 동작 방식",
+  "file": "ch08-02-strings.md",
+  "line": 1
+ },
+ {
+  "q": "rust dynamic dispatch trait object로 객체지향 디자인 패턴 구현하기",
+  "file": "ch18-03-oo-design-patterns.md",
+  "line": 529
+ },
+ {
+  "q": "rust 입문 튜토리얼 요약 복습 let match 함수 외부 crate",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 924
+ },
+ {
+  "q": "같은 trait 구현하는 서로 다른 여러 타입을 vector에 담는 방법",
+  "file": "ch18-02-trait-objects.md",
+  "line": 5
+ },
+ {
+  "q": "rust hashmap 컬렉션으로 key value 쌍 저장하는 방법",
+  "file": "ch08-03-hash-maps.md",
+  "line": 1
+ },
+ {
+  "q": "rust tokio future를 사용한 간단한 비동기 프로그래밍 시작하기 예제",
+  "file": "ch17-01-futures-and-syntax.md",
+  "line": 42
+ },
+ {
+  "q": "trait object static dispatch dynamic dispatch 런타임 비용 차이",
+  "file": "ch18-02-trait-objects.md",
+  "line": 227
+ },
+ {
+  "q": "pattern matching으로 enum variant 내부 데이터 꺼내는 방법",
+  "file": "ch06-02-match.md",
+  "line": 68
+ },
+ {
+  "q": "패턴에서 밑줄 underscore 사용해서 튜플 일부나 값 무시하기",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 323
+ },
+ {
+  "q": "스레드 간 소유권 이전을 위한 Send trait 마커",
+  "file": "ch16-04-extensible-concurrency-sync-and-send.md",
+  "line": 21
+ },
+ {
+  "q": "crates io 레지스트리에 오픈소스 라이브러리 업로드 및 배포 publish 단계",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 1
+ },
+ {
+  "q": "rust로 기본 멀티스레드 http 서버 바닥부터 만들기",
+  "file": "ch21-00-final-project-a-web-server.md",
+  "line": 1
+ },
+ {
+  "q": "rust 스택 힙 메모리 소유권 ownership 규칙 관리 방식",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 1
+ },
+ {
+  "q": "튜플을 named struct로 대체하고 함수에 borrow 인스턴스 전달하기",
+  "file": "ch05-02-example-structs.md",
+  "line": 71
+ },
+ {
+  "q": "enum variant 사용해서 단일 vector에 서로 다른 타입 저장하기",
+  "file": "ch08-01-vectors.md",
+  "line": 197
+ },
+ {
+  "q": "iterator filter collect 어댑터로 텍스트 검색 함수 리팩토링하기",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 127
+ },
+ {
+  "q": "rust 하위 호환성 및 코드 깨짐 없는 버전 업그레이드 처리 방식",
+  "file": "appendix-07-nightly-rust.md",
+  "line": 6
+ },
+ {
+  "q": "vector string map 같은 표준 heap 할당 자료구조 개요",
+  "file": "ch08-00-common-collections.md",
+  "line": 1
+ },
+ {
+  "q": "rust 함수에 커맨드 라인 인자 args iterator 직접 전달하기",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 43
+ },
+ {
+  "q": "rust 커스텀 struct 생성자 내부에 입력값 검증 logic 캡슐화하기",
+  "file": "ch09-03-to-panic-or-not-to-panic.md",
+  "line": 135
+ },
+ {
+  "q": "rust 특정 trait을 구현하는 여러 타입을 함수 파라미터로 받기",
+  "file": "ch10-02-traits.md",
+  "line": 201
+ },
+ {
+  "q": "rust mutable vector에 새 요소 추가 append 하는 법",
+  "file": "ch08-01-vectors.md",
+  "line": 51
+ },
+ {
+  "q": "rust 객체지향 스타일로 state 디자인 패턴 구현하기",
+  "file": "ch18-03-oo-design-patterns.md",
+  "line": 43
+ },
+ {
+  "q": "rust union 필드 읽을 때 unsafe 코드가 필요한 이유",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 491
+ },
+ {
+  "q": "at @ 기호 사용해서 매칭된 패턴 값을 변수에 바인딩하기",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 594
+ },
+ {
+  "q": "rust 함수에서 제네릭 타입 라이프타임 파라미터 trait bound 조합하는 법",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 603
+ },
+ {
+  "q": "rust match 문에서 리터럴 값 패턴 매칭하기",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 6
+ },
+ {
+  "q": "crates io 외부 크레이트를 cargo toml dependencies에 추가하는 법",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 169
+ },
+ {
+  "q": "rust 비동기 Stream trait 정의 및 poll next",
+  "file": "ch17-05-traits-for-async.md",
+  "line": 441
+ },
+ {
+  "q": "rust 서로 다른 타입 파라미터를 가진 generic struct에 메서드 구현하기",
+  "file": "ch10-01-syntax.md",
+  "line": 189
+ },
+ {
+  "q": "rust 익명 함수 작성 및 closure로 환경 캡처하는 법",
+  "file": "ch13-01-closures.md",
+  "line": 6
+ },
+ {
+  "q": "rust unwrap or else로 Result 에러 처리하고 프로그램 종료하기",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 293
+ },
+ {
+  "q": "rust 자기 참조 구조체 self referential struct에 Pin 및 Unpin 마커 trait이 필요한 이유",
+  "file": "ch17-05-traits-for-async.md",
+  "line": 282
+ },
+ {
+  "q": "테스트에서 assert 매크로 커스텀 실패 메시지 출력 방법",
+  "file": "ch11-01-writing-tests.md",
+  "line": 366
+ },
+ {
+  "q": "reference counting rc로 여러 변수 간 데이터 소유권 공유",
+  "file": "ch15-04-rc.md",
+  "line": 36
+ },
+ {
+  "q": "동일한 trait 구현하는 서로 다른 타입 vector에 저장하는 방법",
+  "file": "ch18-02-trait-objects.md",
+  "line": 42
+ },
+ {
+  "q": "여러 variant 가능한 커스텀 데이터 타입 만드는 방법",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 1
+ },
+ {
+  "q": "double dot 문법으로 다른 인스턴스에서 나머지 필드 값 복사",
+  "file": "ch05-01-defining-structs.md",
+  "line": 107
+ },
+ {
+  "q": "iterator의 next 메서드로 커맨드 라인 인자 처리",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 101
+ },
+ {
+  "q": "reference counting 스마트 포인터에서 순환 참조가 메모리 누수 일으키는 이유",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 1
+ },
+ {
+  "q": "병렬 테스트 실행 비활성화하고 순차적으로 테스트 실행하는 방법",
+  "file": "ch11-02-running-tests.md",
+  "line": 21
+ },
+ {
+  "q": "메모리에서 크기 가변 heap 할당 string과 string literal 차이점",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 134
+ },
+ {
+  "q": "제네릭 trait trait bounds 및 lifetime 파라미터 챕터 개요 요약",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 621
+ },
+ {
+  "q": "windows에서 rust 컴파일러 툴체인 및 visual studio 설정 및 설치",
+  "file": "ch01-01-installation.md",
+  "line": 58
+ },
+ {
+  "q": "unsafe 블록 내부에서 허용되는 연산 및 기능",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 30
+ },
+ {
+  "q": "rust에서 입력 인자와 타입 어노테이션을 가진 함수 정의하는 방법",
+  "file": "ch03-03-how-functions-work.md",
+  "line": 41
+ },
+ {
+  "q": "rust에서 클로저가 borrow 또는 move로 환경 변수를 캡처하는 방식",
+  "file": "ch13-01-closures.md",
+  "line": 176
+ },
+ {
+  "q": "rust에서 스레드 간 안전하게 데이터 공유하기 위한 mutex locking 동작 방식",
+  "file": "ch16-03-shared-state.md",
+  "line": 25
+ },
+ {
+  "q": "rust에서 channel sender drop하여 워커 스레드 graceful하게 종료하는 방법",
+  "file": "ch21-03-graceful-shutdown-and-cleanup.md",
+  "line": 90
+ },
+ {
+  "q": "rust에서 함수 포인터 fn 타입 사용해서 일반 함수를 인자로 전달하기",
+  "file": "ch20-04-advanced-functions-and-closures.md",
+  "line": 6
+ },
+ {
+  "q": "rust에서 else if 사용해 여러 분기 조건 검사하는 방법",
+  "file": "ch03-05-control-flow.md",
+  "line": 90
+ },
+ {
+  "q": "rust에서 빈 string 초기화하거나 literal로부터 string 생성하는 방법",
+  "file": "ch08-02-strings.md",
+  "line": 40
+ },
+ {
+  "q": "rust에서 rc와 refcell 사용 시 참조 사이클로 인한 메모리 누수 발생 원리",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 12
+ },
+ {
+  "q": "rust 클로저 문법 타입 추론 및 선택적 파라미터 타입 어노테이션",
+  "file": "ch13-01-closures.md",
+  "line": 92
+ },
+ {
+  "q": "rust에서 break 사용해 loop 표현식에서 값 반환하는 방법",
+  "file": "ch03-05-control-flow.md",
+  "line": 232
+ },
+ {
+  "q": "rust deref coercion box string을 str 파라미터로 전달",
+  "file": "ch15-02-deref.md",
+  "line": 203
+ },
+ {
+  "q": "rust struct 필드 정의 및 인스턴스 생성 mutable 업데이트",
+  "file": "ch05-01-defining-structs.md",
+  "line": 1
+ },
+ {
+  "q": "rust fs 파일 내용을 string으로 읽는 방법",
+  "file": "ch12-02-reading-a-file.md",
+  "line": 1
+ },
+ {
+  "q": "rust minigrep tdd 실패하는 테스트 작성 대소문자 구분 없는 검색",
+  "file": "ch12-05-working-with-environment-variables.md",
+  "line": 13
+ },
+ {
+  "q": "rust 복수 trait bounds 더하기 구문 제네릭 파라미터 함수",
+  "file": "ch10-02-traits.md",
+  "line": 267
+ },
+ {
+  "q": "rust 제네릭 라이프타임 파라미터 더 긴 string slice 반환하는 함수",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 108
+ },
+ {
+  "q": "rust 호출자에게 에러 반환 Result match 에러 전파",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 233
+ },
+ {
+  "q": "rust derive PartialEq vs Eq trait 차이점 float NaN",
+  "file": "appendix-03-derivable-traits.md",
+  "line": 53
+ },
+ {
+  "q": "unsafe rust가 존재하는 이유 저수준 시스템 프로그래밍 초능력",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 1
+ },
+ {
+  "q": "rust Cargo.toml edition 주요 차이점 2015 2018 2021 2024",
+  "file": "appendix-05-editions.md",
+  "line": 1
+ },
+ {
+  "q": "rust에서 문자열 문자나 바이트 순회하는 방법",
+  "file": "ch08-02-strings.md",
+  "line": 380
+ },
+ {
+  "q": "rust enum 기초 및 match와 if let 패턴 매칭",
+  "file": "ch06-00-enums.md",
+  "line": 1
+ },
+ {
+  "q": "rust 중첩 루프에서 레이블로 외부 루프 탈출하는 방법",
+  "file": "ch03-05-control-flow.md",
+  "line": 259
+ },
+ {
+  "q": "rust 부동소수점 원시 데이터 타입 f32 vs f64 정밀도",
+  "file": "ch03-02-data-types.md",
+  "line": 128
+ },
+ {
+  "q": "rust async 블록으로 채널 sender 소유권 넘기는 방법",
+  "file": "ch17-02-concurrency-with-async.md",
+  "line": 316
+ },
+ {
+  "q": "rust impl 블록에서 정적 생성자 함수 정의하는 방법",
+  "file": "ch05-03-method-syntax.md",
+  "line": 194
+ },
+ {
+  "q": "rust에서 Result enum과 match를 사용한 복구 가능한 에러 처리",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 1
+ },
+ {
+  "q": "rust에서 panic 없이 누락된 커맨드라인 인자 처리하기",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 196
+ },
+ {
+  "q": "rust unwrap 없이 main run 함수 에러 처리하는 방법",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 426
+ },
+ {
+  "q": "cargo로 의존성 패키지 최신 버전으로 업데이트하는 방법",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 471
+ },
+ {
+  "q": "rust에서 힙에 할당된 문자열 데이터 deep copy하는 방법",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 393
+ },
+ {
+  "q": "hash map에서 기존 키의 값을 덮어쓰거나 삽입하는 방법",
+  "file": "ch08-03-hash-maps.md",
+  "line": 107
+ },
+ {
+  "q": "웹 브라우저에서 표준 라이브러리 문서를 로컬로 열고 보는 방법",
+  "file": "ch01-01-installation.md",
+  "line": 132
+ },
+ {
+  "q": "OS 스레드를 사용할 때 race condition 및 데드락 같은 동시성 위험 이해하기",
+  "file": "ch16-01-threads.md",
+  "line": 1
+ },
+ {
+  "q": "함수형 iterator와 기존 루프의 성능 및 인체공학성(ergonomics) 비교",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 176
+ },
+ {
+  "q": "문자열을 숫자로 파싱할 때 명시적 타입 어노테이션이 필요한 이유",
+  "file": "ch03-02-data-types.md",
+  "line": 1
+ },
+ {
+  "q": "rust에서 가변 문자열에 문자나 string slice를 추가하는 방법",
+  "file": "ch08-02-strings.md",
+  "line": 113
+ },
+ {
+  "q": "매크로가 함수와 다른 점과 메타프로그래밍을 사용해야 하는 시점",
+  "file": "ch20-05-macros.md",
+  "line": 17
+ },
+ {
+  "q": "enum variant에 서로 다른 데이터 타입 정의하고 저장하는 방법",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 33
+ },
+ {
+  "q": "느린 테스트 기본으로 skip하고 cargo flag로 실행하는 방법",
+  "file": "ch11-02-running-tests.md",
+  "line": 156
+ },
+ {
+  "q": "documentation comment 작성하고 cargo doc으로 html 생성하는 방법",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 13
+ },
+ {
+  "q": "string을 다른 변수에 할당할 때 원래 변수가 무효화되는 이유",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 240
+ },
+ {
+  "q": "rust에서 빈 vector 또는 초기값 채운 vector 초기화하는 방법",
+  "file": "ch08-01-vectors.md",
+  "line": 9
+ },
+ {
+  "q": "reference counting 스마트 포인터로 부모 자식 노드 관계 구현하기",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 151
+ },
+ {
+  "q": "rust에서 복구 가능한 result 에러와 복구 불가능한 panic 크래시 차이점",
+  "file": "ch09-00-error-handling.md",
+  "line": 1
+ },
+ {
+  "q": "로직을 lib.rs로 옮기고 main.rs에서 호출하여 프로젝트 구조화하기",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 447
+ },
+ {
+  "q": "null 없이 option enum으로 nullable 값 안전하게 처리하기",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 193
+ },
+ {
+  "q": "const 키워드로 컴파일 타임 불변 상수 정의하는 규칙",
+  "file": "ch03-01-variables-and-mutability.md",
+  "line": 77
+ },
+ {
+  "q": "소스 파일 내 unit test 모듈 배치 및 구성 컨벤션",
+  "file": "ch11-03-test-organization.md",
+  "line": 15
+ },
+ {
+  "q": "rust 문장부호 기호 주석 괄호 대괄호 속성 레퍼런스 표",
+  "file": "appendix-02-operators.md",
+  "line": 151
+ },
+ {
+  "q": "rust에서 stack backtrace 확인하고 panic 시 abort하는 방법",
+  "file": "ch09-01-unrecoverable-errors-with-panic.md",
+  "line": 1
+ },
+ {
+  "q": "rust 컴파일 타임 메모리 안전성 및 소유권 개요 요약",
+  "file": "ch04-03-slices.md",
+  "line": 319
+ },
+ {
+  "q": "rust match arm에 if 조건문 추가하는 방법",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 489
+ },
+ {
+  "q": "물음표 연산자로 에러 전파하고 에러 타입 변환하는 방법",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 313
+ },
+ {
+  "q": "panic 없이 vector에서 안전하게 요소 가져오는 방법",
+  "file": "ch08-01-vectors.md",
+  "line": 69
+ },
+ {
+  "q": "rust 프로그래밍 언어 공식 도서 에디션 및 인터랙티브 버전",
+  "file": "title-page.md",
+  "line": 1
+ },
+ {
+  "q": "threadpool 구조체 내부에 worker join handle 저장하는 방법",
+  "file": "ch21-02-multithreaded.md",
+  "line": 352
+ },
+ {
+  "q": "rust에서 고정 크기 배열 요소 인덱스로 접근하는 방법",
+  "file": "ch03-02-data-types.md",
+  "line": 318
+ },
+ {
+  "q": "생성자 인자 검증하고 스레드 개수 0일 때 panic 발생시키는 방법",
+  "file": "ch21-02-multithreaded.md",
+  "line": 316
+ },
+ {
+  "q": "match arm에서 와일드카드 밑줄로 나머지 케이스 처리하는 방법",
+  "file": "ch06-02-match.md",
+  "line": 201
+ }
+]

@@ -1,0 +1,891 @@
+[
+ {
+  "q": "스캔 중 non-text content 발견 시 호출되는 callback",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 174,
+  "lang": "rust",
+  "hash": "61e531d9dfa38aee"
+ },
+ {
+  "q": "옵셔널 pattern string과 함께 pattern syntax failure message 표시",
+  "file": "crates/globset/src/lib.rs",
+  "line": 244,
+  "lang": "rust",
+  "hash": "b5f169db87bb3e94"
+ },
+ {
+  "q": "raw slice of characters로 matching target instance 생성",
+  "file": "crates/globset/src/lib.rs",
+  "line": 632,
+  "lang": "rust",
+  "hash": "0014c0c390cca029"
+ },
+ {
+  "q": "item이 collection의 모든 pattern을 만족하는지 확인",
+  "file": "crates/globset/src/lib.rs",
+  "line": 383,
+  "lang": "rust",
+  "hash": "df7164901a9bd0f4"
+ },
+ {
+  "q": "surrounding context lines 플래그 상세 help text",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1019,
+  "lang": "rust",
+  "hash": "b039321724ca220f"
+ },
+ {
+  "q": "parsed item을 현재 branch pattern group에 append",
+  "file": "crates/globset/src/glob.rs",
+  "line": 875,
+  "lang": "rust",
+  "hash": "5384574938041213"
+ },
+ {
+  "q": "structured output stream 시작 전 state와 timer 초기화",
+  "file": "crates/printer/src/json.rs",
+  "line": 802,
+  "lang": "rust",
+  "hash": "22ed90f5ab65dde9"
+ },
+ {
+  "q": "pattern list에서 rule들을 생성하는 helper",
+  "file": "crates/ignore/src/overrides.rs",
+  "line": 192,
+  "lang": "rust",
+  "hash": "d10c25a3819c67c3"
+ },
+ {
+  "q": "ignore rule entry 파싱 후 pattern matching 구조체로 변환",
+  "file": "crates/ignore/src/gitignore.rs",
+  "line": 457,
+  "lang": "rust",
+  "hash": "151aa428f7e60ad6"
+ },
+ {
+  "q": "output formatting을 위한 match count 및 total bytes 수집 토글",
+  "file": "crates/printer/src/standard.rs",
+  "line": 188,
+  "lang": "rust",
+  "hash": "4acfe6a8b82fcf4d"
+ },
+ {
+  "q": "OS 임시 디렉토리에 고유 scratch folder 할당",
+  "file": "crates/ignore/src/lib.rs",
+  "line": 521,
+  "lang": "rust",
+  "hash": "80734d15529fba89"
+ },
+ {
+  "q": "주변 non-matching text line을 만났을 때 호출되는 callback",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 130,
+  "lang": "rust",
+  "hash": "b043b7455a4b85bb"
+ },
+ {
+  "q": "file association 재설정 방법을 설명하는 extended man page 텍스트",
+  "file": "crates/core/flags/defs.rs",
+  "line": 7043,
+  "lang": "rust",
+  "hash": "97f2b74891553abd"
+ },
+ {
+  "q": "numeric size representation 파싱 실패 시 failure object 생성",
+  "file": "crates/cli/src/human.rs",
+  "line": 26,
+  "lang": "rust",
+  "hash": "2bb119794c6f1d38"
+ },
+ {
+  "q": "검색어가 plain substring으로 regex 파싱을 bypass할 수 있는지 판단",
+  "file": "crates/regex/src/config.rs",
+  "line": 94,
+  "lang": "rust",
+  "hash": "5e681f5f4d4faa33"
+ },
+ {
+  "q": "현재 file location으로 연결되는 terminal escape sequence 열기",
+  "file": "crates/printer/src/summary.rs",
+  "line": 591,
+  "lang": "rust",
+  "hash": "28b0e375497c3297"
+ },
+ {
+  "q": "memory-mapped file search를 활성화하는 CLI 옵션 문서",
+  "file": "crates/core/flags/defs.rs",
+  "line": 4080,
+  "lang": "rust",
+  "hash": "e3653e7ae352f7ef"
+ },
+ {
+  "q": "match line 내용 앞에 구분자와 함께 현재 file location 출력",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1655,
+  "lang": "rust",
+  "hash": "09de571422d79efd"
+ },
+ {
+  "q": "인접한 라인의 연속된 발생 건들을 리포팅 전에 누적 및 merge",
+  "file": "crates/searcher/src/searcher/glue.rs",
+  "line": 208,
+  "lang": "rust",
+  "hash": "cd385972e7ccbdc7"
+ },
+ {
+  "q": "byte buffer 내 순차적인 pattern occurrence들에 대해 callback 실행",
+  "file": "crates/pcre2/src/matcher.rs",
+  "line": 343,
+  "lang": "rust",
+  "hash": "acc4b1f22c82a49b"
+ },
+ {
+  "q": "단일 expression string에서 compiled pattern searcher 생성",
+  "file": "crates/pcre2/src/matcher.rs",
+  "line": 32,
+  "lang": "rust",
+  "hash": "ae28916ff2003b65"
+ },
+ {
+  "q": "wildcard pattern으로 검색 대상을 필터링하는 man page 설명",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3109,
+  "lang": "rust",
+  "hash": "1060e3f5b2ad56f6"
+ },
+ {
+  "q": "worker pool 실행 수를 설정하기 위한 command line argument 파싱",
+  "file": "crates/core/flags/defs.rs",
+  "line": 6740,
+  "lang": "rust",
+  "hash": "be381eb40e33bee1"
+ },
+ {
+  "q": "커맨드 옵션 기반 null byte 처리 전략 설정",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 1158,
+  "lang": "rust",
+  "hash": "0f1d4d0e96e02fad"
+ },
+ {
+  "q": "directory traversal item 표현에서 file location reference 조회",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 138,
+  "lang": "rust",
+  "hash": "1c2a59e0ede4d9e9"
+ },
+ {
+  "q": "정규표현식 백엔드 자동 선택 관련 도움말",
+  "file": "crates/core/flags/defs.rs",
+  "line": 260,
+  "lang": "rust",
+  "hash": "e2a8e19de22812f3"
+ },
+ {
+  "q": "경로 매칭 패턴에서 뒤쪽 literal 문자 추출",
+  "file": "crates/globset/src/glob.rs",
+  "line": 460,
+  "lang": "rust",
+  "hash": "af6b06d177351d29"
+ },
+ {
+  "q": "콜백 함수로 variant 내부 wrapped 값 변환",
+  "file": "crates/ignore/src/types.rs",
+  "line": 205,
+  "lang": "rust",
+  "hash": "b74a7bd266262014"
+ },
+ {
+  "q": "미지원 타깃 플랫폼용 디렉터리 엔트리 생성 stub",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 424,
+  "lang": "rust",
+  "hash": "07e9c6ab173c7f0a"
+ },
+ {
+  "q": "내용 스캔 전 아카이브 파일 압축 해제 설정",
+  "file": "crates/core/search.rs",
+  "line": 116,
+  "lang": "rust",
+  "hash": "dce85a390e227d6e"
+ },
+ {
+  "q": "정규표현식 dot 개행 문자 매칭 문서",
+  "file": "crates/core/flags/defs.rs",
+  "line": 4232,
+  "lang": "rust",
+  "hash": "45efd658b34d214c"
+ },
+ {
+  "q": "커맨드 옵션 문자열에서 3글자 sliding substring 추출",
+  "file": "crates/core/flags/parse.rs",
+  "line": 462,
+  "lang": "rust",
+  "hash": "81368aa372b86817"
+ },
+ {
+  "q": "주어진 경로에 매칭되는 모든 패턴 인덱스 찾기",
+  "file": "crates/globset/src/lib.rs",
+  "line": 399,
+  "lang": "rust",
+  "hash": "e9eb95db910acd92"
+ },
+ {
+  "q": "검색 타깃과 파일 시스템 수정 날짜 매핑",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 771,
+  "lang": "rust",
+  "hash": "e18290d7f87d1362"
+ },
+ {
+  "q": "콘솔 터미널 출력 스트림 라인 버퍼링 및 색상 설정",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 826,
+  "lang": "rust",
+  "hash": "6fd40d57b9e7941d"
+ },
+ {
+  "q": "중첩된 프로젝트 패키지 폴더 내부 디렉터리 트리 traversal 벤치마크",
+  "file": "crates/ignore/benches/workloads.rs",
+  "line": 221,
+  "lang": "rust",
+  "hash": "9de5283fac6de4cd"
+ },
+ {
+  "q": "유저 글로벌 버전 관리 설정 파일에서 raw bytes 읽기",
+  "file": "crates/ignore/src/gitignore.rs",
+  "line": 632,
+  "lang": "rust",
+  "hash": "dce27d3310927b5d"
+ },
+ {
+  "q": "상위 부모 디렉터리 규칙 적용 여부 토글",
+  "file": "crates/ignore/src/dir.rs",
+  "line": 971,
+  "lang": "rust",
+  "hash": "a31534c37c64dab8"
+ },
+ {
+  "q": "첫 번째 non-matching 레코드 발견 즉시 검색 중단",
+  "file": "crates/core/flags/defs.rs",
+  "line": 6598,
+  "lang": "rust",
+  "hash": "cf9cbce6ecb038a5"
+ },
+ {
+  "q": "raw byte string에서 OS 디렉터리 슬래시 정규화",
+  "file": "crates/printer/src/util.rs",
+  "line": 317,
+  "lang": "rust",
+  "hash": "1a0ee056d6148ae2"
+ },
+ {
+  "q": "추출된 literal 후보 시퀀스를 threshold 길이 이내로 결합 및 trim",
+  "file": "crates/regex/src/literal.rs",
+  "line": 395,
+  "lang": "rust",
+  "hash": "ca49a4daf4385f8c"
+ },
+ {
+  "q": "지정된 offset부터 byte buffer 내 패턴 검색",
+  "file": "crates/searcher/src/testutil.rs",
+  "line": 67,
+  "lang": "rust",
+  "hash": "409cbbc03b0cfd58"
+ },
+ {
+  "q": "디버그 출력용 검색 후보 엔트리 상세 정보 포맷팅",
+  "file": "crates/globset/src/lib.rs",
+  "line": 617,
+  "lang": "rust",
+  "hash": "35b58be5761c05e9"
+ },
+ {
+  "q": "타깃 파일 또는 상위 디렉터리가 제외 패턴과 매칭되는지 확인",
+  "file": "crates/ignore/src/gitignore.rs",
+  "line": 213,
+  "lang": "rust",
+  "hash": "66f3ad16fcec533b"
+ },
+ {
+  "q": "디렉터리 탐색 깊이와 크기 제한으로 파일 시스템 엔트리 필터링",
+  "file": "crates/ignore/src/incremental.rs",
+  "line": 267,
+  "lang": "rust",
+  "hash": "2733b5fb7e0d3e43"
+ },
+ {
+  "q": "base 폴더를 루트로 하는 커스텀 rule collector 생성",
+  "file": "crates/ignore/src/overrides.rs",
+  "line": 120,
+  "lang": "rust",
+  "hash": "79c98ea08a76c14e"
+ },
+ {
+  "q": "중지될 때까지 큐의 항목을 실행하는 백그라운드 태스크 처리 루프",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 1757,
+  "lang": "rust",
+  "hash": "3c3260f08a8cbbb4"
+ },
+ {
+  "q": "집계 tally 컬럼을 구분하는 커스텀 delimiter byte 설정",
+  "file": "crates/printer/src/summary.rs",
+  "line": 295,
+  "lang": "rust",
+  "hash": "2c6445110bb575c9"
+ },
+ {
+  "q": "전체 입력 스트림의 시작 지점 기준 시작 위치 가져오기",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 396,
+  "lang": "rust",
+  "hash": "c4df53d54ee0d46a"
+ },
+ {
+  "q": "클로저로 전달하기 전에 라인 위치 추출 및 텍스트 디코딩",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 598,
+  "lang": "rust",
+  "hash": "114360d7788a31d3"
+ },
+ {
+  "q": "여러 search expression을 단일 automata로 컴파일",
+  "file": "crates/globset/src/lib.rs",
+  "line": 287,
+  "lang": "rust",
+  "hash": "d68f4a072716597b"
+ },
+ {
+  "q": "repository ignore 파일 없이 directory tree traversal 벤치마크",
+  "file": "crates/ignore/benches/workloads.rs",
+  "line": 232,
+  "lang": "rust",
+  "hash": "27be10e7e8fed64b"
+ },
+ {
+  "q": "출력 컬럼 또는 파일 위치 세그먼트 사이의 output delimiter",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1717,
+  "lang": "rust",
+  "hash": "fdab5c415a2b149f"
+ },
+ {
+  "q": "검색 대상 expression 지정을 위한 man page 상세 설명",
+  "file": "crates/core/flags/defs.rs",
+  "line": 5865,
+  "lang": "rust",
+  "hash": "11aeffc5d6956d48"
+ },
+ {
+  "q": "선택한 backend를 사용해 디스크 위치에서 query scan 실행",
+  "file": "crates/core/search.rs",
+  "line": 341,
+  "lang": "rust",
+  "hash": "c914ad28e5e9d273"
+ },
+ {
+  "q": "외부 엔진 release 정보를 출력하는 command line switch 처리",
+  "file": "crates/core/flags/defs.rs",
+  "line": 5434,
+  "lang": "rust",
+  "hash": "bca8f2a98959bfb8"
+ },
+ {
+  "q": "newline 및 carriage return 규칙에 따른 beginning match assertion 선택",
+  "file": "crates/regex/src/config.rs",
+  "line": 333,
+  "lang": "rust",
+  "hash": "c370f94f60e55f64"
+ },
+ {
+  "q": "콜론으로 구분된 커스텀 파일 카테고리 및 확장자 매핑 spec 파싱",
+  "file": "crates/ignore/src/types.rs",
+  "line": 437,
+  "lang": "rust",
+  "hash": "32b20067b3add7e3"
+ },
+ {
+  "q": "traversal 시 repository exclude 규칙을 적용할지 여부 토글",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 915,
+  "lang": "rust",
+  "hash": "d20873e959dd27e5"
+ },
+ {
+  "q": "소스 위치 좌표로 링크되는 terminal escape sequence 출력",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1454,
+  "lang": "rust",
+  "hash": "d246882356efb6b6"
+ },
+ {
+  "q": "파싱된 regular expression syntax에서 중첩된 character group과 연산 순회",
+  "file": "crates/regex/src/ast.rs",
+  "line": 92,
+  "lang": "rust",
+  "hash": "42861c7a19e9e740"
+ },
+ {
+  "q": "파일 또는 폴더 경로가 repository exclusion 규칙과 매칭되는지 테스트",
+  "file": "crates/ignore/src/gitignore.rs",
+  "line": 191,
+  "lang": "rust",
+  "hash": "90f3f2b06bbb3b70"
+ },
+ {
+  "q": "대문자 포함 여부에 따라 검색 시 case를 무시할지 결정",
+  "file": "crates/regex/src/config.rs",
+  "line": 82,
+  "lang": "rust",
+  "hash": "c20814d463ed6ec1"
+ },
+ {
+  "q": "검색 hit 및 metadata 표시를 위한 console output formatter 설정",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 606,
+  "lang": "rust",
+  "hash": "6b7ac0ceb1638da2"
+ },
+ {
+  "q": "대소문자를 무시하도록 command line 검색 옵션 설정",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3181,
+  "lang": "rust",
+  "hash": "5926d72e96b15893"
+ },
+ {
+  "q": "CRLF 처리 및 regex anchor 동작을 설명하는 문서",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1400,
+  "lang": "rust",
+  "hash": "9793152ef19edc4c"
+ },
+ {
+  "q": "configuration 파일을 읽어 라인별로 command line argument 추출",
+  "file": "crates/core/flags/config.rs",
+  "line": 73,
+  "lang": "rust",
+  "hash": "51f33f9f3cca792b"
+ },
+ {
+  "q": "traversal에 dotfile 및 숨김 디렉토리를 포함하는 플래그 문서",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2791,
+  "lang": "rust",
+  "hash": "42bcdf6ddd5d32e5"
+ },
+ {
+  "q": "case folding을 덮어쓰고 exact casing을 강제하는 플래그의 help text",
+  "file": "crates/core/flags/defs.rs",
+  "line": 656,
+  "lang": "rust",
+  "hash": "48207c055ab35258"
+ },
+ {
+  "q": "pattern evaluation을 위해 상위 디렉토리 점을 유지하면서 trailing path component 추출",
+  "file": "crates/globset/src/lib.rs",
+  "line": 655,
+  "lang": "rust",
+  "hash": "71a174efbb8d3b2d"
+ },
+ {
+  "q": "전체 매칭 라인 수 또는 항목 수의 설정된 upper bound 조회",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 875,
+  "lang": "rust",
+  "hash": "93beabe9da922558"
+ },
+ {
+  "q": "현재 검색 설정으로 유효한 hit이 생성될 수 있는지 확인",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 516,
+  "lang": "rust",
+  "hash": "5b17db4ce71837e0"
+ },
+ {
+  "q": "character charset 플래그를 내부 text decode 설정으로 파싱",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1630,
+  "lang": "rust",
+  "hash": "63165993a5abc4b1"
+ },
+ {
+  "q": "고수준 intermediate representation을 finite automaton 엔진으로 컴파일",
+  "file": "crates/regex/src/config.rs",
+  "line": 241,
+  "lang": "rust",
+  "hash": "33da21d821b1e0cd"
+ },
+ {
+  "q": "symlink 순회 및 loop 감지 옵션에 대한 help 설명",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2362,
+  "lang": "rust",
+  "hash": "4e06cb10a01b7af7"
+ },
+ {
+  "q": "binary 감지 및 context 포함 in-memory buffer 검색 실행",
+  "file": "crates/searcher/src/searcher/glue.rs",
+  "line": 166,
+  "lang": "rust",
+  "hash": "b0fef2f5468e155a"
+ },
+ {
+  "q": "directory 탐색 및 file traversal 실패 상황에 대한 사람이 읽기 쉬운 메시지",
+  "file": "crates/ignore/src/lib.rs",
+  "line": 311,
+  "lang": "rust",
+  "hash": "87847fe5b635713a"
+ },
+ {
+  "q": "expression에 최소 하나의 exact string 또는 문자 상수가 포함되어 있는지 확인",
+  "file": "crates/regex/src/ast.rs",
+  "line": 43,
+  "lang": "rust",
+  "hash": "55d5462046692e0d"
+ },
+ {
+  "q": "테스트 중 검색 타겟 주변에 표시할 앞쪽 라인 수 설정",
+  "file": "crates/searcher/src/testutil.rs",
+  "line": 436,
+  "lang": "rust",
+  "hash": "30ece457fd4225e9"
+ },
+ {
+  "q": "worker별 lifo queue 초기화 및 초기 discovery job 분배",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 1659,
+  "lang": "rust",
+  "hash": "48a89dd14c1f2078"
+ },
+ {
+  "q": "상한값으로 clamp된 디렉터리 재귀 최소 허용 레벨 설정",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 741,
+  "lang": "rust",
+  "hash": "722ed653e1addcec"
+ },
+ {
+  "q": "주석 및 무시해도 되는 공백을 건너뛰는 verbose 모드 활성화 또는 비활성화",
+  "file": "crates/regex/src/matcher.rs",
+  "line": 162,
+  "lang": "rust",
+  "hash": "d4b2035bce3e12c1"
+ },
+ {
+  "q": "시스템 machine identifier executable path 인자를 커맨드 설정으로 파싱",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2875,
+  "lang": "rust",
+  "hash": "0d27b4c608966b21"
+ },
+ {
+  "q": "원래 시작 byte boundary를 유지하며 갱신된 match span 구성",
+  "file": "crates/matcher/src/lib.rs",
+  "line": 116,
+  "lang": "rust",
+  "hash": "0fbffc3c449c53bd"
+ },
+ {
+  "q": "출력이 최대 column width 임계값을 초과할 때의 preview 동작을 설명하는 문서",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3837,
+  "lang": "rust",
+  "hash": "f6eb5f5316321155"
+ },
+ {
+  "q": "사용자 입력 delimiter 문자열을 unescape된 raw byte sequence로 파싱",
+  "file": "crates/core/flags/lowargs.rs",
+  "line": 593,
+  "lang": "rust",
+  "hash": "10e7ea1a718f1590"
+ },
+ {
+  "q": "여러 파일 검색 wildcard로부터 pattern matching engine 구성",
+  "file": "crates/globset/src/lib.rs",
+  "line": 458,
+  "lang": "rust",
+  "hash": "7617bd743deec3dd"
+ },
+ {
+  "q": "printer 스타일링 구분자 및 줄바꿈 delimiter 초기 설정",
+  "file": "crates/printer/src/path.rs",
+  "line": 21,
+  "lang": "rust",
+  "hash": "c8b6e41579d71e37"
+ },
+ {
+  "q": "command line 옵션 값으로부터 file type 필터링 선택 적용",
+  "file": "crates/core/flags/defs.rs",
+  "line": 6904,
+  "lang": "rust",
+  "hash": "f69da65a5e74925b"
+ },
+ {
+  "q": "syntax tree가 금지된 리터럴 문자와 일치하지 않는지 검증",
+  "file": "crates/regex/src/ban.rs",
+  "line": 7,
+  "lang": "rust",
+  "hash": "f3a475c8847a5613"
+ },
+ {
+  "q": "파싱된 command line 파라미터에서 텍스트 payload 추출하거나 boolean인 경우 중단",
+  "file": "crates/core/flags/mod.rs",
+  "line": 286,
+  "lang": "rust",
+  "hash": "8cd4c182d5769c5a"
+ },
+ {
+  "q": "memory buffer에서 매칭을 스캔하고 출력을 collector로 스트리밍",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 767,
+  "lang": "rust",
+  "hash": "b2002e9fcfc9bcf5"
+ },
+ {
+  "q": "정확한 match 텍스트 기록 및 최대 발견 string 길이 업데이트",
+  "file": "crates/globset/src/lib.rs",
+  "line": 1044,
+  "lang": "rust",
+  "hash": "5c217fea8710d3a0"
+ },
+ {
+  "q": "터미널 여부에 따라 line 또는 block buffer를 선택하여 standard output stream 생성",
+  "file": "crates/cli/src/wtr.rs",
+  "line": 9,
+  "lang": "rust",
+  "hash": "9651685f738cf399"
+ },
+ {
+  "q": "command line 옵션에서 전체 매칭 횟수 카운팅 모드 활성화",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1357,
+  "lang": "rust",
+  "hash": "157192d7e65fd02d"
+ },
+ {
+  "q": "매칭 시 표시할 주변 라인 수 설정",
+  "file": "crates/core/flags/lowargs.rs",
+  "line": 395,
+  "lang": "rust",
+  "hash": "869393d5dcbe918c"
+ },
+ {
+  "q": "shell completion 스크립트 또는 문서를 생성하는 cli flag 파싱",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2452,
+  "lang": "rust",
+  "hash": "c5500ace68c158ec"
+ },
+ {
+  "q": "터미널 출력에 클릭 가능한 링크를 포함하도록 설정",
+  "file": "crates/printer/src/standard.rs",
+  "line": 169,
+  "lang": "rust",
+  "hash": "f2fa009935a4def6"
+ },
+ {
+  "q": "정규표현식 문법을 비활성화하고 패턴을 exact literal로 매칭",
+  "file": "crates/pcre2/src/matcher.rs",
+  "line": 181,
+  "lang": "rust",
+  "hash": "dcf9f29dd31a3286"
+ },
+ {
+  "q": "byte character set 범위 크기가 최대 용량을 초과하는지 확인",
+  "file": "crates/regex/src/literal.rs",
+  "line": 363,
+  "lang": "rust",
+  "hash": "32c1ee5947a42b77"
+ },
+ {
+  "q": "매치가 없는 파일 목록 출력 플래그 설정",
+  "file": "crates/core/flags/defs.rs",
+  "line": 2253,
+  "lang": "rust",
+  "hash": "b0f955e7208b9ba2"
+ },
+ {
+  "q": "다음 stream 읽기를 위한 내부 buffer offset 및 position 리셋",
+  "file": "crates/searcher/src/line_buffer.rs",
+  "line": 334,
+  "lang": "rust",
+  "hash": "f6c9dffc68517953"
+ },
+ {
+  "q": "구조화된 직렬화 포맷 출력 stream handler 생성",
+  "file": "crates/printer/src/json.rs",
+  "line": 64,
+  "lang": "rust",
+  "hash": "09feb8d421a501ab"
+ },
+ {
+  "q": "standard output builder에 터미널 styling 규칙 설정",
+  "file": "crates/printer/src/standard.rs",
+  "line": 147,
+  "lang": "rust",
+  "hash": "e83b66172efaa5b1"
+ },
+ {
+  "q": "low level argument에서 null byte 구분자 옵션 플래그 활성화",
+  "file": "crates/core/flags/defs.rs",
+  "line": 5047,
+  "lang": "rust",
+  "hash": "19c2c484c8213796"
+ },
+ {
+  "q": "패턴 발생 위치에 대한 byte offset 경계 span 인스턴스화",
+  "file": "crates/matcher/src/lib.rs",
+  "line": 75,
+  "lang": "rust",
+  "hash": "724a3221086b6158"
+ },
+ {
+  "q": "negative pattern filtering 모드가 활성화되어 있는지 확인",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 846,
+  "lang": "rust",
+  "hash": "4cac9aaa46d0f61b"
+ },
+ {
+  "q": "콘솔 출력을 위한 내장 터미널 highlight 테마 palette 정의",
+  "file": "crates/printer/src/color.rs",
+  "line": 3,
+  "lang": "rust",
+  "hash": "293d8ff2c3b4f285"
+ },
+ {
+  "q": "커맨드 라인 실행 시 일반 출력을 suppress해야 하는지 확인",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 668,
+  "lang": "rust",
+  "hash": "773211b7b492d99a"
+ },
+ {
+  "q": "유효하지 않은 터미널 styling 옵션에 대한 설명 메시지 표시",
+  "file": "crates/printer/src/color.rs",
+  "line": 49,
+  "lang": "rust",
+  "hash": "92316d369f034758"
+ },
+ {
+  "q": "cli 옵션 help text 포맷팅 및 설명 줄바꿈",
+  "file": "crates/core/flags/doc/help.rs",
+  "line": 130,
+  "lang": "rust",
+  "hash": "1a8a55be727d3c73"
+ },
+ {
+  "q": "stdout chunked stream buffering 옵션을 설명하는 help 메시지",
+  "file": "crates/core/flags/defs.rs",
+  "line": 536,
+  "lang": "rust",
+  "hash": "30058d6317cf3c41"
+ },
+ {
+  "q": "파일 경로가 파일 패턴 전략을 만족하는지 확인",
+  "file": "crates/globset/src/lib.rs",
+  "line": 725,
+  "lang": "rust",
+  "hash": "28f1b0b9bc481cd9"
+ },
+ {
+  "q": "바이너리 릴리즈 빌드 및 커밋 정보 출력 처리",
+  "file": "crates/core/flags/defs.rs",
+  "line": 7320,
+  "lang": "rust",
+  "hash": "1f539e06eef445c1"
+ },
+ {
+  "q": "대소문자 구분을 무시하도록 검색 식 설정",
+  "file": "crates/regex/src/matcher.rs",
+  "line": 99,
+  "lang": "rust",
+  "hash": "26ae8f1830bc0fdf"
+ },
+ {
+  "q": "터미널 hyperlink template 보간을 위한 row index 할당",
+  "file": "crates/printer/src/hyperlink/mod.rs",
+  "line": 596,
+  "lang": "rust",
+  "hash": "b1808012d7a36086"
+ },
+ {
+  "q": "Windows 파일 시스템 파일 metadata를 검사하는 디렉터리 항목 생성",
+  "file": "crates/ignore/src/walk.rs",
+  "line": 338,
+  "lang": "rust",
+  "hash": "86ce21edf30f2ac3"
+ },
+ {
+  "q": "텍스트가 아닌 내용을 만났을 때 검색 중단을 트리거하는 문자",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 99,
+  "lang": "rust",
+  "hash": "15f0e39b5d77e0ab"
+ },
+ {
+  "q": "총 매치 수와 처리된 byte 수를 추적하도록 collector 설정",
+  "file": "crates/printer/src/summary.rs",
+  "line": 244,
+  "lang": "rust",
+  "hash": "1c1870179d34afe7"
+ },
+ {
+  "q": "커맨드 라인 플래그에서 터미널 클릭 가능한 링크 template 옵션 파싱",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3041,
+  "lang": "rust",
+  "hash": "cd4a2a77eb979a4a"
+ },
+ {
+  "q": "문서 내 대체 이름 정렬을 위한 상대적 ranking 가중치",
+  "file": "crates/printer/src/hyperlink/mod.rs",
+  "line": 209,
+  "lang": "rust",
+  "hash": "ace39b58f3ccbdca"
+ },
+ {
+  "q": "reader 캐시를 채우고 텍스트가 아닌 데이터가 나타났는지 확인",
+  "file": "crates/searcher/src/searcher/glue.rs",
+  "line": 58,
+  "lang": "rust",
+  "hash": "8a71274bcbcd1eca"
+ },
+ {
+  "q": "파일 경로, 라인 번호, 텍스트를 구분하는 구분자 문서",
+  "file": "crates/core/flags/defs.rs",
+  "line": 1909,
+  "lang": "rust",
+  "hash": "881a060eb1249920"
+ },
+ {
+  "q": "severity, target, 소스 위치를 포함한 진단 메시지를 stderr로 포맷팅",
+  "file": "crates/core/logger.rs",
+  "line": 37,
+  "lang": "rust",
+  "hash": "2579b856ddaa8845"
+ },
+ {
+  "q": "파일 시스템 경로에서 선행 디렉터리 컴포넌트 제거",
+  "file": "crates/ignore/src/pathutil.rs",
+  "line": 93,
+  "lang": "rust",
+  "hash": "24886ae4890b5dd6"
+ },
+ {
+  "q": "CLI 옵션으로 템플릿 채워서 터미널 매뉴얼 문서 빌드",
+  "file": "crates/core/flags/doc/man.rs",
+  "line": 25,
+  "lang": "rust",
+  "hash": "e0f142bbcec3d6d8"
+ },
+ {
+  "q": "buffer 끝에서 N행 역방향으로 시작하는 buffer 위치 찾기",
+  "file": "crates/searcher/src/lines.rs",
+  "line": 149,
+  "lang": "rust",
+  "hash": "fb68b0a1004fa865"
+ }
+]

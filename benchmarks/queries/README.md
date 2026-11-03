@@ -90,3 +90,14 @@ index` records for the tree's markdown, dumped from `.folio/index.db`.
 sqlite3 <root>/.folio/index.db "SELECT path, start, stop FROM sections" | tr '|' '\t' > sections.tsv
 ./mixed.py <root> sections.tsv units.json ripgrep rust-book-seed55.json ripgrep-seed58.json http://127.0.0.1:8090/v1/embeddings
 ```
+
+`translate.py` rewrites a set's questions in another language and keeps the
+rest of each pair, so the same targets are asked for in that language.
+`*-ko.json` keep the technical terms a Korean developer writes in English, and
+`*-ko-all.json`, written with `--all-terms`, translate those too. The
+2026-11-03 language measurement ran each through `mixed.py`.
+
+```sh
+./translate.py ripgrep-seed58.json Korean ripgrep-seed58-ko.json
+./translate.py ripgrep-seed58.json Korean ripgrep-seed58-ko-all.json --all-terms
+```

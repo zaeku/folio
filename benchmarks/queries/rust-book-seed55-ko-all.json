@@ -1,0 +1,737 @@
+[
+ {
+  "q": "let else 문으로 option 언랩하거나 조기 반환하는 방법",
+  "file": "ch06-03-if-let.md",
+  "line": 65
+ },
+ {
+  "q": "cargo 바이너리용 커스텀 서브커맨드 확장 만드는 방법",
+  "file": "ch14-05-extending-cargo.md",
+  "line": 1
+ },
+ {
+  "q": "해시맵에 삽입된 키와 값의 소유권이 이전되는지 여부",
+  "file": "ch08-03-hash-maps.md",
+  "line": 84
+ },
+ {
+  "q": "밑줄 접두사 붙여서 미사용 변수 경고 억제하는 방법",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 370
+ },
+ {
+  "q": "러스트에서 커맨드라인 인자 읽고 파싱하는 방법",
+  "file": "ch12-01-accepting-command-line-arguments.md",
+  "line": 1
+ },
+ {
+  "q": "러스트 문법에서 함수 선언 및 호출하는 방법",
+  "file": "ch03-03-how-functions-work.md",
+  "line": 1
+ },
+ {
+  "q": "트레이트를 사용해 여러 타입 간 공통 동작 정의하는 방법",
+  "file": "ch10-02-traits.md",
+  "line": 5
+ },
+ {
+  "q": "pub use 사용해서 모듈과 항목 재내보내기하는 방법",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 131
+ },
+ {
+  "q": "deref 연산자 구현하는 커스텀 스마트 포인터 만드는 방법",
+  "file": "ch15-02-deref.md",
+  "line": 82
+ },
+ {
+  "q": "비동기 태스크와 운영체제 스레드는 각각 언제 사용해야 하는지",
+  "file": "ch17-06-futures-tasks-threads.md",
+  "line": 1
+ },
+ {
+  "q": "러스트 match 표현식에서 데이터가 있는 열거형 배리언트 구조분해하는 방법",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 198
+ },
+ {
+  "q": "첫 러스트 기본 콘솔 애플리케이션 작성하고 실행하기",
+  "file": "ch01-02-hello-world.md",
+  "line": 1
+ },
+ {
+  "q": "if let과 else를 사용해 단일 열거형 패턴 간결하게 매칭하기",
+  "file": "ch06-03-if-let.md",
+  "line": 1
+ },
+ {
+  "q": "러스트에서 async 블록이 동시 실행되지 않고 순차 실행되는 이유",
+  "file": "ch17-02-concurrency-with-async.md",
+  "line": 282
+ },
+ {
+  "q": "무한 루프로 러스트에서 사용자 프롬프트 반복 입력받는 방법",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 760
+ },
+ {
+  "q": "cargo test에서 특정 문자열과 일치하는 테스트만 실행하는 방법",
+  "file": "ch11-02-running-tests.md",
+  "line": 97
+ },
+ {
+  "q": "cargo 패키지 매니저 소개 및 cargo 버전 확인 방법",
+  "file": "ch01-03-hello-cargo.md",
+  "line": 1
+ },
+ {
+  "q": "러스트 클로저가 주변 스코프의 변수와 참조를 캡처하는 방식",
+  "file": "ch13-01-closures.md",
+  "line": 22
+ },
+ {
+  "q": "러스트 함수 시그니처에서 String 참조 대신 문자열 슬라이스 받기",
+  "file": "ch04-03-slices.md",
+  "line": 256
+ },
+ {
+  "q": "러스트 프로그래밍 언어 공식 도서 번역본 커뮤니티 목록",
+  "file": "appendix-06-translation.md",
+  "line": 1
+ },
+ {
+  "q": "로직을 라이브러리로 분리하여 러스트 cli 프로젝트 구조화하는 방법",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 40
+ },
+ {
+  "q": "러스트 구조체에서 메서드와 self 매개변수의 개념",
+  "file": "ch05-03-method-syntax.md",
+  "line": 1
+ },
+ {
+  "q": "러스트에서 impl 블록 사용해 구조체 메서드 정의하기",
+  "file": "ch05-03-method-syntax.md",
+  "line": 16
+ },
+ {
+  "q": "러스트 hashmap 키용 Hash 트레이트 derive하는 방법",
+  "file": "appendix-03-derivable-traits.md",
+  "line": 150
+ },
+ {
+  "q": "스레드 간 참조 카운팅 데이터 공유 시 Rc Send 에러 해결 러스트",
+  "file": "ch16-03-shared-state.md",
+  "line": 138
+ },
+ {
+  "q": "성공하는 러스트 테스트에서 표준 출력 출력문 확인하는 방법",
+  "file": "ch11-02-running-tests.md",
+  "line": 53
+ },
+ {
+  "q": "러스트에서 값 반환 시 소유권 이동과 참조자 사용 방법",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 478
+ },
+ {
+  "q": "러스트 스레드 풀에서 여러 작업자 스레드 간 채널 수신자 공유하기",
+  "file": "ch21-02-multithreaded.md",
+  "line": 479
+ },
+ {
+  "q": "크레이트 및 모듈 수준 문서를 위한 내부 문서화 주석 작성법",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 109
+ },
+ {
+  "q": "러스트에서 트레이트 정의 시 다른 트레이트를 요구하는 방법",
+  "file": "ch20-02-advanced-traits.md",
+  "line": 347
+ },
+ {
+  "q": "러스트 단위 테스트에서 비공개 내부 비공개 함수 테스트하는 방법",
+  "file": "ch11-03-test-organization.md",
+  "line": 56
+ },
+ {
+  "q": "cargo를 사용하여 러스트 프로젝트를 복제 빌드 관리하는 표준 워크플로",
+  "file": "ch01-03-hello-cargo.md",
+  "line": 222
+ },
+ {
+  "q": "러스트에서 if else 조건식의 결과를 변수에 할당하기",
+  "file": "ch03-05-control-flow.md",
+  "line": 119
+ },
+ {
+  "q": "러스트에서 공개 라이브러리 api에 대한 통합 테스트 작성하는 방법",
+  "file": "ch11-03-test-organization.md",
+  "line": 81
+ },
+ {
+  "q": "러스트 동시성에서 Send 및 Sync 마커 트레이트를 안전하게 수동 구현하기",
+  "file": "ch16-04-extensible-concurrency-sync-and-send.md",
+  "line": 63
+ },
+ {
+  "q": "러스트 느낌표 뱅 never 반환 타입 발산 함수",
+  "file": "ch20-03-advanced-types.md",
+  "line": 139
+ },
+ {
+  "q": "Weak를 사용하여 트리 노드 부모 포인터의 순환 참조 메모리 누수 방지하기",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 188
+ },
+ {
+  "q": "프로젝트 디렉터리별로 nightly와 stable 간 rustup 툴체인 오버라이드 전환하기",
+  "file": "appendix-07-nightly-rust.md",
+  "line": 144
+ },
+ {
+  "q": "러스트에서 로컬 환경 변수를 캡처하는 클로저와 함께 이터레이터 filter 사용하기",
+  "file": "ch13-02-iterators.md",
+  "line": 191
+ },
+ {
+  "q": "러스트 구조체 impl 메서드에 라이프타임 매개변수를 지정하는 방법",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 539
+ },
+ {
+  "q": "러스트에서 별칭을 사용하여 가져온 모듈 타입 이름 바꾸는 방법",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 111
+ },
+ {
+  "q": "러스트에서 제네릭 타입이 단형성화를 통해 런타임 성능 비용을 발생시키는지 여부",
+  "file": "ch10-01-syntax.md",
+  "line": 265
+ },
+ {
+  "q": "러스트에서 문자열 컬렉션이 utf8 인코딩으로 동작하는 방식",
+  "file": "ch08-02-strings.md",
+  "line": 1
+ },
+ {
+  "q": "러스트에서 동적 디스패치 트레이트 객체로 객체 지향 디자인 패턴 구현하기",
+  "file": "ch18-03-oo-design-patterns.md",
+  "line": 529
+ },
+ {
+  "q": "러스트 초보자 튜토리얼 복습 요약 let match 함수 외부 크레이트",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 924
+ },
+ {
+  "q": "동일한 트레이트를 구현하는 여러 서로 다른 타입을 벡터에 담는 방법",
+  "file": "ch18-02-trait-objects.md",
+  "line": 5
+ },
+ {
+  "q": "러스트에서 HashMap 컬렉션을 사용하여 키-값 쌍을 저장하는 방법",
+  "file": "ch08-03-hash-maps.md",
+  "line": 1
+ },
+ {
+  "q": "러스트에서 tokio future를 사용한 간단한 비동기 프로그래밍 예제 시작하기",
+  "file": "ch17-01-futures-and-syntax.md",
+  "line": 42
+ },
+ {
+  "q": "트레이트 객체를 사용한 정적 디스패치와 동적 디스패치 간의 런타임 비용 차이",
+  "file": "ch18-02-trait-objects.md",
+  "line": 227
+ },
+ {
+  "q": "패턴 매칭을 사용하여 열거형 배리언트에서 데이터를 추출하는 방법",
+  "file": "ch06-02-match.md",
+  "line": 68
+ },
+ {
+  "q": "패턴에서 밑줄 문자를 사용해 튜플의 일부나 특정 값 무시하기",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 323
+ },
+ {
+  "q": "스레드 경계 간 소유권 이전을 위한 Send 트레이트 마커",
+  "file": "ch16-04-extensible-concurrency-sync-and-send.md",
+  "line": 21
+ },
+ {
+  "q": "crates io 레지스트리에 오픈소스 라이브러리 업로드 및 배포하는 절차",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 1
+ },
+ {
+  "q": "러스트로 바닥부터 기본 멀티스레드 http 서버 프로젝트 만들기",
+  "file": "ch21-00-final-project-a-web-server.md",
+  "line": 1
+ },
+ {
+  "q": "러스트가 스택과 힙에서 소유권 규칙을 사용해 메모리를 관리하는 방법",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 1
+ },
+ {
+  "q": "튜플을 이름 있는 구조체로 바꾸고 빌린 인스턴스를 함수에 전달하기",
+  "file": "ch05-02-example-structs.md",
+  "line": 71
+ },
+ {
+  "q": "열거형 배리언트를 사용해 단일 벡터 안에 서로 다른 데이터 타입 저장하기",
+  "file": "ch08-01-vectors.md",
+  "line": 197
+ },
+ {
+  "q": "반복자 filter 및 collect 어댑터를 사용해 텍스트 검색 함수 리팩토링하기",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 127
+ },
+ {
+  "q": "러스트가 코드를 깨뜨리지 않고 하위 호환성과 버전 업그레이드를 처리하는 방법",
+  "file": "appendix-07-nightly-rust.md",
+  "line": 6
+ },
+ {
+  "q": "벡터 문자열 맵 등 힙에 할당되는 표준 자료구조 개요",
+  "file": "ch08-00-common-collections.md",
+  "line": 1
+ },
+ {
+  "q": "러스트에서 명령줄 인수 반복자를 함수에 직접 전달하기",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 43
+ },
+ {
+  "q": "러스트에서 입력 유효성 검사 로직을 커스텀 구조체 생성자 안에 캡슐화하기",
+  "file": "ch09-03-to-panic-or-not-to-panic.md",
+  "line": 135
+ },
+ {
+  "q": "러스트에서 트레이트를 구현하는 여러 타입을 함수 매개변수로 받기",
+  "file": "ch10-02-traits.md",
+  "line": 201
+ },
+ {
+  "q": "러스트에서 가변 벡터에 새 요소를 추가하는 방법",
+  "file": "ch08-01-vectors.md",
+  "line": 51
+ },
+ {
+  "q": "러스트에서 객체 지향 스타일을 사용해 상태 디자인 패턴 구현하기",
+  "file": "ch18-03-oo-design-patterns.md",
+  "line": 43
+ },
+ {
+  "q": "러스트에서 공용체의 필드를 읽을 때 unsafe 코드가 필요한 이유",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 491
+ },
+ {
+  "q": "at 기호를 사용해 매칭된 패턴 값을 변수에 바인딩하기",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 594
+ },
+ {
+  "q": "러스트 함수에서 제네릭 타입 수명 매개변수 트레이트 바운드를 결합하는 방법",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 603
+ },
+ {
+  "q": "러스트 match 문에서 리터럴 값에 대한 패턴 매칭",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 6
+ },
+ {
+  "q": "crates io의 외부 크레이트를 Cargo toml 의존성에 추가하는 방법",
+  "file": "ch07-04-bringing-paths-into-scope-with-the-use-keyword.md",
+  "line": 169
+ },
+ {
+  "q": "러스트에서 비동기 Stream 트레이트 정의 및 poll_next",
+  "file": "ch17-05-traits-for-async.md",
+  "line": 441
+ },
+ {
+  "q": "서로 다른 타입 매개변수를 가진 제네릭 구조체에 메서드 구현하기 러스트",
+  "file": "ch10-01-syntax.md",
+  "line": 189
+ },
+ {
+  "q": "러스트에서 익명 함수 작성 및 클로저로 환경 캡처하는 방법",
+  "file": "ch13-01-closures.md",
+  "line": 6
+ },
+ {
+  "q": "러스트에서 unwrap_or_else로 Result 에러 처리하고 프로그램 종료하기",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 293
+ },
+ {
+  "q": "러스트에서 자기 참조 구조체에 Pin과 Unpin 마커 트레이트가 필요한 이유",
+  "file": "ch17-05-traits-for-async.md",
+  "line": 282
+ },
+ {
+  "q": "테스트에서 assert 매크로로 사용자 지정 실패 메시지 출력하는 방법",
+  "file": "ch11-01-writing-tests.md",
+  "line": 366
+ },
+ {
+  "q": "참조 카운팅 rc 사용해서 여러 변수 간 데이터 소유권 공유하기",
+  "file": "ch15-04-rc.md",
+  "line": 36
+ },
+ {
+  "q": "트레이트를 구현하는 서로 다른 타입들을 벡터에 저장하는 방법",
+  "file": "ch18-02-trait-objects.md",
+  "line": 42
+ },
+ {
+  "q": "여러 개의 가능한 배리언트를 갖는 사용자 정의 데이터 타입 생성 방법",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 1
+ },
+ {
+  "q": "마침표 두 개 문법으로 다른 인스턴스에서 나머지 필드 값 복사하기",
+  "file": "ch05-01-defining-structs.md",
+  "line": 107
+ },
+ {
+  "q": "반복자의 next 메서드로 명령줄 인수 처리하기",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 101
+ },
+ {
+  "q": "참조 카운팅 스마트 포인터에서 순환 참조가 메모리 누수를 유발하는 이유",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 1
+ },
+ {
+  "q": "병렬 테스트 실행 비활성화하고 순차적으로 테스트 실행하는 방법",
+  "file": "ch11-02-running-tests.md",
+  "line": 21
+ },
+ {
+  "q": "메모리에서 가변 힙 할당 문자열과 문자열 리터럴 간의 차이점",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 134
+ },
+ {
+  "q": "제네릭 트레이트 트레이트 바운드 수명 매개변수 요약 단원 개요",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 621
+ },
+ {
+  "q": "윈도우에서 러스트 컴파일러 툴체인 및 비주얼 스튜디오 설정과 설치",
+  "file": "ch01-01-installation.md",
+  "line": 58
+ },
+ {
+  "q": "unsafe 블록 안에서 허용되는 작업과 기능",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 30
+ },
+ {
+  "q": "러스트에서 입력 인수와 타입 표기가 있는 함수 정의 방법",
+  "file": "ch03-03-how-functions-work.md",
+  "line": 41
+ },
+ {
+  "q": "러스트에서 클로저가 대여나 이동으로 환경 변수를 캡처하는 방법",
+  "file": "ch13-01-closures.md",
+  "line": 176
+ },
+ {
+  "q": "러스트에서 스레드 간 안전한 데이터 공유를 위한 뮤텍스 락 동작 방식",
+  "file": "ch16-03-shared-state.md",
+  "line": 25
+ },
+ {
+  "q": "러스트에서 채널 송신자를 드롭하여 워커 스레드를 우아하게 종료하는 방법",
+  "file": "ch21-03-graceful-shutdown-and-cleanup.md",
+  "line": 90
+ },
+ {
+  "q": "러스트에서 함수 포인터 fn 타입으로 일반 함수를 인수로 전달하기",
+  "file": "ch20-04-advanced-functions-and-closures.md",
+  "line": 6
+ },
+ {
+  "q": "러스트에서 else if 사용해서 여러 분기 조건 검사하는 방법",
+  "file": "ch03-05-control-flow.md",
+  "line": 90
+ },
+ {
+  "q": "러스트에서 빈 문자열 초기화하거나 리터럴로부터 문자열 생성하는 방법",
+  "file": "ch08-02-strings.md",
+  "line": 40
+ },
+ {
+  "q": "러스트에서 rc와 refcell을 사용한 참조 순환으로 메모리 누수가 발생하는 방식",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 12
+ },
+ {
+  "q": "러스트 클로저 문법 타입 추론 및 선택적 매개변수 타입 표기",
+  "file": "ch13-01-closures.md",
+  "line": 92
+ },
+ {
+  "q": "러스트에서 break 사용해서 loop 표현식에서 값 반환하는 방법",
+  "file": "ch03-05-control-flow.md",
+  "line": 232
+ },
+ {
+  "q": "러스트 역참조 강제 box string을 str 매개변수로 전달",
+  "file": "ch15-02-deref.md",
+  "line": 203
+ },
+ {
+  "q": "러스트 구조체 필드 정의 및 인스턴스 생성 가변 갱신",
+  "file": "ch05-01-defining-structs.md",
+  "line": 1
+ },
+ {
+  "q": "러스트 fs로 파일 내용을 문자열로 읽는 방법",
+  "file": "ch12-02-reading-a-file.md",
+  "line": 1
+ },
+ {
+  "q": "러스트 minigrep tdd 실패하는 테스트 작성 대소문자 구분 없는 검색",
+  "file": "ch12-05-working-with-environment-variables.md",
+  "line": 13
+ },
+ {
+  "q": "러스트 다중 트레이트 바운드 더하기 구문 제네릭 매개변수 함수",
+  "file": "ch10-02-traits.md",
+  "line": 267
+ },
+ {
+  "q": "러스트 제네릭 라이프타임 매개변수 더 긴 문자열 슬라이스 반환하는 함수",
+  "file": "ch10-03-lifetime-syntax.md",
+  "line": 108
+ },
+ {
+  "q": "러스트 호출자에게 에러 반환 Result match 에러 전파",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 233
+ },
+ {
+  "q": "러스트 derive PartialEq vs Eq 트레이트 차이 부동소수점 NaN",
+  "file": "appendix-03-derivable-traits.md",
+  "line": 53
+ },
+ {
+  "q": "왜 unsafe 러스트가 존재하는가 저수준 시스템 프로그래밍 초능력",
+  "file": "ch20-01-unsafe-rust.md",
+  "line": 1
+ },
+ {
+  "q": "러스트 Cargo.toml 에디션 키 차이점 2015 2018 2021 2024",
+  "file": "appendix-05-editions.md",
+  "line": 1
+ },
+ {
+  "q": "러스트에서 문자열 문자나 바이트 순회 루프 도는 법",
+  "file": "ch08-02-strings.md",
+  "line": 380
+ },
+ {
+  "q": "러스트 열거형 기초와 match 및 if let 패턴 매칭",
+  "file": "ch06-00-enums.md",
+  "line": 1
+ },
+ {
+  "q": "러스트 중첩 루프에서 바깥 루프 탈출 레이블 break",
+  "file": "ch03-05-control-flow.md",
+  "line": 259
+ },
+ {
+  "q": "러스트 부동소수점 원시 자료형 f32 vs f64 정밀도",
+  "file": "ch03-02-data-types.md",
+  "line": 128
+ },
+ {
+  "q": "러스트 채널 송신자 소유권을 비동기 블록으로 넘기는 법",
+  "file": "ch17-02-concurrency-with-async.md",
+  "line": 316
+ },
+ {
+  "q": "러스트 impl 블록에서 정적 생성자 함수 정의하는 법",
+  "file": "ch05-03-method-syntax.md",
+  "line": 194
+ },
+ {
+  "q": "러스트에서 Result 열거형과 match를 사용한 복구 가능한 에러 처리",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 1
+ },
+ {
+  "q": "러스트 패닉 없이 누락된 명령줄 인수 처리하기",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 196
+ },
+ {
+  "q": "러스트 main run 함수에서 unwrap 없이 에러 처리하는 법",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 426
+ },
+ {
+  "q": "cargo 의존성 최신 버전으로 업데이트하는 법",
+  "file": "ch02-00-guessing-game-tutorial.md",
+  "line": 471
+ },
+ {
+  "q": "러스트에서 힙 할당된 문자열 데이터 딥카피하는 법",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 393
+ },
+ {
+  "q": "해시맵에서 기존 키의 값을 덮어쓰거나 삽입하는 방법",
+  "file": "ch08-03-hash-maps.md",
+  "line": 107
+ },
+ {
+  "q": "웹 브라우저에서 로컬 표준 라이브러리 문서 열고 확인하는 법",
+  "file": "ch01-01-installation.md",
+  "line": 132
+ },
+ {
+  "q": "운영체제 스레드를 사용할 때 경쟁 상태와 교착 상태 같은 동시성 위험 이해하기",
+  "file": "ch16-01-threads.md",
+  "line": 1
+ },
+ {
+  "q": "함수형 이터레이터와 전통적인 루프의 성능 및 인체공학성 비교",
+  "file": "ch13-03-improving-our-io-project.md",
+  "line": 176
+ },
+ {
+  "q": "문자열을 숫자로 파싱할 때 명시적 타입 어노테이션이 필요한 이유",
+  "file": "ch03-02-data-types.md",
+  "line": 1
+ },
+ {
+  "q": "러스트에서 가변 문자열에 문자나 문자열 슬라이스를 덧붙이는 법",
+  "file": "ch08-02-strings.md",
+  "line": 113
+ },
+ {
+  "q": "매크로와 함수의 차이점 및 메타프로그래밍을 사용해야 하는 시점",
+  "file": "ch20-05-macros.md",
+  "line": 17
+ },
+ {
+  "q": "enum 배리언트에 서로 다른 데이터 타입을 연결하고 저장하는 방법",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 33
+ },
+ {
+  "q": "느린 테스트를 기본적으로 건너뛰고 cargo 플래그로 실행하는 방법",
+  "file": "ch11-02-running-tests.md",
+  "line": 156
+ },
+ {
+  "q": "문서화 주석 작성하고 cargo doc으로 html 생성하는 방법",
+  "file": "ch14-02-publishing-to-crates-io.md",
+  "line": 13
+ },
+ {
+  "q": "문자열을 다른 변수에 할당하면 원래 변수가 무효화되는 이유",
+  "file": "ch04-01-what-is-ownership.md",
+  "line": 240
+ },
+ {
+  "q": "rust에서 비어 있거나 미리 채워진 벡터를 초기화하는 방법",
+  "file": "ch08-01-vectors.md",
+  "line": 9
+ },
+ {
+  "q": "참조 카운팅 스마트 포인터를 사용해 부모 자식 노드 관계 구현하기",
+  "file": "ch15-06-reference-cycles.md",
+  "line": 151
+ },
+ {
+  "q": "rust에서 복구 가능한 result 에러와 복구 불가능한 panic 크래시의 차이점",
+  "file": "ch09-00-error-handling.md",
+  "line": 1
+ },
+ {
+  "q": "로직을 lib.rs로 옮기고 main.rs에서 호출하여 프로젝트 구성하기",
+  "file": "ch12-03-improving-error-handling-and-modularity.md",
+  "line": 447
+ },
+ {
+  "q": "option enum을 사용해 null 없이 널 가능 값을 안전하게 처리하기",
+  "file": "ch06-01-defining-an-enum.md",
+  "line": 193
+ },
+ {
+  "q": "const 키워드로 컴파일 타임 불변 상수 값을 정의하는 규칙",
+  "file": "ch03-01-variables-and-mutability.md",
+  "line": 77
+ },
+ {
+  "q": "소스 파일에 단위 테스트 모듈을 배치하고 설정하는 관례",
+  "file": "ch11-03-test-organization.md",
+  "line": 15
+ },
+ {
+  "q": "rust 구두점 기호 주석 괄호 대괄호 속성 참조표",
+  "file": "appendix-02-operators.md",
+  "line": 151
+ },
+ {
+  "q": "rust에서 스택 백트레이스를 검사하고 panic 시 중단하는 방법",
+  "file": "ch09-01-unrecoverable-errors-with-panic.md",
+  "line": 1
+ },
+ {
+  "q": "rust 컴파일 타임 메모리 안전성 및 소유권 개요 요약",
+  "file": "ch04-03-slices.md",
+  "line": 319
+ },
+ {
+  "q": "rust match 암에 if 조건 표현식을 추가하는 방법",
+  "file": "ch19-03-pattern-syntax.md",
+  "line": 489
+ },
+ {
+  "q": "물음표를 사용해 에러를 전파하고 에러 타입을 변환하는 방법",
+  "file": "ch09-02-recoverable-errors-with-result.md",
+  "line": 313
+ },
+ {
+  "q": "패닉 없이 벡터에서 요소를 안전하게 가져오는 방법",
+  "file": "ch08-01-vectors.md",
+  "line": 69
+ },
+ {
+  "q": "공식 rust 프로그래밍 언어 책 판본 및 대화형 버전",
+  "file": "title-page.md",
+  "line": 1
+ },
+ {
+  "q": "threadpool 구조체 안에 워커의 join 핸들을 저장하는 방법",
+  "file": "ch21-02-multithreaded.md",
+  "line": 352
+ },
+ {
+  "q": "rust에서 인덱스로 고정 크기 배열 요소에 접근하는 방법",
+  "file": "ch03-02-data-types.md",
+  "line": 318
+ },
+ {
+  "q": "생성자 인수를 검증하고 스레드 수가 0일 때 패닉을 발생시키는 방법",
+  "file": "ch21-02-multithreaded.md",
+  "line": 316
+ },
+ {
+  "q": "match 암에서 와일드카드 밑줄을 사용해 나머지 케이스를 처리하는 방법",
+  "file": "ch06-02-match.md",
+  "line": 201
+ }
+]
