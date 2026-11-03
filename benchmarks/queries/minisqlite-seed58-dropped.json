@@ -1,0 +1,440 @@
+[
+ {
+  "q": "lookup original record index from sorted partition offset",
+  "piece": "index",
+  "file": "crates/minisqlite-exec/src/ops/window/partition.rs",
+  "line": 123
+ },
+ {
+  "q": "check if column is non physical virtual computed field",
+  "piece": "virtual",
+  "file": "crates/minisqlite-exec/src/row.rs",
+  "line": 14
+ },
+ {
+  "q": "compute aggregate across custom window frame for every partition element",
+  "piece": "frame",
+  "file": "crates/minisqlite-exec/src/ops/window.rs",
+  "line": 332
+ },
+ {
+  "q": "find primary key column positions for table definition",
+  "piece": "primary",
+  "file": "crates/minisqlite-catalog/src/builder.rs",
+  "line": 212
+ },
+ {
+  "q": "binary search partition window range boundary for numeric order values",
+  "piece": "range",
+  "file": "crates/minisqlite-exec/src/ops/window/frame.rs",
+  "line": 365
+ },
+ {
+  "q": "parse comma separated square bracket list of elements with optional trailing comma",
+  "piece": "parse",
+  "file": "crates/minisqlite-functions/src/json/parse.rs",
+  "line": 330
+ },
+ {
+  "q": "register built in extremum aggregation routines into registry",
+  "piece": "register",
+  "file": "crates/minisqlite-functions/src/agg/minmax.rs",
+  "line": 23
+ },
+ {
+  "q": "insert binary entry into btree leaf page buffer at offset",
+  "piece": "leaf",
+  "file": "crates/minisqlite-btree/src/index.rs",
+  "line": 208
+ },
+ {
+  "q": "query primary key columns when inspecting tables missing explicit row ids",
+  "piece": "table",
+  "file": "crates/minisqlite-catalog/src/introspect.rs",
+  "line": 264
+ },
+ {
+  "q": "create constant check rule with explanatory failure message",
+  "piece": "check",
+  "file": "crates/minisqlite-exec/src/ops/constraints.rs",
+  "line": 486
+ },
+ {
+  "q": "logarithm input validator non positive null pole domain guard",
+  "piece": "domain",
+  "file": "crates/minisqlite-functions/src/scalar/math.rs",
+  "line": 526
+ },
+ {
+  "q": "write header content area start offset with zero sentinel",
+  "piece": "write",
+  "file": "crates/minisqlite-fileformat/src/page_edit.rs",
+  "line": 78
+ },
+ {
+  "q": "convert conflict violation into unique or primary key error",
+  "piece": "error",
+  "file": "crates/minisqlite-exec/src/ops/insert.rs",
+  "line": 1330
+ },
+ {
+  "q": "stable sort frame positions before stepping ordered window aggregate",
+  "piece": "ordered",
+  "file": "crates/minisqlite-exec/src/ops/window.rs",
+  "line": 429
+ },
+ {
+  "q": "build cache lookup key for memoizing correlated subquery execution",
+  "piece": "memo",
+  "file": "crates/minisqlite-exec/src/context.rs",
+  "line": 488
+ },
+ {
+  "q": "aggregate accumulator step function adding numbers with overflow tracking and precision",
+  "piece": "step",
+  "file": "crates/minisqlite-functions/src/agg/sum.rs",
+  "line": 213
+ },
+ {
+  "q": "calculate total calendar seven day intervals in Gregorian year",
+  "piece": "year",
+  "file": "crates/minisqlite-functions/src/datetime/julian.rs",
+  "line": 235
+ },
+ {
+  "q": "convert string representation of column default into syntax tree",
+  "piece": "default",
+  "file": "crates/minisqlite-plan/src/compile/insert.rs",
+  "line": 459
+ },
+ {
+  "q": "calculate cumulative distribution window calculation over partition",
+  "piece": "dist",
+  "file": "crates/minisqlite-exec/src/ops/window/ranking.rs",
+  "line": 116
+ },
+ {
+  "q": "convert parser join syntax to execution plan join method",
+  "piece": "join",
+  "file": "crates/minisqlite-plan/src/compile/from.rs",
+  "line": 2238
+ },
+ {
+  "q": "execute drop table or view statement and return error outcome",
+  "piece": "drop",
+  "file": "crates/minisqlite-catalog/src/schemacatalog.rs",
+  "line": 3889
+ },
+ {
+  "q": "format signed integer with padding precision and thousands separators into buffer",
+  "piece": "signed",
+  "file": "crates/minisqlite-functions/src/scalar/string/format.rs",
+  "line": 391
+ },
+ {
+  "q": "check if query execution tree accesses common table expressions or materialized scans",
+  "piece": "materialized",
+  "file": "crates/minisqlite-plan/src/compile/select.rs",
+  "line": 309
+ },
+ {
+  "q": "build detailed metadata listing key and auxiliary fields of secondary index",
+  "piece": "index",
+  "file": "crates/minisqlite-catalog/src/introspect.rs",
+  "line": 404
+ },
+ {
+  "q": "check if syntax tree element contains non trivial sub expressions",
+  "piece": "expr",
+  "file": "crates/minisqlite-sql/src/ast_expr.rs",
+  "line": 96
+ },
+ {
+  "q": "check if file header length matches change version counters",
+  "piece": "header",
+  "file": "crates/minisqlite-fileformat/src/header.rs",
+  "line": 190
+ },
+ {
+  "q": "lookup relation schema rejecting tables that lack sequential integer keys",
+  "piece": "table",
+  "file": "crates/minisqlite-exec/src/row.rs",
+  "line": 173
+ },
+ {
+  "q": "execute subquery check if at least one row exists memoized",
+  "piece": "exists",
+  "file": "crates/minisqlite-exec/src/context.rs",
+  "line": 245
+ },
+ {
+  "q": "lookup database schema or catalog owning unqualified secondary index",
+  "piece": "index",
+  "file": "crates/minisqlite-catalog/src/catalog.rs",
+  "line": 183
+ },
+ {
+  "q": "parse statement string into syntax tree and build query plan",
+  "piece": "plan",
+  "file": "crates/minisqlite-plan/src/compile/order_scan.rs",
+  "line": 547
+ },
+ {
+  "q": "calculate rollback journal page sparse hash using initial nonce seed",
+  "piece": "journal",
+  "file": "crates/minisqlite-journal/src/codec.rs",
+  "line": 134
+ },
+ {
+  "q": "mark function as non deterministic to prevent subquery result caching",
+  "piece": "deterministic",
+  "file": "crates/minisqlite-functions/src/scalar/misc.rs",
+  "line": 314
+ },
+ {
+  "q": "extract top level expressions and child node from plan root",
+  "piece": "root",
+  "file": "crates/minisqlite-plan/src/compile/window.rs",
+  "line": 659
+ },
+ {
+  "q": "generate schema inspection rows for database metadata commands",
+  "piece": "rows",
+  "file": "crates/minisqlite-catalog/src/introspect.rs",
+  "line": 85
+ },
+ {
+  "q": "update database header with new unused page trunk pointer",
+  "piece": "head",
+  "file": "crates/minisqlite-pager/src/roots_first.rs",
+  "line": 648
+ },
+ {
+  "q": "initialize storage backend and open file for database queries",
+  "piece": "open",
+  "file": "crates/minisqlite-engine/src/lib.rs",
+  "line": 58
+ },
+ {
+  "q": "fill buffer with pseudo random bytes from generator",
+  "piece": "fill",
+  "file": "crates/minisqlite-exec/src/runtime.rs",
+  "line": 738
+ },
+ {
+  "q": "b-tree root pass-through page collapse reduce tree height",
+  "piece": "root",
+  "file": "crates/minisqlite-btree/src/index_delete.rs",
+  "line": 853
+ },
+ {
+  "q": "check autoincrement restriction on primary key and table type",
+  "piece": "autoincrement",
+  "file": "crates/minisqlite-catalog/src/builder.rs",
+  "line": 797
+ },
+ {
+  "q": "create index definition for automatic unique constraint index",
+  "piece": "auto",
+  "file": "crates/minisqlite-catalog/src/def.rs",
+  "line": 271
+ },
+ {
+  "q": "check if vacuum moved btree root page during commit",
+  "piece": "moved",
+  "file": "crates/minisqlite-pager/src/pager.rs",
+  "line": 210
+ },
+ {
+  "q": "replace select result column aliases in having filter clause",
+  "piece": "aliases",
+  "file": "crates/minisqlite-plan/src/compile/aggregate.rs",
+  "line": 304
+ },
+ {
+  "q": "read pointer map entry bytes for database page",
+  "piece": "entry",
+  "file": "crates/minisqlite-pager/src/roots_first.rs",
+  "line": 365
+ },
+ {
+  "q": "lookup table indexes within database namespace in catalog",
+  "piece": "indexes",
+  "file": "crates/minisqlite-catalog/src/catalog.rs",
+  "line": 137
+ },
+ {
+  "q": "parse upsert clause conflict target and do update or nothing action",
+  "piece": "parse",
+  "file": "crates/minisqlite-sql/src/parser/dml.rs",
+  "line": 62
+ },
+ {
+  "q": "determine collation for variadic functions from arguments left to right",
+  "piece": "collation",
+  "file": "crates/minisqlite-plan/src/bind/expr.rs",
+  "line": 1650
+ },
+ {
+  "q": "extract single materialized common table expression from execution plan",
+  "piece": "materialized",
+  "file": "crates/minisqlite-plan/src/compile/from.rs",
+  "line": 2910
+ },
+ {
+  "q": "map group by ordinal or alias to select list source expression",
+  "piece": "group",
+  "file": "crates/minisqlite-plan/src/compile/aggregate.rs",
+  "line": 242
+ },
+ {
+  "q": "validate and register view definition from schema table row",
+  "piece": "view",
+  "file": "crates/minisqlite-catalog/src/schemacatalog.rs",
+  "line": 1878
+ },
+ {
+  "q": "lazily upgrade read transaction to obtain write lock on first modification",
+  "piece": "write",
+  "file": "crates/minisqlite-pager/src/cow.rs",
+  "line": 256
+ },
+ {
+  "q": "check if schema item is user defined rather than internal system object",
+  "piece": "user",
+  "file": "crates/minisqlite-engine/src/vacuum.rs",
+  "line": 451
+ },
+ {
+  "q": "lookup wal frame header by one based index",
+  "piece": "frame",
+  "file": "crates/minisqlite-wal/src/index.rs",
+  "line": 150
+ },
+ {
+  "q": "evaluate limit and offset bounds and advance past initial rows",
+  "piece": "init",
+  "file": "crates/minisqlite-exec/src/ops/limit.rs",
+  "line": 63
+ },
+ {
+  "q": "remove single matching entry from unordered list using swap remove",
+  "piece": "remove",
+  "file": "crates/minisqlite-pager/src/walshared.rs",
+  "line": 215
+ },
+ {
+  "q": "parse pragma argument to determine number of freelist pages to vacuum",
+  "piece": "vacuum",
+  "file": "crates/minisqlite-engine/src/pragma.rs",
+  "line": 972
+ },
+ {
+  "q": "clear statement rows modified counter before query execution begins",
+  "piece": "statement",
+  "file": "crates/minisqlite-exec/src/runtime.rs",
+  "line": 374
+ },
+ {
+  "q": "read database header format versions to check write ahead log mode string",
+  "piece": "mode",
+  "file": "crates/minisqlite-engine/src/pragma.rs",
+  "line": 467
+ },
+ {
+  "q": "check if window frame boundary specifies preceding or following row offset",
+  "piece": "bound",
+  "file": "crates/minisqlite-plan/src/compile/window.rs",
+  "line": 450
+ },
+ {
+  "q": "build comparison expression for matching elements at index across two rows",
+  "piece": "elem",
+  "file": "crates/minisqlite-plan/src/bind/expr.rs",
+  "line": 625
+ },
+ {
+  "q": "parse btree page type byte into leaf or interior table index",
+  "piece": "byte",
+  "file": "crates/minisqlite-fileformat/src/page.rs",
+  "line": 30
+ },
+ {
+  "q": "map database schema text qualifier to built in main or temporary store",
+  "piece": "schema",
+  "file": "crates/minisqlite-types/src/dbindex.rs",
+  "line": 40
+ },
+ {
+  "q": "validate insert column names against table definition and check generated columns",
+  "piece": "columns",
+  "file": "crates/minisqlite-plan/src/compile/insert.rs",
+  "line": 295
+ },
+ {
+  "q": "retrieve metadata rows describing key columns of index or primary key table",
+  "piece": "rows",
+  "file": "crates/minisqlite-catalog/src/introspect.rs",
+  "line": 203
+ },
+ {
+  "q": "determine if initial byte is valid start of unquoted sql identifier",
+  "piece": "start",
+  "file": "crates/minisqlite-sql/src/token.rs",
+  "line": 119
+ },
+ {
+  "q": "parse create index statement string into syntax tree structure",
+  "piece": "parse",
+  "file": "crates/minisqlite-catalog/src/builder.rs",
+  "line": 2117
+ },
+ {
+  "q": "evaluate equijoin key expressions for table build side row",
+  "piece": "eval",
+  "file": "crates/minisqlite-exec/src/ops/join.rs",
+  "line": 165
+ },
+ {
+  "q": "create floating point json number token from text and value",
+  "piece": "number",
+  "file": "crates/minisqlite-functions/src/json/parse.rs",
+  "line": 732
+ },
+ {
+  "q": "commit transaction across databases and verify deferred foreign keys",
+  "piece": "commit",
+  "file": "crates/minisqlite-engine/src/txn.rs",
+  "line": 73
+ },
+ {
+  "q": "parse optional plus or minus sign before integer or float token",
+  "piece": "parse",
+  "file": "crates/minisqlite-sql/src/parser/expr.rs",
+  "line": 728
+ },
+ {
+  "q": "extract numeric value from text integer or real applying affinities",
+  "piece": "numeric",
+  "file": "crates/minisqlite-functions/src/scalar/math.rs",
+  "line": 125
+ },
+ {
+  "q": "check if expression is unqualified column matching specific identifier",
+  "piece": "column",
+  "file": "crates/minisqlite-plan/src/compile/aggregate.rs",
+  "line": 1276
+ },
+ {
+  "q": "rebalance btree pages after deletion causes underfull leaf node",
+  "piece": "rebalance",
+  "file": "crates/minisqlite-btree/src/index_delete.rs",
+  "line": 531
+ },
+ {
+  "q": "create hidden synthetic column omitted from wildcard expansion",
+  "piece": "hidden",
+  "file": "crates/minisqlite-plan/src/compile/from.rs",
+  "line": 543
+ }
+]

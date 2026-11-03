@@ -1,0 +1,140 @@
+[
+ {
+  "q": "check if line length exceeds configured column limit",
+  "piece": "exceeds",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1560
+ },
+ {
+  "q": "iterate through all occurrences in buffer with contextual position offset",
+  "piece": "iter",
+  "file": "crates/matcher/src/lib.rs",
+  "line": 680
+ },
+ {
+  "q": "check if current search pattern can span multiple lines",
+  "piece": "multi",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1566
+ },
+ {
+  "q": "verify file extension matches and satisfies every required regular expression",
+  "piece": "matches",
+  "file": "crates/globset/src/lib.rs",
+  "line": 935
+ },
+ {
+  "q": "build nested ignore rules for child directory during traversal",
+  "piece": "ignore",
+  "file": "crates/ignore/src/dir.rs",
+  "line": 369
+ },
+ {
+  "q": "apply terminal color styling before printing matching line",
+  "piece": "line",
+  "file": "crates/printer/src/standard.rs",
+  "line": 1503
+ },
+ {
+  "q": "configure output formatter for printing matched file paths",
+  "piece": "path",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 540
+ },
+ {
+  "q": "check whether terminal output writes execute in blocking synchronous mode",
+  "piece": "synchronous",
+  "file": "crates/cli/src/wtr.rs",
+  "line": 140
+ },
+ {
+  "q": "check if search should exit early after finding first hit",
+  "piece": "after",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 678
+ },
+ {
+  "q": "serialize structured event payload directly into destination writer stream",
+  "piece": "write",
+  "file": "crates/printer/src/json.rs",
+  "line": 547
+ },
+ {
+  "q": "quickly scan buffer for potential matching lines before full verification",
+  "piece": "line",
+  "file": "crates/regex/src/matcher.rs",
+  "line": 490
+ },
+ {
+  "q": "benchmark performance of matching paths against deeply nested ignore rules",
+  "piece": "ignore",
+  "file": "crates/ignore/benches/workloads.rs",
+  "line": 423
+ },
+ {
+  "q": "enable or disable case folding for override glob rules",
+  "piece": "case",
+  "file": "crates/ignore/src/overrides.rs",
+  "line": 147
+ },
+ {
+  "q": "long help text explaining whole line matching mode",
+  "piece": "long",
+  "file": "crates/core/flags/defs.rs",
+  "line": 3728
+ },
+ {
+  "q": "configure search pattern to require matching from beginning to end of line",
+  "piece": "line",
+  "file": "crates/pcre2/src/matcher.rs",
+  "line": 189
+ },
+ {
+  "q": "fast search file descriptor using memory mapping when possible",
+  "piece": "search",
+  "file": "crates/searcher/src/searcher/mod.rs",
+  "line": 659
+ },
+ {
+  "q": "earliest end boundary of first match from specific offset",
+  "piece": "match",
+  "file": "crates/matcher/src/lib.rs",
+  "line": 1017
+ },
+ {
+  "q": "iterate capturing groups repeatedly from offset with callback closure",
+  "piece": "iter",
+  "file": "crates/matcher/src/lib.rs",
+  "line": 1275
+ },
+ {
+  "q": "check whether summary reporting format requires location information",
+  "piece": "requires",
+  "file": "crates/printer/src/summary.rs",
+  "line": 98
+ },
+ {
+  "q": "determine whether current directory was implicitly chosen as target",
+  "piece": "implicit",
+  "file": "crates/core/flags/hiargs.rs",
+  "line": 338
+ },
+ {
+  "q": "callback invoked when scanning stream finishes successfully",
+  "piece": "finish",
+  "file": "crates/searcher/src/sink.rs",
+  "line": 210
+ },
+ {
+  "q": "generate manual documentation and shell completion scripts",
+  "piece": "generate",
+  "file": "crates/core/main.rs",
+  "line": 350
+ },
+ {
+  "q": "benchmark git ignore rules containing negation pattern matching",
+  "piece": "match",
+  "file": "crates/ignore/benches/workloads.rs",
+  "line": 529
+ }
+]

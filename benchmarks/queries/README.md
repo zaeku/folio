@@ -60,3 +60,14 @@ judgements the 2026-11-03 miss measurement used.
 ./misses.py <export> units.json ripgrep-seed58.json http://127.0.0.1:8090/v1/embeddings ripgrep ../reports/misses 3
 ./judged.py ../reports/misses/key-ripgrep.json verdicts.json 127 31 > ripgrep-seed58-misses.json
 ```
+
+`chunked.py` ranks the same set twice, once with each function over 8,000
+characters cut there and once with it split at syntax nodes. `hybrid.py` ranks
+Gemma, `rg` and their reciprocal-rank fusion on the kept questions together with
+the ones generation dropped for naming the function, which are
+`*-seed58-dropped.json`.
+
+```sh
+./chunked.py <export> units.json minisqlite-seed58.json http://127.0.0.1:8090/v1/embeddings
+./hybrid.py <export> units.json minisqlite-seed58.json minisqlite-seed58-dropped.json http://127.0.0.1:8090/v1/embeddings
+```

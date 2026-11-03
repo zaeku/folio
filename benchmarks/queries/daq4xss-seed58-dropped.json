@@ -1,0 +1,242 @@
+[
+ {
+  "q": "estimate target location and intensity ratio from measured signal convolution",
+  "piece": "estimate",
+  "file": "domains/interfaces/oxc-extractor-gui/src/analysis/mod.rs",
+  "line": 187
+ },
+ {
+  "q": "online running variance and average update subtracting baseline shift",
+  "piece": "update",
+  "file": "domains/pipelines/jungfrau/src/processor/src/isp.rs",
+  "line": 135
+ },
+ {
+  "q": "parse hardware timestamp to assign circular buffer slot index",
+  "piece": "index",
+  "file": "domains/pipelines/digitizer/src/receiver/src/normalizer.rs",
+  "line": 4
+ },
+ {
+  "q": "extract timing values from record and compute circular buffer index",
+  "piece": "index",
+  "file": "domains/pipelines/jungfrau/src/receiver/src/normalizer.rs",
+  "line": 4
+ },
+ {
+  "q": "calculate sample count required to settle smoothing filter history",
+  "piece": "required",
+  "file": "domains/interfaces/oxc-extractor-gui/src/smoothing.rs",
+  "line": 79
+ },
+ {
+  "q": "unsupported multipart object upload method returning error",
+  "piece": "multipart",
+  "file": "libs/rust/src/garnet_object_store.rs",
+  "line": 141
+ },
+ {
+  "q": "deserialize binary stream frame containing triggers and device payloads",
+  "piece": "frame",
+  "file": "archive/quarantine/compactor.rs",
+  "line": 141
+ },
+ {
+  "q": "calculate mean baseline pixel intensity from lowest sum horizontal lines",
+  "piece": "calculate",
+  "file": "domains/pipelines/oxc/src/processor/src/isp.rs",
+  "line": 61
+ },
+ {
+  "q": "persist columnar table chunks to partitioned storage under exclusive minute lock",
+  "piece": "minute",
+  "file": "domains/archival/lance-archiver/src/src/writer.rs",
+  "line": 53
+ },
+ {
+  "q": "clear accumulated image statistics and reset run state",
+  "piece": "reset",
+  "file": "domains/interfaces/jungfrau-gui/src/accum.rs",
+  "line": 123
+ },
+ {
+  "q": "calculate total byte size of files in a directory recursively",
+  "piece": "size",
+  "file": "domains/archival/zarr-uploader/src/src/main.rs",
+  "line": 42
+ },
+ {
+  "q": "fetch precision time protocol status and update clock synchronization statistics",
+  "piece": "update",
+  "file": "domains/telemetry/linuxptp-metrics-exporter/src/src/main.rs",
+  "line": 26
+ },
+ {
+  "q": "query attributes and link status for an rdma verbs interface port",
+  "piece": "query",
+  "file": "libs/rust/rdma-io/src/lib.rs",
+  "line": 430
+ },
+ {
+  "q": "delete stored blob or file key asynchronously from key value cache",
+  "piece": "delete",
+  "file": "libs/rust/src/garnet_object_store.rs",
+  "line": 308
+ },
+ {
+  "q": "serialize active regions of interest configuration to browser json text",
+  "piece": "config",
+  "file": "domains/interfaces/web/src/jrid-dashboard/wasm/src/lib.rs",
+  "line": 115
+ },
+ {
+  "q": "send acquisition start command with updated positions and metadata",
+  "piece": "update",
+  "file": "archive/prototypes/scan-system/nats_bridge.py",
+  "line": 220
+ },
+ {
+  "q": "retrieve mock key value storage matching expected broker partition",
+  "piece": "value",
+  "file": "archive/prototypes/scan-system/conftest.py",
+  "line": 102
+ },
+ {
+  "q": "find most recent timestamped ordered set across distributed database members",
+  "piece": "find",
+  "file": "check_redis.py",
+  "line": 47
+ },
+ {
+  "q": "query database cluster key handling moved redirections across nodes",
+  "piece": "cluster",
+  "file": "print_latest_oxc.py",
+  "line": 8
+ },
+ {
+  "q": "load calibration profile arrays and initialize curve fit parameters",
+  "piece": "init",
+  "file": "archive/legacy_reference_codes/old oxc_processor/atomic_funcs.py",
+  "line": 227
+ },
+ {
+  "q": "initialize zero message queue subscriber connection to network endpoint",
+  "piece": "init",
+  "file": "archive/legacy_reference_codes/old scan script/libscan.py",
+  "line": 29
+ },
+ {
+  "q": "initialize distributed storage wrapper client using cluster configuration options",
+  "piece": "init",
+  "file": "libs/python/garnetfs/garnetfs/core.py",
+  "line": 93
+ },
+ {
+  "q": "interpolate physical motion stage coordinates from detected signal peak",
+  "piece": "stage",
+  "file": "archive/legacy_reference_codes/old oxc_processor/atomic_funcs.py",
+  "line": 276
+ },
+ {
+  "q": "initialize state estimation filters tracking timestamps errors and integral terms",
+  "piece": "init",
+  "file": "domains/interfaces/oxc-extractor-gui/plugin/oxc_feedback_plugin.py",
+  "line": 111
+ },
+ {
+  "q": "lookup connection handle mapped to hashed key partition slot",
+  "piece": "conn",
+  "file": "archive/quarantine/evr-pipeline/timestamp-counter-py/src/main.py",
+  "line": 77
+ },
+ {
+  "q": "convert storage file path into cluster hash tag partitioned key",
+  "piece": "path",
+  "file": "libs/python/garnetfs/build/lib/garnetfs/core.py",
+  "line": 98
+ },
+ {
+  "q": "find most recent recorded timestamp across partitioned columnar storage files",
+  "piece": "timestamp",
+  "file": "domains/interfaces/lance-analyzer/garnet_tail.py",
+  "line": 180
+ },
+ {
+  "q": "find motors with valid recorded values during an experimental execution",
+  "piece": "motors",
+  "file": "domains/interfaces/lance-analyzer/app.py",
+  "line": 293
+ },
+ {
+  "q": "extract date hour and minute timestamp components from dataset partition paths",
+  "piece": "path",
+  "file": "domains/interfaces/lance-analyzer/garnet_tail.py",
+  "line": 146
+ },
+ {
+  "q": "extract rows containing non null run identifier using indexed lookup or scan",
+  "piece": "rows",
+  "file": "domains/interfaces/lance-analyzer/cache_manager.py",
+  "line": 450
+ },
+ {
+  "q": "initialize and persist experiment scan execution metadata record to filesystem",
+  "piece": "scan",
+  "file": "archive/prototypes/scan-system/scan_logger.py",
+  "line": 43
+ },
+ {
+  "q": "reset detector calibration factors and pixel masks to initial state",
+  "piece": "mask",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/load_calib_param.cpp",
+  "line": 1256
+ },
+ {
+  "q": "parse configuration text file into allocated detector receiver settings structure",
+  "piece": "config",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/load_jf_config.cpp",
+  "line": 38
+ },
+ {
+  "q": "format current local date and timestamp into text string buffer",
+  "piece": "current",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/system_util.cpp",
+  "line": 48
+ },
+ {
+  "q": "read detector gain pedestal and pixel bad mask calibration files",
+  "piece": "calib",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/load_calib_param.cpp",
+  "line": 1266
+ },
+ {
+  "q": "parse network and hardware settings for distributed streaming detector publisher",
+  "piece": "publisher",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/load_jf_config.cpp",
+  "line": 252
+ },
+ {
+  "q": "wait for infiniband work completion events on queue pair channel",
+  "piece": "completion",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/lib/pxrdma_src/src/pxrdma_qp.cpp",
+  "line": 902
+ },
+ {
+  "q": "transition queue pair state to initial with access permissions",
+  "piece": "init",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/lib/pxrdma_src/src/pxrdma_qp.cpp",
+  "line": 475
+ },
+ {
+  "q": "query library release version string into provided buffer",
+  "piece": "version",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/src/jf_h5_writer.cpp",
+  "line": 36
+ },
+ {
+  "q": "exchange fixed size payload between local and remote over socket",
+  "piece": "sock",
+  "file": "archive/legacy_reference_codes/Jungfrau RDMA/lib/pxrdma_src/src/pxrdma_common.cpp",
+  "line": 213
+ }
+]
