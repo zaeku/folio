@@ -16,11 +16,14 @@ const BATCH: usize = 32;
 ///
 /// A prefix changes the text the endpoint embeds, so a document prefix belongs
 /// to an index the way its model does, and a query is sent with the query
-/// prefix of the index it reads. Empty for a model that expects none.
+/// prefix of the index it reads. Empty for a model that expects none. A section
+/// is embedded behind `document` and a function behind `function`, in which
+/// `{file}` names the function's file.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Prefixes {
     pub query: String,
     pub document: String,
+    pub function: String,
 }
 
 #[derive(Serialize)]

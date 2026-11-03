@@ -1,7 +1,8 @@
 # folio
 
-Section-scoped semantic search over a markdown corpus. The index holds
-references, never bodies.
+Section-scoped semantic search over a markdown corpus, and over the functions
+of its source files when you turn that on. The index holds references, never
+bodies.
 
 A *folio* is a numbered leaf reference — a pointer to where text sits, not the
 text. That is what this index stores: for every markdown heading section, a path,
@@ -39,23 +40,40 @@ run `cargo install --path .`.
 
 folio calls an OpenAI-compatible embeddings endpoint and contains no inference
 code, so the model is yours to choose. Any server exposing `/v1/embeddings`
-works. One that has been measured:
+works. The one folio is set up for is EmbeddingGemma 2 on `llama-server`:
 
 ```sh
-llama-server -hf keisuke-miyako/gte-modernbert-base-gguf \
-  --hf-file gte-modernbert-base-Q8_0.gguf \
-  --embeddings --pooling cls -c 8192 -b 8192 -ub 8192 --port 8080
+llama-server -hf unsloth/embeddinggemma-2-GGUF \
+  --hf-file embeddinggemma-2-Q8_0.gguf --no-mmproj \
+  --embeddings --pooling mean -c 8192 -b 8192 -ub 8192 --port 8080
 ```
 
-Two flags there are not optional. `--pooling cls` is what this model wants, and
-the default is wrong for it — the Qwen3-Embedding family wants `--pooling last`
-instead. And `-b`/`-ub` must be at least your longest section: an encoder needs
-its whole input in one physical batch, so at the default 512 a longer section
-comes back as an HTTP 500 rather than a truncated vector.
+It wants the model card's retrieval prefixes, and without them it ranks below
+the model folio used before it, so set them beside the endpoint:
 
-Another that has been measured is Hugging Face's `text-embeddings-inference`,
-which is Rust on Candle and reads safetensors, so the model loads directly and
-no GGUF conversion has to be trusted:
+```sh
+folio config set query_prefix 'task: search result | query: '
+folio config set document_prefix 'title: none | text: '
+folio config set function_prefix 'title: {file} | text: '
+```
+
+folio's prefixes default to empty, so a model that expects none needs nothing
+set. An index records the prefixes it was built behind, and a query behind other
+ones is refused rather than answered from another space.
+
+Three flags there are not optional. `--pooling mean` is what this model wants,
+and a wrong pooling ranks badly without failing — gte-modernbert wants `cls`
+and the Qwen3-Embedding family `last`. `--no-mmproj` keeps the vision and audio
+encoders the repository ships beside the text model from loading. And `-b`/`-ub`
+must be at least your longest section: an encoder needs its whole input in one
+physical batch, so at the default 512 a longer section comes back as an HTTP 500
+rather than a truncated vector. The model needs a `llama-server` recent enough
+to know it; an older one refuses to load it.
+
+Another that has been measured, with gte-modernbert-base, is Hugging Face's
+`text-embeddings-inference`, which is Rust on Candle and reads safetensors, so
+the model loads directly and no GGUF conversion has to be trusted. Whether it
+serves EmbeddingGemma 2 has not been checked:
 
 ```sh
 text-embeddings-router --model-id Alibaba-NLP/gte-modernbert-base --port 8080 \
@@ -75,7 +93,7 @@ have to be told.
 
 `folio unit --backend tei` prints a service file for it.
 
-Switching between the two costs no re-index. An index built by either is
+Switching servers for one model costs no re-index. An index built by either is
 answered from the other with nothing re-embedded, because folio compares what
 the endpoint returns rather than what it is called.
 
@@ -112,8 +130,7 @@ before Ventura, `launchctl load` and `unload` are the pair to use instead.
 `folio unit` writes nothing and starts nothing. `--backend tei` prints
 `text-embeddings-router`'s command instead, with `--auto-truncate false` in it
 because folio's own accounting is wrong without it; `--backend llama.cpp` is the
-default, so an invocation written before that flag existed prints what it always
-did. A flag belonging to the other server is refused rather than dropped. It
+default, and serves EmbeddingGemma 2 unless told otherwise. A flag belonging to the other server is refused rather than dropped. It
 fills in the port your configuration already points at, and the absolute path to
 the server,
 because a service manager starts a job with a bare environment and will not find
@@ -179,6 +196,37 @@ that corpus chose rather than with whatever the machine is configured for.
 which beats the user's `~/.config/folio/config.yaml`, which beats
 `http://127.0.0.1:8080/v1/embeddings`. `folio config` prints what won and where
 each file is. Both are YAML with two keys, so editing one by hand is fine.
+
+### Source code
+
+A corpus can index the functions in its source files beside its markdown:
+
+```sh
+folio config set --project code true
+folio index
+folio query "check if a line exceeds the configured column limit"
+```
+
+Each function becomes one unit, from the comments, attributes and decorators
+directly above it to its last line, and a result names it the way it names a
+section: `src/printer.rs:1560-1564`. The languages are the ones the `ast-query`
+crate has a function template for: Rust, Python, Go, JavaScript, TypeScript and
+TSX, Java, C, C++, Swift and Bash. A file in any other language is not read, and
+a definition the parser could only recover from an error is left out.
+
+A function is embedded behind `function_prefix`, where `{file}` names its file,
+and a section behind `document_prefix`; one query prefix serves both. The setup
+above uses the search query prefix for both because, in an index holding both,
+it ranked sections best and functions as well as the code-retrieval one, and
+names the file for functions alone because that helped functions and cost
+sections. `docs/measurements/` has the runs.
+
+A result is a candidate to read, not an answer: the right function is often
+first and not always there at all, so an empty or wrong result is no evidence
+that the code does not exist. Once a result has given you a name, `rg` finds
+every use of it exhaustively, which folio does not. The index records the
+version of the cutter it used, so a folio carrying another one cuts every
+source file again on its next index.
 
 ### A corpus that needs its own model
 
@@ -617,8 +665,11 @@ time. Where it belongs is yours to decide, as with `folio unit`.
 
 - **Exact matching.** Use `rg`. It is exhaustive and folio is not, and a lexical
   route mixed into the ranking measurably buried correct answers.
-- **Code structure.** folio indexes prose sections, not symbols or call graphs.
-- **Anything but markdown.** PDF, office documents and source files are skipped.
+- **Code structure.** folio finds a function from a description of what it
+  does, not from its name, its callers or its callees. A name is `rg`'s, and a
+  call graph a code-intelligence tool's.
+- **Anything but markdown and source.** PDF and office documents are skipped,
+  and so is source in a language with no grammar folio carries.
 
 ## Sizing
 

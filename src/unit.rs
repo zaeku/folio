@@ -68,6 +68,9 @@ fn backend_args(
             hf.into(),
             "--hf-file".into(),
             hf_file.into(),
+            // A model whose repository ships a vision or audio encoder beside
+            // it would load that too; an embedding endpoint wants text alone.
+            "--no-mmproj".into(),
             "--pooling".into(),
             pooling.into(),
             "-c".into(),
@@ -115,13 +118,11 @@ pub(crate) fn cmd_unit(
         }
     }
     let (server_name, hf) = match backend {
-        Backend::LlamaCpp => {
-            ("llama-server", hf.unwrap_or("keisuke-miyako/gte-modernbert-base-gguf"))
-        }
+        Backend::LlamaCpp => ("llama-server", hf.unwrap_or("unsloth/embeddinggemma-2-GGUF")),
         Backend::Tei => ("text-embeddings-router", hf.unwrap_or("Alibaba-NLP/gte-modernbert-base")),
     };
-    let hf_file = hf_file.unwrap_or("gte-modernbert-base-Q8_0.gguf");
-    let pooling = pooling.unwrap_or("cls");
+    let hf_file = hf_file.unwrap_or("embeddinggemma-2-Q8_0.gguf");
+    let pooling = pooling.unwrap_or("mean");
     let declared = nearest_declaration(root).unwrap_or_else(|| root.join(PROJECT_CONFIG));
     let proj = read_config_at(&declared)?;
     let user = read_config_at(&config_path())?;
@@ -243,7 +244,7 @@ mod tests {
         }
     }
     #[test]
-    fn the_default_backend_prints_what_it_always_printed() {
+    fn the_llama_cpp_backend_prints_text_alone_at_full_batch() {
         let args = backend_args(
             Backend::LlamaCpp,
             "repo",
@@ -261,6 +262,7 @@ mod tests {
                 "repo",
                 "--hf-file",
                 "file.gguf",
+                "--no-mmproj",
                 "--pooling",
                 "cls",
                 "-c",

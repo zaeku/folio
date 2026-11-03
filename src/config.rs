@@ -41,6 +41,12 @@ pub(crate) struct Config {
     pub(crate) query_prefix: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) document_prefix: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) function_prefix: Option<String>,
+    /// Whether source files are cut into functions and indexed beside the
+    /// markdown.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) code: Option<bool>,
 }
 
 /// The per-corpus config, meant to be committed with the corpus.
@@ -221,7 +227,26 @@ pub(crate) fn resolve_prefixes(project: &Config, user: &Config) -> Prefixes {
         user.document_prefix.as_deref(),
         "",
     );
-    Prefixes { query, document }
+    let (function, _) = resolve(
+        None,
+        "FOLIO_FUNCTION_PREFIX",
+        project.function_prefix.as_deref(),
+        user.function_prefix.as_deref(),
+        "",
+    );
+    Prefixes { query, document, function }
+}
+
+/// Whether a new index cuts source files into functions, from the environment,
+/// the corpus's declaration and the user's config, in that order. Off unless
+/// one of them turns it on.
+pub(crate) fn resolve_code(project: &Config, user: &Config) -> bool {
+    if let Ok(v) = std::env::var("FOLIO_CODE")
+        && !v.is_empty()
+    {
+        return matches!(v.as_str(), "1" | "true" | "yes" | "on");
+    }
+    project.code.or(user.code).unwrap_or(false)
 }
 
 pub(crate) fn resolve_allow_insecure(flag: bool, user: Option<bool>) -> bool {

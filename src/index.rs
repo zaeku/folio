@@ -20,12 +20,23 @@ use std::sync::Mutex;
 use crate::config::{
     DEFAULT_ENDPOINT, DEFAULT_MODEL, PROJECT_CONFIG, config_path, enclosing_index,
     nearest_declaration, read_config_at, resolve, resolve_allow_insecure, resolve_api_key,
-    resolve_prefixes,
+    resolve_code, resolve_prefixes,
 };
 use crate::embed::{Prefixes, SAME_SPACE, calibrate, embed, same_space};
+use crate::functions::{self, CUTTER};
 use crate::sections::{self, Section};
 use crate::store::{self, Meta, Stamp, Store};
 use crate::{as_floats, map_vectors, stamp};
+
+/// What the endpoint is sent for one unit: a section behind the document
+/// prefix, a function behind the function prefix naming its file.
+fn embedded(prefixes: &Prefixes, s: &Section) -> String {
+    if s.path.ends_with(".md") {
+        format!("{}{}", prefixes.document, s.text)
+    } else {
+        format!("{}{}", functions::prefix(&prefixes.function, &s.path), s.text)
+    }
+}
 
 /// The text whose embedding says which weights answered. Its value does not
 /// matter; that every run sends the same one does. An index stores the text it
@@ -91,7 +102,7 @@ fn pair_moves(
 /// `Ok(None)` means another process holds the write lock and this one declined
 /// to wait: a re-index nobody asked for is not worth blocking on, and one the
 /// user asked for says so rather than hanging.
-// Nine, and the endpoint, model, key, budget and prefixes among them are what a
+// Ten, and the endpoint, model, key, budget, prefixes and code among them are what a
 // run sends rather than what it computes. Grouping them into a struct would name a
 // thing that exists only for the length of one call.
 #[expect(clippy::too_many_arguments)]
@@ -103,6 +114,7 @@ pub(crate) fn reindex(
     allow_insecure: bool,
     max_chars: usize,
     prefixes: &Prefixes,
+    code: bool,
     rebuild: bool,
     wait: std::time::Duration,
 ) -> Result<Option<Indexed>> {
@@ -152,12 +164,25 @@ pub(crate) fn reindex(
     // A document prefix is part of what was embedded, so rows written behind
     // another one are in another space however the fingerprint reads. A query
     // prefix is only recorded, so changing it re-embeds nothing.
-    let reprefixed = !rebuild && prev.dim > 0 && prev.prefixes.document != prefixes.document;
+    let reprefixed = !rebuild
+        && prev.dim > 0
+        && (prev.prefixes.document != prefixes.document
+            || prev.prefixes.function != prefixes.function);
     if reprefixed {
         println!(
-            "this index was built behind document prefix {:?} and {:?} is configured now — \
-             re-embedding every section",
-            prev.prefixes.document, prefixes.document
+            "this index was built behind document prefixes {:?} and {:?}, and {:?} and {:?} \
+             are configured now — re-embedding every section",
+            prev.prefixes.document, prev.prefixes.function, prefixes.document, prefixes.function
+        );
+    }
+    // Spans another cutter drew may not be the ones this one draws, so every
+    // source file is cut again; the markdown is not touched.
+    let recut = code && prev.code && prev.cutter != CUTTER;
+    if recut {
+        println!(
+            "this index cut its functions with ast-query {} and this folio carries {CUTTER} — \
+             cutting every source file again",
+            prev.cutter
         );
     }
     let reuse = !rebuild && prev.dim > 0 && drifted.is_none() && !reprefixed;
@@ -199,13 +224,14 @@ pub(crate) fn reindex(
                 return ignore::WalkState::Continue;
             }
             let path = entry.path();
-            if path.extension().and_then(|e| e.to_str()) != Some("md") {
-                return ignore::WalkState::Continue;
-            }
             let Ok(suffix) = path.strip_prefix(&root) else {
                 return ignore::WalkState::Continue;
             };
             let rel = suffix.to_string_lossy().replace('\\', "/");
+            let markdown = path.extension().and_then(|e| e.to_str()) == Some("md");
+            if !markdown && !(code && functions::is_source(&rel)) {
+                return ignore::WalkState::Continue;
+            }
 
             // Listing a file is cheap and reading it is not: stamping all
             // 14,616 costs 33 ms against 1294 ms to read and hash them. So a
@@ -235,7 +261,7 @@ pub(crate) fn reindex(
                     }
                 }
             };
-            let moved = was.is_none_or(|w| w.hash != h);
+            let moved = was.is_none_or(|w| w.hash != h) || (recut && !markdown);
             found.lock().unwrap().push((rel, stamp(&meta, h), moved));
             ignore::WalkState::Continue
         })
@@ -273,7 +299,12 @@ pub(crate) fn reindex(
     let mut fresh: Vec<Section> = Vec::new();
     for rel in &changed {
         let source = fs::read_to_string(root.join(rel))?;
-        for s in sections::split(rel, &source) {
+        let units = if rel.ends_with(".md") {
+            sections::split(rel, &source)
+        } else {
+            functions::split(rel, &source)
+        };
+        for s in units {
             fresh.extend(sections::to_budget(s, max_chars));
         }
     }
@@ -284,7 +315,7 @@ pub(crate) fn reindex(
     // says here.
     let mut max_chars = max_chars;
     if let Some(longest) = fresh.iter().max_by_key(|s| s.text.chars().count()) {
-        let longest = format!("{}{}", prefixes.document, longest.text);
+        let longest = embedded(prefixes, longest);
         let fitted = calibrate(endpoint, model, api_key, allow_insecure, &longest, max_chars)?;
         if fitted < max_chars {
             println!("  budget for this run: {fitted} characters, not {max_chars}");
@@ -325,6 +356,8 @@ pub(crate) fn reindex(
         dim,
         max_chars,
         prefixes: prefixes.clone(),
+        code,
+        cutter: if code { CUTTER.to_string() } else { String::new() },
         fingerprint: fingerprint_text,
         fingerprint_vec: fingerprint,
     })?;
@@ -335,8 +368,7 @@ pub(crate) fn reindex(
     // current for one: written for a file whose sections are only half in, the
     // next run would skip the other half forever.
     for batch in batches(fresh, FLUSH) {
-        let inputs: Vec<String> =
-            batch.iter().map(|s| format!("{}{}", prefixes.document, s.text)).collect();
+        let inputs: Vec<String> = batch.iter().map(|s| embedded(prefixes, s)).collect();
         let vectors = embed(endpoint, model, api_key, allow_insecure, &inputs)?;
         if dim == 0 {
             dim = vectors[0].len();
@@ -438,6 +470,7 @@ pub(crate) fn cmd_index(
     let (api_key, _) = resolve_api_key(&endpoint, user.api_key.as_deref());
     let allow_insecure = resolve_allow_insecure(allow_insecure, user.allow_insecure);
     let prefixes = resolve_prefixes(&proj, &user);
+    let code = resolve_code(&proj, &user);
     let (endpoint, model) = (endpoint.as_str(), model.as_str());
     // An index the user asked for waits a little for one already running, and
     // then says who it is waiting for rather than hanging on it.
@@ -450,6 +483,7 @@ pub(crate) fn cmd_index(
         allow_insecure,
         max_chars,
         &prefixes,
+        code,
         rebuild,
         wait,
     )?

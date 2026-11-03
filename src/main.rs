@@ -8,6 +8,7 @@ mod cli;
 mod config;
 mod embed;
 mod filters;
+mod functions;
 mod index;
 mod query;
 mod sections;
@@ -20,7 +21,8 @@ use clap::Parser;
 use cli::{Cli, Cmd, ConfigCmd};
 use config::{
     DEFAULT_ENDPOINT, DEFAULT_MODEL, PROJECT_CONFIG, config_path, corpus_root, nearest_declaration,
-    read_config_at, resolve, resolve_allow_insecure, resolve_api_key, resolve_prefixes,
+    read_config_at, resolve, resolve_allow_insecure, resolve_api_key, resolve_code,
+    resolve_prefixes,
 };
 use embed::{dot, embed};
 use index::{FLUSH, append, cmd_index, hash};
@@ -304,13 +306,15 @@ fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
             "api_key" => cfg.api_key = Some(value),
             "query_prefix" => cfg.query_prefix = Some(value),
             "document_prefix" => cfg.document_prefix = Some(value),
+            "function_prefix" => cfg.function_prefix = Some(value),
+            "code" => cfg.code = Some(value.parse().context("code must be 'true' or 'false'")?),
             "allow_insecure" => {
                 cfg.allow_insecure =
                     Some(value.parse().context("allow_insecure must be 'true' or 'false'")?)
             }
             other => bail!(
                 "no setting named {other} — folio config holds endpoint, model, api_key, \
-                 allow_insecure, query_prefix, document_prefix"
+                 allow_insecure, query_prefix, document_prefix, function_prefix, code"
             ),
         }
         if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
@@ -339,12 +343,17 @@ fn cmd_config(action: Option<ConfigCmd>, root: &Path) -> Result<()> {
         println!("  api_key   [configured]  ({k_src})");
     }
     let prefixes = resolve_prefixes(&proj, &user);
-    for (label, p) in
-        [("query_prefix   ", &prefixes.query), ("document_prefix", &prefixes.document)]
-    {
+    for (label, p) in [
+        ("query_prefix   ", &prefixes.query),
+        ("document_prefix", &prefixes.document),
+        ("function_prefix", &prefixes.function),
+    ] {
         if !p.is_empty() {
             println!("  {label} {p:?}");
         }
+    }
+    if resolve_code(&proj, &user) {
+        println!("  code      true  (source files are cut into functions)");
     }
     for (label, path) in [("corpus", &proj_path), ("user  ", &user_path)] {
         println!(

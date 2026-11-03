@@ -155,9 +155,6 @@ pub(crate) enum Cmd {
         root: PathBuf,
         /// Which server the unit runs. `llama.cpp` prints `llama-server`'s
         /// command, `tei` prints `text-embeddings-router`'s.
-        ///
-        /// The default is what folio has always printed, so an invocation
-        /// written before this flag existed produces the same file.
         #[arg(long, value_enum, default_value_t = Backend::LlamaCpp)]
         backend: Backend,
         /// Write a launchd agent. The default on macOS.
@@ -166,18 +163,18 @@ pub(crate) enum Cmd {
         /// Write a systemd user service. The default elsewhere.
         #[arg(long)]
         systemd: bool,
-        /// The model repository the server should pull. Defaults to the GGUF
-        /// conversion measured for `llama.cpp`, and to the safetensors the
-        /// same model publishes for `tei`.
+        /// The model repository the server should pull. Defaults to
+        /// EmbeddingGemma 2's GGUF for `llama.cpp`, and to gte-modernbert's
+        /// safetensors for `tei`, which was not checked against Gemma.
         #[arg(long)]
         hf: Option<String>,
         /// The file within that repository. `llama.cpp` only: `tei` reads
         /// safetensors and picks the file itself.
         #[arg(long)]
         hf_file: Option<String>,
-        /// The pooling this model wants. `cls` for gte-modernbert, `last` for
-        /// the Qwen3-Embedding family. The server's own default is wrong for
-        /// both, and a wrong one ranks badly without failing.
+        /// The pooling this model wants. `mean` for EmbeddingGemma 2, `cls`
+        /// for gte-modernbert, `last` for the Qwen3-Embedding family. A wrong
+        /// one ranks badly without failing.
         ///
         /// `llama.cpp` only: `tei` reads pooling from the model.
         #[arg(long)]
@@ -231,8 +228,8 @@ pub(crate) enum Cmd {
 pub(crate) enum ConfigCmd {
     /// Write one setting to a config file, creating it if it is absent.
     Set {
-        /// `endpoint`, `model`, `api_key`, `allow_insecure`, `query_prefix`, or
-        /// `document_prefix`.
+        /// `endpoint`, `model`, `api_key`, `allow_insecure`, `query_prefix`,
+        /// `document_prefix`, `function_prefix`, or `code`.
         key: String,
         value: String,
         /// Write `folio.yaml` beside the corpus instead of the user's config.

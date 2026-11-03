@@ -91,7 +91,7 @@ fn open_all(roots: &[PathBuf]) -> Result<Vec<Opened>> {
             bail!(
                 "the indexes under {} and {} were embedded behind different prefixes, so a \
                  question cannot be sent in a form both were built for — re-index one of them \
-                 with the other's query_prefix and document_prefix",
+                 with the other's query_prefix, document_prefix and function_prefix",
                 first.root.display(),
                 o.root.display()
             );
@@ -411,7 +411,8 @@ pub(crate) fn cmd_query(
         // What a refresh needs, taken before the maps are given up. Only the
         // indexes with a stale row are re-indexed: the others answered from
         // files that have not moved.
-        let plans: Vec<(PathBuf, String, String, usize, Prefixes)> = if refresh && !refreshed {
+        let plans: Vec<(PathBuf, String, String, usize, Prefixes, bool)> = if refresh && !refreshed
+        {
             opened
                 .iter()
                 .enumerate()
@@ -423,6 +424,7 @@ pub(crate) fn cmd_query(
                         o.meta.model.clone(),
                         budget(o.meta.max_chars),
                         o.meta.prefixes.clone(),
+                        o.meta.code,
                     )
                 })
                 .collect()
@@ -434,7 +436,7 @@ pub(crate) fn cmd_query(
         if !plans.is_empty() {
             let mut reembedded = 0usize;
             let mut ran = false;
-            for (root, endpoint, model, budget, prefixes) in &plans {
+            for (root, endpoint, model, budget, prefixes, code) in &plans {
                 // Declined rather than waited: another folio is already
                 // writing, and its result will be at least as fresh as this
                 // one's would be.
@@ -446,6 +448,7 @@ pub(crate) fn cmd_query(
                     allow_insecure,
                     *budget,
                     prefixes,
+                    *code,
                     false,
                     std::time::Duration::ZERO,
                 )? {

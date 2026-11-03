@@ -1,11 +1,12 @@
 ---
 name: folio
 description: >-
-  Ranks markdown sections by meaning and returns `path:start-end` references to
-  read. Use it to find a section when you do not know the words the corpus uses
-  for it. Use it to rank sections filtered on frontmatter, such as a status or
-  a supersedes. Do not use it for exact strings, for regexes, or for code
-  symbols.
+  Ranks markdown sections, and source functions where a corpus turns `code` on,
+  by meaning and returns `path:start-end` references to read. Use it to find a
+  section or a function when you do not know the words or the name the corpus
+  uses for it. Use it to rank sections filtered on frontmatter, such as a status
+  or a supersedes. Do not use it for exact strings, for regexes, or for a
+  symbol you can name.
 ---
 
 # folio
@@ -25,7 +26,8 @@ cannot tell you at the moment you need it.
 |---|---|
 | An exact string, identifier, or regex | `rg` — exhaustive where folio is not |
 | Symbols, callers, call graphs | CodeGraph |
-| Anything not markdown | folio skips PDF, office documents and source files |
+| A function you can describe but not name | folio, where `folio config` shows `code true` |
+| Anything not markdown or source | folio skips PDF and office documents |
 
 ## The commands
 
@@ -75,6 +77,12 @@ A query prints five rows by default, or `-l N` for more. Each row is a score, a
 
 **Read those line ranges.** A score orders candidates rather than judging them —
 the answer may be in the third row, and it may be in none of them.
+
+A function result is the same: read it before you change it, because a close
+variant of the right function — the same operation for another statement, a
+caller, a wrapper — ranks near it and reads plausibly. A function folio did not
+return may still exist, so do not take an empty result as proof. Once a result
+gives you a name, switch to `rg` for every use of it.
 
 folio marks a row `(N sections)` when it covers several sections that touch and
 rank alike, because that is the one read they describe.

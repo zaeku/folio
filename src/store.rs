@@ -46,6 +46,10 @@ pub struct Meta {
     /// The prefixes every row was embedded behind and every query is sent
     /// behind.
     pub prefixes: Prefixes,
+    /// Whether source files were cut into functions, and the cutter's version
+    /// when they were.
+    pub code: bool,
+    pub cutter: String,
 }
 
 /// What the index covers.
@@ -159,6 +163,9 @@ impl Store {
                 "max_chars" => m.max_chars = v.parse().unwrap_or(0),
                 "query_prefix" => m.prefixes.query = v,
                 "document_prefix" => m.prefixes.document = v,
+                "function_prefix" => m.prefixes.function = v,
+                "code" => m.code = v == "true",
+                "cutter" => m.cutter = v,
                 "fingerprint" => m.fingerprint = v,
                 "fingerprint_vec" => {
                     m.fingerprint_vec = serde_json::from_str(&v).unwrap_or_default()
@@ -414,6 +421,9 @@ impl Store {
         ins.execute(params!["max_chars", meta.max_chars.to_string()])?;
         ins.execute(params!["query_prefix", meta.prefixes.query])?;
         ins.execute(params!["document_prefix", meta.prefixes.document])?;
+        ins.execute(params!["function_prefix", meta.prefixes.function])?;
+        ins.execute(params!["code", meta.code.to_string()])?;
+        ins.execute(params!["cutter", meta.cutter])?;
         ins.execute(params!["fingerprint", meta.fingerprint])?;
         ins.execute(params!["fingerprint_vec", serde_json::to_string(&meta.fingerprint_vec)?])?;
         Ok(())
@@ -489,7 +499,13 @@ mod tests {
             endpoint: "e".into(),
             dim: 3,
             max_chars: 99,
-            prefixes: Prefixes { query: "q: ".into(), document: "d: ".into() },
+            prefixes: Prefixes {
+                query: "q: ".into(),
+                document: "d: ".into(),
+                function: "f: ".into(),
+            },
+            code: true,
+            cutter: "0.1.0".into(),
             ..Meta::default()
         };
         let files =

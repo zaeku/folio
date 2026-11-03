@@ -15,6 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1"
+ast-query = { version = "0.1", default-features = false, features = ["rust", "python", "javascript", "typescript", "go", "java", "c", "cpp", "swift", "bash"] }
 clap = { version = "4", features = ["derive", "env"] }
 ignore = "0.4"
 libc = "0.2"

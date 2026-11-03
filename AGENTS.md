@@ -15,6 +15,7 @@ This table decides where new code goes.
 | Work | Belongs in | Why |
 |---|---|---|
 | Heading split, frontmatter flattening | `src/sections.rs` | The only non-trivial logic in the project, so it is where the tests live |
+| What a function unit spans in a source file | `src/functions.rs` | The unit is folio's; the grammars and the query that finds a definition are `ast-query`'s |
 | Anything issuing SQL | `src/store.rs` | Every statement folio makes is there, so the engine behind it can be replaced without the rest knowing |
 | Where a setting comes from, which corpus a command stands in, what may be sent where | `src/config.rs` | Resolution, the upward walks, and the transport rule are one subject |
 | The request to the endpoint, and the arithmetic on what returns | `src/embed.rs` | folio runs no model; this is the whole of what it says to one |
@@ -27,7 +28,8 @@ This table decides where new code goes.
 | Embedding inference | Outside the binary, behind the endpoint | Changing the model must not mean rebuilding folio |
 | Reading a document's body | The caller, after folio names a range | The index holds references only |
 | Exact string or regex matching | `rg`, not folio | Measured: a lexical route drowned the correct vector hit |
-| Symbol and call-graph questions about code | CodeGraph, not folio | folio indexes prose sections, not symbols |
+| Symbol and call-graph questions about code | CodeGraph, not folio | folio finds a function from a description of what it does, not from its name or its calls |
+| Parsing source: grammars, their versions, the function template | `ast-query`, not folio | One definition shared with ast-editor, pinned by `Cargo.lock`, so moving it is a change folio's tests check |
 
 ## Hard rules
 
@@ -226,10 +228,13 @@ runs.
 tests pass with no server running. Only `index` and `query` need one:
 
 ```sh
-llama-server -hf keisuke-miyako/gte-modernbert-base-gguf \
-  --hf-file gte-modernbert-base-Q8_0.gguf \
-  --embeddings --pooling cls -c 8192 -b 8192 -ub 8192 --port 8080
+llama-server -hf unsloth/embeddinggemma-2-GGUF \
+  --hf-file embeddinggemma-2-Q8_0.gguf --no-mmproj \
+  --embeddings --pooling mean -c 8192 -b 8192 -ub 8192 --port 8080
 export FOLIO_ENDPOINT=http://127.0.0.1:8080/v1/embeddings
+export FOLIO_QUERY_PREFIX='task: search result | query: '
+export FOLIO_DOCUMENT_PREFIX='title: none | text: '
+export FOLIO_FUNCTION_PREFIX='title: {file} | text: '
 ```
 
 Any OpenAI-compatible embeddings endpoint substitutes for that one without a
